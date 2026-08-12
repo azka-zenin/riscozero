@@ -9,6 +9,7 @@
 require('dotenv').config();
 
 const express = require('express');
+const compression = require('compression');
 const path = require('path');
 const config = require('./config');
 const { conectar, mongoose } = require('./database');
@@ -29,11 +30,24 @@ app.set('trust proxy', 1);
 
 app.use(express.json());
 
+// Comprime toda resposta antes de enviar — o arquivo do Chart.js sozinho tem
+// mais de 200KB, e numa wifi de escola isso é diferença real de tempo de
+// carregamento. Cedo na cadeia, de propósito: cobre tanto os arquivos
+// estáticos quanto as respostas JSON da API.
+app.use(compression());
+
 // Cabeçalhos de segurança em toda resposta, inclusive nos arquivos estáticos —
 // por isso vem antes do express.static.
 app.use(seguranca);
 
-app.use(express.static(path.join(__dirname, 'public')));
+// maxAge curto (1h), não um valor grande: os nomes de arquivo aqui não mudam
+// quando o conteúdo muda (não há um hash tipo style.abc123.css), então um
+// cache longo faria alguém continuar vendo a versão antiga por bastante
+// tempo depois de um push de última hora — justamente o tipo de ajuste que
+// este time faz nos dias antes de apresentar. Uma hora já evita rebuscar
+// fonte/CSS/JS a cada clique dentro da mesma sessão de demonstração, sem
+// esse risco.
+app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1h' }));
 
 // Verificação de saúde. Serviços de hospedagem chamam um endereço assim de
 // tempos em tempos para saber se a aplicação continua de pé. Fica antes das

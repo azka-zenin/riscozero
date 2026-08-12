@@ -32,7 +32,7 @@ const respostasRouter = require('../routes/respostas');
 const app = express();
 app.use(express.json());
 app.use(seguranca);
-app.use(express.static(path.join(__dirname, '..', 'public')));
+app.use(express.static(path.join(__dirname, '..', 'public'), { maxAge: '1h' }));
 // Mesma rota de saude do server.js, para os testes cobrirem o caminho que a
 // hospedagem usa para saber se a aplicacao esta de pe.
 app.get('/api/saude', (req, res) => {
