@@ -350,7 +350,7 @@ automaticamente.
 ## Testes
 
 ```bash
-npm test           # 220 testes, sem precisar de banco
+npm test           # 223 testes, sem precisar de banco
 npm run verificar  # testa o MongoDB de verdade (precisa do .env)
 ```
 

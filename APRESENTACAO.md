@@ -217,19 +217,39 @@ Mostre a estrutura de pastas e explique o caminho do dado:
 > ficaria piscando a cada ciclo.
 
 **"Como vocês garantem que funciona?"**
-> Temos quase 200 testes automatizados que rodam com um comando (`npm test`),
-> sem precisar de banco instalado. Eles verificam as rotas, o login, as
-> permissões, o CRUD, os cálculos e a geração dos textos — incluindo casos de
-> borda, como um dia atípico que não deve virar tendência. Vários bugs reais
-> foram encontrados por eles durante o desenvolvimento.
+> Temos mais de 220 testes automatizados que rodam com um comando
+> (`npm test`), sem precisar de banco instalado. Eles verificam as rotas, o
+> login, as permissões, o CRUD, os cálculos e a geração dos textos —
+> incluindo casos de borda, como um dia atípico que não deve virar
+> tendência. Vários bugs reais foram encontrados por eles durante o
+> desenvolvimento. Além disso, a coleção do Postman documenta a API inteira
+> e tem um script que confere se cada requisição descrita ali ainda
+> funciona de verdade — documentação que não bate com o sistema é pior que
+> documentação nenhuma.
 
 **"Vocês fizeram alguma revisão de segurança?"**
-> Sim, e achamos dois problemas reais que corrigimos. O CSV exportado deixava
-> passar "injeção de fórmula": um comentário do formulário começando com `=`
-> vinha, e se alguém abrisse o arquivo no Excel, aquele texto rodava como
-> fórmula — um ataque conhecido e documentado. E o endereço de IP usado para
-> travar tentativas de login era lido de um jeito que o próprio usuário
-> podia forjar. Os dois foram corrigidos e cobertos por teste automatizado.
+> Fizemos, e ela achou coisa de verdade. Quatro problemas, todos corrigidos
+> e cobertos por teste:
+>
+> - O CSV exportado deixava passar "injeção de fórmula": um comentário
+>   começando com `=` era interpretado como fórmula ao abrir no Excel — um
+>   ataque conhecido e documentado.
+> - A trava de tentativas de login contava por IP **e** e-mail juntos, então
+>   quem trocasse o e-mail a cada tentativa nunca esbarrava no limite.
+>   Medimos: 15 tentativas seguidas passaram sem nenhuma ser barrada.
+>   Colocamos um segundo teto, só por IP, em cima do que já existia.
+> - O aviso de "comentários ocultos" do painel podia dizer zero havendo
+>   comentários ocultos. A proteção de anonimato em si nunca falhou —
+>   nenhum comentário de setor pequeno chegou a aparecer —, mas o painel
+>   deixava de avisar que existiam comentários suprimidos.
+> - Os botões "Tentar de novo" das telas de erro não funcionavam: usavam um
+>   recurso que a nossa própria política de segurança do navegador bloqueia.
+>
+> Se quiserem o detalhe técnico, está tudo escrito no `PROJETO.md`.
+
+> **Dica:** esta é uma boa pergunta para *provocar*, se a banca não fizer.
+> Achar bug no próprio projeto e corrigir com teste mostra mais maturidade
+> do que dizer que estava tudo perfeito desde o começo.
 
 **"As senhas estão seguras?"**
 > São guardadas como hash bcrypt, não em texto puro. Um hash é uma conta que só

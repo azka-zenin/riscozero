@@ -200,7 +200,7 @@ riscozero/
 
 ## 7. Qualidade e testes
 
-- **220 testes automatizados** (`npm test`), rodando contra um MongoDB
+- **223 testes automatizados** (`npm test`), rodando contra um MongoDB
   simulado em memória — funcionam em qualquer máquina, sem banco instalado e
   sem internet. Cobrem a lógica de risco e tendência (inclusive casos de
   borda, como série vazia ou um dia atípico que não deve virar tendência), as
@@ -307,7 +307,50 @@ Postman) e verificação visual antes de integrar.
 
 ---
 
-## 9. Limitações conhecidas
+## 9. Auditoria final
+
+Antes de fechar o projeto, o código passou por uma revisão completa —
+segurança, corretude e funcionamento — em que cada suspeita foi verificada
+na prática (requisições contra um servidor de verdade, navegador
+automatizado), não só na leitura. Quatro problemas reais apareceram, todos
+corrigidos e cobertos por teste:
+
+1. **A contagem de comentários ocultos podia anunciar zero havendo
+   comentários ocultos.** A rota buscava um lote e decidia dentro de um laço
+   que interrompia ao juntar 20 comentários visíveis — os ocultos que
+   viessem depois nunca eram contados. Medido: com 30 comentários de um
+   setor grande e 2 de um pequeno, a API respondia "ocultos: 0". A supressão
+   em si nunca falhou (nenhum comentário de setor pequeno vazou em momento
+   algum); o que falhava era o aviso de que existiam comentários suprimidos
+   — justamente o sumiço silencioso que a rota se propõe a evitar. Agora a
+   separação é feita por consulta ao banco, e a soma sempre fecha.
+2. **A trava de tentativas de login podia ser contornada trocando o
+   e-mail.** Como a chave é IP + e-mail, cada e-mail novo estreava com o
+   contador zerado. Medido: 15 tentativas seguidas do mesmo endereço, com
+   e-mails diferentes, passaram todas. Entrou um segundo teto por IP (40 em
+   15 minutos) em cima do que já existia, sem desfazer o motivo original.
+   Junto, o contador em memória nunca descartava chave velha — a mesma
+   varredura o fazia crescer sem limite.
+3. **Os três botões "Tentar de novo" não funcionavam.** Usavam `onclick`
+   escrito no HTML, que a própria política de conteúdo do sistema bloqueia.
+   Confirmado em navegador. O detalhe ruim é onde isso aparecia: só na tela
+   de erro, ou seja, o botão falhava exatamente quando era necessário.
+4. **Ajustes menores**: cabeçalhos `Referrer-Policy` e HSTS que faltavam;
+   configuração que descartava silenciosamente um valor `0` legítimo; e
+   limite de tamanho no e-mail gravado no histórico de acessos.
+
+Igualmente relevante, o que a auditoria **confirmou estar correto**:
+injeção de operadores de banco (NoSQL injection) bloqueada tanto no login
+quanto no formulário público; XSS armazenado — testado enviando um payload
+real por uma tentativa de login e abrindo o histórico num navegador —
+neutralizado por escape e pela política de conteúdo; a correção de origem
+de IP da rodada anterior verificada como semanticamente correta; a trava do
+último administrador ativo consistente entre edição e remoção; e nenhuma
+vulnerabilidade conhecida nas dependências.
+
+---
+
+## 10. Limitações conhecidas
 
 Simplificações conscientes, assumidas abertamente:
 
@@ -327,7 +370,7 @@ Simplificações conscientes, assumidas abertamente:
 
 ---
 
-## 10. Evolução futura mapeada
+## 11. Evolução futura mapeada
 
 - Envio de e-mail automático quando um setor entra em risco alto
 - Medir automaticamente se o índice melhorou depois de uma ação registrada
@@ -337,7 +380,7 @@ Simplificações conscientes, assumidas abertamente:
 
 ---
 
-## 11. Como executar
+## 12. Como executar
 
 ```bash
 npm install

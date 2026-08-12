@@ -328,6 +328,63 @@ banco de verdade e apareceria na apresentação real. Corrigido: `limpar.js`
 agora também apaga `AcaoAlerta`, e um item foi adicionado ao checklist do
 roteiro alertando sobre isso.
 
+### Fase 10 — Auditoria final do projeto inteiro
+
+Revisão completa de segurança, corretude e funcionamento, com cada suspeita
+verificada empiricamente (requisições contra servidor real, navegador
+automatizado) em vez de só por leitura de código. Quatro problemas reais,
+todos corrigidos e cobertos por teste de regressão:
+
+1. **`ocultos` em `GET /api/respostas/comentarios` era sistematicamente
+   subcontado, podendo reportar zero.** A rota buscava um lote de 40 e
+   classificava visível/oculto dentro de um laço que dava `break` ao juntar
+   20 visíveis — os ocultos posteriores nunca eram contados, e além do lote
+   nem eram buscados. Reproduzido: 30 comentários de setor grande + 2 de
+   setor pequeno → API respondia `ocultos: 0`. A **supressão nunca falhou**
+   (nenhum comentário de setor pequeno vazou); o que quebrava era o aviso ao
+   painel — exatamente o "sumiço silencioso" que o comentário da própria
+   rota declara inaceitável. Corrigido trocando a classificação em JS por
+   duas consultas complementares (`$in` / `$nin` sobre os setores
+   permitidos), o que também elimina o over-fetch.
+2. **Trava de login contornável trocando o e-mail a cada tentativa.** A
+   chave é `IP|email`, então cada e-mail novo estreia com contador zerado.
+   Medido contra servidor real: **15/15 tentativas passaram**, nenhuma
+   barrada. Permitia enumeração de contas e inundação do histórico de
+   acessos a partir de um único IP. Corrigido com um segundo limitador por
+   IP (40 / 15 min) empilhado sobre o existente — verificado depois: 40
+   passam, o resto recebe 429. Junto: o `Map` de contadores nunca removia
+   chave expirada (só reavaliava quem voltasse), então a mesma varredura o
+   fazia crescer sem limite na memória do processo; agora há varredura de
+   expirados uma vez por janela.
+3. **Os três botões "Tentar de novo" (painel, contas, acessos) não
+   funcionavam.** Usavam `onclick=""` inline, bloqueado pela própria CSP do
+   sistema (`script-src 'self'` sem `'unsafe-inline'`). Confirmado em
+   navegador: o handler não executa e o browser registra violação de CSP.
+   Agravante: aparecem só na tela de erro, ou seja, falhavam justamente
+   quando eram necessários. Trocados por `data-recarregar` + delegação de
+   clique no container; as três telas verificadas derrubando a API e
+   clicando no botão.
+4. **Ajustes menores**: faltavam `Referrer-Policy` e HSTS (este condicional
+   a HTTPS); `config.js` usava `Number(env) || padrao`, que descarta
+   silenciosamente um `0` legítimo; e o e-mail gravado no histórico não
+   tinha teto de tamanho — truncado em 254 (RFC 5321) **na origem**, não
+   via validação do model, porque rejeitar faria a tentativa suspeita não
+   ser registrada.
+
+**Confirmado como correto** (vale tanto quanto os achados): injeção de
+operadores de banco bloqueada no login e no formulário público (coerção via
+`String()` e cast do Mongoose); XSS armazenado — testado enviando
+`<img src=x onerror=alert(1)>` como e-mail numa tentativa de login e
+abrindo o histórico num navegador real — neutralizado por `escaparHTML` e
+pela CSP, sem `<img>` no DOM e sem execução; a correção de `req.ip` da Fase
+8 verificada como semanticamente correta para `trust proxy: 1` (o Express
+pega o segmento à direita, que o proxy anexa, não o forjável à esquerda); a
+invariante "sempre existe ao menos um admin ativo" consistente entre `PUT`
+e `DELETE`; `senhaHash` com `select: false` sem caminho de vazamento; e
+`npm audit` com zero vulnerabilidades.
+
+Resultado: **223 testes automatizados** (era 220) e 24 no Postman.
+
 ---
 
 ## 5. Estrutura de arquivos atual
@@ -429,7 +486,7 @@ riscozero/
 ## 8. Testes — estado atual
 
 ```bash
-npm test           # 220 testes, sem precisar de banco (67 + 153)
+npm test           # 223 testes, sem precisar de banco (67 + 156)
 npm run verificar  # testa o MongoDB de verdade (precisa do .env)
 node testes/rodar-postman.js   # 24 requisições, contra um servidor real
 ```
