@@ -1712,23 +1712,65 @@ textarea { resize: vertical; }
    -------------------------------------------------------------------------- */
 
 .caixa-login {
+  position: relative;
   background: var(--superficie);
   border: 1px solid var(--linha);
   border-radius: var(--raio);
   padding: var(--e-9);
   box-shadow: var(--erguido);
   animation: surgir-login 0.6s var(--assenta) backwards;
+  /* Sem isto, o topo arredondado corta a marcação de ::before em quina —
+     ela precisa acompanhar o mesmo raio da caixa. */
+  overflow: hidden;
+}
+
+/* Marcação de calibração no alto da caixa — a mesma textura de régua usada
+   ao pé do mostrador escuro do painel (.destaque::after), só que em tinta
+   sobre papel claro em vez de branco sobre escuro. O login é a soleira do
+   instrumento: antes de entrar, já se reconhece que é o mesmo aparelho. */
+.caixa-login::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background-image: repeating-linear-gradient(
+    to right,
+    rgba(13, 27, 42, 0.14) 0,
+    rgba(13, 27, 42, 0.14) 1px,
+    transparent 1px,
+    transparent 12px
+  );
 }
 
 .caixa-login h1 { font-size: var(--t-titulo); }
 
 .aviso-login {
+  position: relative;
   margin-top: var(--e-8);
   padding-top: var(--e-6);
-  border-top: 1px solid var(--linha);
   color: var(--tinta-media);
   font-size: var(--t-pequeno);
   line-height: 1.65;
+}
+
+/* Mesma marcação do topo da caixa, em miniatura, fazendo do divisor mais uma
+   leitura de régua em vez de uma linha qualquer. */
+.aviso-login::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 64px;
+  height: 3px;
+  background-image: repeating-linear-gradient(
+    to right,
+    rgba(13, 27, 42, 0.18) 0,
+    rgba(13, 27, 42, 0.18) 1px,
+    transparent 1px,
+    transparent 8px
+  );
 }
 
 .aviso-login strong { color: var(--tinta); }

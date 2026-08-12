@@ -19,6 +19,14 @@ let apenasAtual = 'todos';
 // usa o mesmo traço. currentColor herda a cor de .alerta.alto (vermelho).
 const ICONE_ALERTA = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M8 1.5 15 14H1L8 1.5Zm0 4.2a.85.85 0 0 0-.85.85v3.4a.85.85 0 0 0 1.7 0v-3.4A.85.85 0 0 0 8 5.7Zm0 6.3a.95.95 0 1 0 0 1.9.95.95 0 0 0 0-1.9Z"/></svg>';
 
+// Mesmo traço (2px, ponta arredondada) do ICONES_ALERTA.ok em dashboard.js —
+// os caracteres ✓/✕ que estavam aqui antes mudam de peso e proporção
+// conforme a fonte do sistema (finos no macOS, quadrados e pesados em
+// alguns navegadores no Windows), o que destoa do resto do sistema, todo
+// desenhado à mão em SVG por esse motivo.
+const ICONE_SUCESSO = '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 8.5 6.3 12 13 4"/></svg>';
+const ICONE_FALHA = '<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 4l8 8M12 4l-8 8"/></svg>';
+
 function escaparHTML(texto) {
   if (texto === null || texto === undefined) return '';
   const div = document.createElement('div');
@@ -165,7 +173,7 @@ function montarLista(registros) {
 
   const linhas = registros.map((r) => `
     <div class="linha-acesso ${r.sucesso ? '' : 'falha'}">
-      <span class="marca-acesso" aria-hidden="true">${r.sucesso ? '✓' : '✕'}</span>
+      <span class="marca-acesso" aria-hidden="true">${r.sucesso ? ICONE_SUCESSO : ICONE_FALHA}</span>
       <div class="dados-acesso">
         <div class="identidade">
           ${r.nome ? escaparHTML(r.nome) : '<em>conta desconhecida</em>'}
