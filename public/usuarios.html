@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RiscoZero — Usuários</title>
+  <!-- As fontes vêm do próprio projeto (public/fonts), não de CDN: se a rede
+       da escola bloquear fontes externas, a identidade visual não muda. -->
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topo">
+    <a href="index.html" class="marca">Risco<span>Zero</span></a>
+    <nav>
+      <a href="index.html">Formulário</a>
+      <a href="dashboard.html">Painel</a>
+      <a href="usuarios.html" class="ativo">Usuários</a>
+      <a href="acessos.html">Acessos</a>
+    </nav>
+    <div class="conta-usuario">
+      <span class="usuario-logado" id="usuario-logado"></span>
+      <button type="button" class="link-sair" id="botao-sair">Sair</button>
+    </div>
+  </header>
+
+  <main class="largo">
+    <h1>Contas de acesso</h1>
+    <p class="subtitulo">
+      Quem pode entrar no painel de gestão. O formulário do trabalhador continua
+      aberto a todos — só a visualização dos dados é restrita.
+    </p>
+
+    <div class="controles">
+      <button type="button" class="botao secundario" id="botao-minha-senha">
+        Trocar minha senha
+      </button>
+      <button type="button" class="botao" id="botao-nova-conta">Nova conta</button>
+    </div>
+
+    <!-- Troca da própria senha: disponível para qualquer pessoa logada, não só
+         administradores. Exige a senha atual, para que um computador deixado
+         destravado não permita que alguém assuma a conta. -->
+    <div class="painel" id="painel-minha-senha" style="display:none">
+      <h2>Trocar minha senha</h2>
+      <p class="descricao-painel">
+        Você precisa informar a senha atual para confirmar que é você.
+      </p>
+
+      <form id="form-minha-senha" novalidate>
+        <div class="campo">
+          <label for="senha-atual">Senha atual</label>
+          <input type="password" id="senha-atual" autocomplete="current-password">
+        </div>
+        <div class="campo">
+          <label for="senha-nova">Nova senha</label>
+          <p class="ajuda">Mínimo de 6 caracteres.</p>
+          <input type="password" id="senha-nova" autocomplete="new-password">
+        </div>
+        <div class="campo">
+          <label for="senha-confirma">Repita a nova senha</label>
+          <input type="password" id="senha-confirma" autocomplete="new-password">
+        </div>
+        <button type="submit" class="botao" id="botao-salvar-senha">Trocar senha</button>
+        <button type="button" class="botao secundario" id="botao-cancelar-senha">Cancelar</button>
+        <div class="mensagem" id="mensagem-minha-senha"></div>
+      </form>
+    </div>
+
+    <!-- Formulário de criar/editar, escondido até alguém clicar -->
+    <div class="painel" id="painel-formulario" style="display:none">
+      <h2 id="titulo-formulario">Nova conta</h2>
+      <p class="descricao-painel" id="ajuda-formulario">
+        A pessoa entra no painel com o e-mail e a senha definidos aqui.
+      </p>
+
+      <form id="form-usuario" novalidate>
+        <input type="hidden" id="usuario-id">
+
+        <div class="campo">
+          <label for="nome">Nome</label>
+          <input type="text" id="nome" name="nome" autocomplete="name">
+        </div>
+
+        <div class="campo">
+          <label for="email">E-mail</label>
+          <input type="email" id="email" name="email" autocomplete="email">
+        </div>
+
+        <div class="campo">
+          <label for="senha">Senha</label>
+          <p class="ajuda" id="ajuda-senha">Mínimo de 6 caracteres.</p>
+          <input type="password" id="senha" name="senha" autocomplete="new-password">
+        </div>
+
+        <div class="campo">
+          <label for="papel">Permissão</label>
+          <p class="ajuda">
+            Gestor vê o painel. Administrador também pode criar e remover contas.
+          </p>
+          <select id="papel" name="papel">
+            <option value="gestor">Gestor</option>
+            <option value="admin">Administrador</option>
+          </select>
+        </div>
+
+        <div class="campo" id="campo-ativo" style="display:none">
+          <label for="ativo">Situação</label>
+          <select id="ativo" name="ativo">
+            <option value="true">Ativa</option>
+            <option value="false">Desativada (não consegue entrar)</option>
+          </select>
+        </div>
+
+        <button type="submit" class="botao" id="botao-salvar">Criar conta</button>
+        <button type="button" class="botao secundario" id="botao-cancelar">Cancelar</button>
+        <div class="mensagem" id="mensagem-formulario"></div>
+      </form>
+    </div>
+
+    <div class="mensagem" id="mensagem-geral"></div>
+
+    <div id="lista-usuarios">
+      <p class="carregando">Carregando contas</p>
+    </div>
+  </main>
+
+  <footer class="rodape">
+    RiscoZero — Mostra Técnica 2026 · CEEP-PG · Equipe 1
+  </footer>
+
+  <script src="js/transicoes.js"></script>
+  <script src="js/login.js"></script>
+  <script src="js/usuarios.js"></script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RiscoZero — Como foi o seu dia?</title>
+  <!-- As fontes vêm do próprio projeto (public/fonts), não de CDN: se a rede
+       da escola bloquear fontes externas, a identidade visual não muda. -->
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topo">
+    <a href="index.html" class="marca">Risco<span>Zero</span></a>
+    <nav>
+      <a href="login.html">Painel de gestão</a>
+    </nav>
+  </header>
+
+  <main>
+    <div id="area-formulario">
+      <h1>Como foi o seu dia?</h1>
+      <p class="subtitulo">
+        Suas respostas ajudam a identificar sinais de sobrecarga antes que virem
+        um problema de saúde. As respostas são analisadas em conjunto, por setor —
+        ninguém é identificado individualmente. Leva menos de um minuto.
+      </p>
+
+      <!--
+        novalidate desliga as mensagens automáticas do navegador de propósito.
+        Sem isso, o campo de setor mostraria o balão padrão do navegador
+        enquanto as escalas mostrariam a nossa mensagem estilizada — duas
+        linguagens visuais diferentes para o mesmo tipo de erro. Com o
+        novalidate, todo aviso passa pelo mesmo lugar e tem a mesma aparência.
+      -->
+      <form id="form-risco" novalidate>
+        <div class="campo">
+          <label for="setor">Setor</label>
+          <select id="setor" name="setor">
+            <option value="" disabled selected>Selecione seu setor</option>
+            <option value="Producao">Produção</option>
+            <option value="Manutencao">Manutenção</option>
+            <option value="Qualidade">Qualidade</option>
+            <option value="Logistica">Logística</option>
+            <option value="TI">TI / Automação</option>
+            <option value="Administrativo">Administrativo</option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <label for="turno">Turno</label>
+          <select id="turno" name="turno">
+            <option value="" disabled selected>Selecione seu turno</option>
+            <option value="Manha">Manhã</option>
+            <option value="Tarde">Tarde</option>
+            <option value="Noite">Noite</option>
+          </select>
+        </div>
+
+        <fieldset class="campo">
+          <legend>Nível de estresse hoje</legend>
+          <p class="ajuda">Quanto de pressão e tensão você sentiu durante o turno.</p>
+          <div class="escala">
+            <input type="radio" id="estresse-1" name="estresse" value="1"><label for="estresse-1">1</label>
+            <input type="radio" id="estresse-2" name="estresse" value="2"><label for="estresse-2">2</label>
+            <input type="radio" id="estresse-3" name="estresse" value="3"><label for="estresse-3">3</label>
+            <input type="radio" id="estresse-4" name="estresse" value="4"><label for="estresse-4">4</label>
+            <input type="radio" id="estresse-5" name="estresse" value="5"><label for="estresse-5">5</label>
+            <span class="trilho" aria-hidden="true"><span class="trilho-preenchido"></span></span>
+          </div>
+          <div class="escala-legenda"><span>Tranquilo</span><span>Muito estressado</span></div>
+        </fieldset>
+
+        <fieldset class="campo">
+          <legend>Qualidade do sono na última noite</legend>
+          <p class="ajuda">Quanto você conseguiu descansar de verdade.</p>
+          <div class="escala">
+            <input type="radio" id="sono-1" name="sono" value="1"><label for="sono-1">1</label>
+            <input type="radio" id="sono-2" name="sono" value="2"><label for="sono-2">2</label>
+            <input type="radio" id="sono-3" name="sono" value="3"><label for="sono-3">3</label>
+            <input type="radio" id="sono-4" name="sono" value="4"><label for="sono-4">4</label>
+            <input type="radio" id="sono-5" name="sono" value="5"><label for="sono-5">5</label>
+            <span class="trilho" aria-hidden="true"><span class="trilho-preenchido"></span></span>
+          </div>
+          <div class="escala-legenda"><span>Dormi muito mal</span><span>Dormi muito bem</span></div>
+        </fieldset>
+
+        <fieldset class="campo">
+          <legend>Carga de trabalho hoje</legend>
+          <p class="ajuda">Se a quantidade de tarefas coube no seu turno.</p>
+          <div class="escala">
+            <input type="radio" id="carga-1" name="carga_trabalho" value="1"><label for="carga-1">1</label>
+            <input type="radio" id="carga-2" name="carga_trabalho" value="2"><label for="carga-2">2</label>
+            <input type="radio" id="carga-3" name="carga_trabalho" value="3"><label for="carga-3">3</label>
+            <input type="radio" id="carga-4" name="carga_trabalho" value="4"><label for="carga-4">4</label>
+            <input type="radio" id="carga-5" name="carga_trabalho" value="5"><label for="carga-5">5</label>
+            <span class="trilho" aria-hidden="true"><span class="trilho-preenchido"></span></span>
+          </div>
+          <div class="escala-legenda"><span>Tranquila</span><span>Sobrecarregada</span></div>
+        </fieldset>
+
+        <fieldset class="campo">
+          <legend>Conforto do ambiente físico</legend>
+          <p class="ajuda">Ruído, temperatura, iluminação e ergonomia do seu posto.</p>
+          <div class="escala">
+            <input type="radio" id="ambiente-1" name="ambiente_fisico" value="1"><label for="ambiente-1">1</label>
+            <input type="radio" id="ambiente-2" name="ambiente_fisico" value="2"><label for="ambiente-2">2</label>
+            <input type="radio" id="ambiente-3" name="ambiente_fisico" value="3"><label for="ambiente-3">3</label>
+            <input type="radio" id="ambiente-4" name="ambiente_fisico" value="4"><label for="ambiente-4">4</label>
+            <input type="radio" id="ambiente-5" name="ambiente_fisico" value="5"><label for="ambiente-5">5</label>
+            <span class="trilho" aria-hidden="true"><span class="trilho-preenchido"></span></span>
+          </div>
+          <div class="escala-legenda"><span>Muito desconfortável</span><span>Muito confortável</span></div>
+        </fieldset>
+
+        <div class="campo">
+          <label for="comentario">Quer contar mais alguma coisa? <span class="opcional">(opcional)</span></label>
+          <textarea id="comentario" name="comentario" rows="3" maxlength="500"
+            placeholder="Algo específico que atrapalhou ou ajudou seu dia..."></textarea>
+        </div>
+
+        <button type="submit" class="botao">Enviar resposta</button>
+        <div class="mensagem" id="mensagem"></div>
+      </form>
+    </div>
+
+    <!-- Tela de confirmação, exibida após o envio -->
+    <div id="area-sucesso" style="display:none">
+      <div class="vazio">
+        <div class="titulo-vazio" style="color:var(--baixo)">Resposta registrada</div>
+        <p>
+          Obrigado por compartilhar. Sua resposta entra na análise do seu setor
+          e ajuda a identificar o que precisa mudar.
+        </p>
+        <button type="button" class="botao" id="botao-nova">Enviar outra resposta</button>
+      </div>
+    </div>
+  </main>
+
+  <footer class="rodape">
+    RiscoZero — Mostra Técnica 2026 · CEEP-PG · Equipe 1
+  </footer>
+
+  <script src="js/transicoes.js"></script>
+  <script src="js/formulario.js"></script>
+</body>
+</html>

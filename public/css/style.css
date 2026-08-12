@@ -1,0 +1,1912 @@
+/* ==========================================================================
+   RiscoZero — folha de estilos
+   Mostra Técnica 2026 · CEEP-PG · Equipe 1
+
+   ---------------------------------------------------------------------------
+   DIREÇÃO VISUAL: face de instrumento
+
+   O sistema mede uma coisa invisível — a carga mental de quem trabalha — e
+   precisa parecer confiável para quem vai decidir com base nele. A referência
+   continua sendo instrumento de aferição, mas agora levada até o fim: um
+   instrumento de verdade tem uma FACE (o mostrador, escuro, onde a leitura
+   acontece) e um CORPO (o resto, claro, onde ficam controles e etiquetas).
+
+   O QUE MUDOU NESTA VERSÃO E POR QUÊ:
+
+   1. HIERARQUIA DE PROFUNDIDADE. Antes, todo bloco era superfície branca com
+      a mesma borda, a mesma sombra e o mesmo raio — do índice geral até uma
+      linha de log. Sem diferença de elevação, nada podia ser mais importante
+      que nada, e a página lia como formulário administrativo. Agora existem
+      níveis declarados (recuado / plano / erguido / face) e cada bloco recebe
+      um deles pelo PAPEL que cumpre, não por estética.
+
+   2. A FACE ESCURA. O bloco de destaque — o índice geral — passou a ser
+      escuro. É a única quebra da regra "tudo claro", e é deliberada: a razão
+      original daquela regra era sobreviver a projetor e luz forte de feira, e
+      um único bloco escuro cercado de papel claro AUMENTA o contraste do
+      ponto focal em vez de reduzir. É também o que impede o número mais
+      importante do sistema de morar numa caixa idêntica à de uma lista.
+
+   3. SEMÁFORO EM DUAS VERSÕES. Como agora existe superfície escura, as três
+      cores de risco ganharam um par claro para uso sobre a face. Os tons de
+      fundo claro continuam idênticos aos anteriores — nenhuma leitura muda de
+      cor no papel.
+
+   DISCIPLINA DE COR — inalterada, é o que sustenta o sistema:
+     1. Cobalto  → marca, navegação, ações
+     2. Semáforo → EXCLUSIVAMENTE valores de risco (verde/âmbar/vermelho)
+   Nada mais recebe cor. Quando algo aparece colorido, sempre significa
+   alguma coisa — nunca é enfeite.
+
+   TIPOGRAFIA: três papéis, três famílias.
+     Archivo      → títulos: grotesca sólida, tracking fechado
+     Public Sans  → texto: desenhada para serviço público, feita para ser lida
+     IBM Plex Mono→ números: dígitos de mesma largura, cara de leitura de
+                    instrumento, e alinham em coluna sem esforço
+
+   ASSINATURA: a régua de 1 a 5 (.regua). Todas as perguntas do formulário são
+   escalas de 1 a 5, então o sistema inteiro fala essa língua.
+
+   MOVIMENTO: a leitura se assenta. Um instrumento físico não salta até o
+   valor — o ponteiro desacelera e para. Toda entrada usa a mesma curva de
+   desaceleração longa, e a carga da página é uma sequência encadeada, não
+   quatro fades simultâneos. Depois que assenta, fica quieto: é um painel que
+   passa a tarde aberto numa tela.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Fontes — servidas do próprio projeto, não de CDN.
+   Se a rede da escola bloquear fontes externas, a identidade não muda.
+   -------------------------------------------------------------------------- */
+
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../fonts/archivo-latin-600-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('../fonts/archivo-latin-700-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Public Sans';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/public-sans-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Public Sans';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('../fonts/public-sans-latin-500-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Public Sans';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../fonts/public-sans-latin-600-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('../fonts/ibm-plex-mono-latin-500-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('../fonts/ibm-plex-mono-latin-600-normal.woff2') format('woff2');
+}
+
+/* --------------------------------------------------------------------------
+   Fichas de cor e medida
+   -------------------------------------------------------------------------- */
+
+:root {
+  /* ------------------------------------------------------------------------
+     SUPERFÍCIES — níveis declarados
+
+     --papel        fundo da página. É o nível RECUADO: nada mora aqui, tudo
+                    repousa em cima. Escurecido de #EDF1F4 para #E3E9EF: o tom
+                    anterior era claro demais para que uma superfície branca
+                    parecesse erguida sobre ele sem precisar de sombra pesada.
+     --superficie   nível PLANO: cartões, painéis, blocos de conteúdo.
+     --superficie-2 preenchimento dentro de um bloco já plano (um item de
+                    lista dentro de um painel). Nunca usada como bloco solto.
+     --face         nível FACE: o mostrador escuro. Um só por tela.
+     ------------------------------------------------------------------------ */
+  --papel: #E3E9EF;
+  --superficie: #FFFFFF;
+  --superficie-2: #F5F8FA;
+  --linha: #DCE3E9;
+  --linha-forte: #C3CED7;
+
+  /* A face escura e seus tons internos */
+  --face: #101F2E;
+  --face-alta: #1A2C3E;
+  --face-linha: #2C4055;
+  --face-tinta: #E8EEF4;
+  --face-tinta-media: #9FB2C4;
+  --face-tinta-fraca: #7C90A3;
+
+  /* Tinta */
+  --tinta: #0D1B2A;
+  --tinta-media: #47596B;
+  /* Escurecido de #7B8A98 para atingir 4.5:1 sobre fundo branco — o tom
+     anterior ficava em 3,5:1 e reprovava no contraste mínimo de
+     acessibilidade. NÃO clarear. */
+  --tinta-fraca: #5E6E7D;
+
+  /* Marca — navegação e ações. Nunca usada em dado. */
+  --marca: #1B3FA0;
+  --marca-clara: #2C57C9;
+  --marca-fraca: #E6ECFA;
+  /* Cobalto legível sobre a face escura */
+  --marca-na-face: #7FA0F0;
+
+  /* ------------------------------------------------------------------------
+     SEMÁFORO — EXCLUSIVO de valores de risco
+
+     Os tons "-fraco" são fundos para superfície clara. Os "-face" são a mesma
+     leitura sobre o mostrador escuro: mesma semântica, luminosidade invertida
+     para manter contraste. Um valor NUNCA muda de significado entre os dois.
+     ------------------------------------------------------------------------ */
+  --baixo: #14804A;
+  --baixo-fraco: #E2F3EA;
+  --baixo-borda: #BEE3CE;
+  --baixo-face: #46C486;
+
+  --medio: #8F5A04;
+  --medio-fraco: #FBF0DC;
+  --medio-borda: #EFD9AE;
+  --medio-face: #E5A63C;
+
+  --alto: #B8342A;
+  --alto-fraco: #FBE7E4;
+  --alto-borda: #F2C4BE;
+  --alto-face: #F4776A;
+
+  /* Tipografia */
+  --titulo: 'Archivo', 'Arial Narrow', system-ui, sans-serif;
+  --corpo: 'Public Sans', system-ui, -apple-system, sans-serif;
+  --dado: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+
+  /* ------------------------------------------------------------------------
+     ESCALA TIPOGRÁFICA — 10 degraus, e só eles
+
+     COMO USAR: escolha o degrau pelo PAPEL do texto, nunca por aparência.
+     Se nenhum degrau serve, provavelmente o problema é o layout, não a fonte.
+
+     O que mudou: os degraus de título subiram. O h1 em 1,9rem era tímido para
+     abrir uma tela, e o display em 3,4rem não vencia visualmente um cartão
+     comum a dois palmos de distância — que é exatamente a situação de quem
+     olha o painel projetado numa feira.
+     ------------------------------------------------------------------------ */
+  --t-micro: 0.7rem;      /* rótulos em maiúscula, sobrescritos */
+  --t-mini: 0.78rem;      /* metadados, datas, contagens */
+  --t-pequeno: 0.86rem;   /* texto de apoio, notas, descrições */
+  --t-interface: 0.92rem; /* botões, itens de menu, listas */
+  --t-corpo: 1rem;        /* campos de formulário, títulos de painel */
+  --t-titulo-p: 1.25rem;  /* títulos de bloco */
+  --t-titulo: 1.6rem;     /* título de cartão de login */
+  --t-titulo-g: 2.35rem;  /* h1 */
+  --t-display-p: 3.4rem;  /* o índice geral no celular */
+  --t-display: 4.6rem;    /* o índice geral — o maior número do sistema */
+
+  /* ------------------------------------------------------------------------
+     ESCALA DE ESPAÇAMENTO — base 4px
+
+     Ajustes de 1 a 3px continuam escritos direto no lugar onde aparecem,
+     porque ali são correção óptica (encostar uma borda, compensar um traço),
+     não espaçamento de layout.
+     ------------------------------------------------------------------------ */
+  --e-1: 4px;
+  --e-2: 6px;
+  --e-3: 8px;
+  --e-4: 12px;
+  --e-5: 16px;
+  --e-6: 20px;
+  --e-7: 24px;
+  --e-8: 32px;
+  --e-9: 40px;
+  --e-10: 52px;
+  --e-11: 64px;
+  --e-12: 80px;
+
+  --raio: 12px;
+  --raio-p: 7px;
+  --raio-face: 14px;
+
+  /* ------------------------------------------------------------------------
+     MOVIMENTO — uma curva para cada papel, e só
+
+     --assenta  desaceleração longa: o valor chega e para, como ponteiro.
+                Usada em tudo que ENTRA ou que representa uma medição.
+     --resposta curva curta para retorno a um toque (hover, foco, clique).
+                Precisa ser rápida: acima de ~0,2s o controle parece lento.
+     ------------------------------------------------------------------------ */
+  --assenta: cubic-bezier(0.16, 1, 0.3, 1);
+  --resposta: cubic-bezier(0.4, 0, 0.2, 1);
+  --transicao: 0.16s var(--resposta);
+
+  /* ------------------------------------------------------------------------
+     ELEVAÇÃO — sombra é hierarquia, não enfeite
+
+     Cada nível é usado por um papel específico. Um bloco não escolhe sombra
+     por aparência: escolhe pelo que ele é.
+       --plano    repouso de conteúdo sobre o papel
+       --erguido  bloco que respondeu a um toque, ou que é a ação da tela
+       --face     o mostrador — a única sombra realmente projetada do sistema
+     ------------------------------------------------------------------------ */
+  --plano: 0 1px 2px rgba(13, 27, 42, 0.04);
+  --erguido: 0 2px 4px rgba(13, 27, 42, 0.05), 0 10px 28px rgba(13, 27, 42, 0.09);
+  --sombra-face: 0 2px 6px rgba(13, 27, 42, 0.14), 0 18px 44px rgba(13, 27, 42, 0.20);
+
+  /* Nomes antigos preservados: havia CSS e comentários apontando para eles.
+     Manter o apelido evita que um bloco esquecido perca a elevação. */
+  --sombra: var(--plano);
+  --sombra-alta: var(--erguido);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: var(--corpo);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+
+  /* Empurra o rodapé para o fim da tela mesmo em páginas curtas. Sem isso ele
+     flutua no meio, com uma faixa vazia embaixo. */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main { flex: 1; }
+
+/* Todo número do sistema usa a fonte de dados e dígitos de largura fixa, para
+   que colunas de valores alinhem sem precisar de tabela. */
+.num, .valor, .indice-grande, .regua-marca-rotulo {
+  font-family: var(--dado);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* --------------------------------------------------------------------------
+   Cabeçalho
+   -------------------------------------------------------------------------- */
+
+.topo {
+  background: rgba(255, 255, 255, 0.86);
+  /* O topo é fixo e o conteúdo passa por baixo dele. Sem o desfoque, texto
+     rolando atrás de um branco semitransparente fica ilegível na borda. */
+  backdrop-filter: saturate(1.6) blur(12px);
+  -webkit-backdrop-filter: saturate(1.6) blur(12px);
+  border-bottom: 1px solid var(--linha);
+  padding: 0 var(--e-7);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--e-5);
+  flex-wrap: wrap;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+.marca {
+  font-family: var(--titulo);
+  font-weight: 700;
+  font-size: var(--t-corpo);
+  letter-spacing: -0.02em;
+  color: var(--tinta);
+  text-decoration: none;
+  padding: var(--e-5) 0;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e-3);
+}
+
+/* Marca gráfica: barras de altura crescente dentro de um bloco — a leitura de
+   um instrumento de medida. */
+.marca::before {
+  content: '';
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  background-color: var(--tinta);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Crect x='5' y='13' width='3' height='4' rx='1' fill='%23FFFFFF'/%3E%3Crect x='10' y='9' width='3' height='8' rx='1' fill='%23FFFFFF'/%3E%3Crect x='15' y='5' width='3' height='12' rx='1' fill='%23FFFFFF'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  flex-shrink: 0;
+  transition: transform 0.4s var(--assenta);
+}
+
+.marca:hover::before { transform: translateY(-1px) scale(1.04); }
+.marca span { color: var(--marca); }
+
+.topo nav {
+  display: flex;
+  align-items: center;
+  gap: var(--e-1);
+}
+
+.topo nav a {
+  position: relative;
+  color: var(--tinta-media);
+  text-decoration: none;
+  font-size: var(--t-interface);
+  font-weight: 500;
+  padding: var(--e-3) var(--e-4);
+  border-radius: var(--raio-p);
+  transition: background var(--transicao), color var(--transicao);
+}
+
+.topo nav a:hover { background: var(--superficie-2); color: var(--tinta); }
+.topo nav a:focus-visible { outline: 2px solid var(--marca); outline-offset: 1px; }
+
+/* O item ativo é marcado por um traço embaixo, não por pílula de fundo. O
+   traço encosta na borda do cabeçalho e lê como "você está nesta aba" —
+   a pílula competia visualmente com os botões de filtro logo abaixo, que têm
+   exatamente o mesmo desenho e um significado diferente. */
+.topo nav a.ativo {
+  color: var(--marca);
+  font-weight: 600;
+}
+
+.topo nav a.ativo::after {
+  content: '';
+  position: absolute;
+  left: var(--e-4);
+  right: var(--e-4);
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--marca);
+}
+
+/* --------------------------------------------------------------------------
+   Estrutura de página
+   -------------------------------------------------------------------------- */
+
+main {
+  max-width: 760px;
+  /* width: 100% é necessário, não decorativo: <main> é item de um flex column
+     (o body) e usa margin auto para centralizar. Em flexbox, margem automática
+     absorve o espaço livre e anula o "stretch" padrão, fazendo o elemento
+     encolher até a largura do conteúdo — a página inteira murchava para o meio
+     da tela quando havia pouco conteúdo (esqueleto, estado vazio). */
+  width: 100%;
+  margin: 0 auto;
+  padding: var(--e-10) var(--e-7) var(--e-12);
+}
+
+main.largo { max-width: 1180px; }
+/* Login: o cartão fica centralizado no espaço livre entre topo e rodapé. */
+main.estreito {
+  max-width: 430px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: var(--e-9) var(--e-7);
+}
+
+h1 {
+  font-family: var(--titulo);
+  font-size: var(--t-titulo-g);
+  font-weight: 700;
+  letter-spacing: -0.032em;
+  line-height: 1.08;
+  margin: 0 0 var(--e-3);
+}
+
+.subtitulo {
+  color: var(--tinta-media);
+  margin: 0 0 var(--e-8);
+  font-size: var(--t-corpo);
+  line-height: 1.6;
+  max-width: 62ch;
+}
+
+/* Rótulo pequeno acima de blocos — diz o que se está olhando. */
+.sobrescrito {
+  font-family: var(--dado);
+  font-size: var(--t-micro);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--tinta-fraca);
+}
+
+/* --------------------------------------------------------------------------
+   ASSINATURA: régua de 1 a 5
+
+   Todas as perguntas do formulário são escalas de 1 a 5, e o índice de risco
+   também. A régua mostra onde o valor caiu dentro dessa escala, com as marcas
+   à vista. Um número solto exige interpretar; uma posição na régua se lê de
+   relance.
+   -------------------------------------------------------------------------- */
+
+.regua {
+  position: relative;
+  height: 10px;
+  background: var(--superficie-2);
+  border: 1px solid var(--linha);
+  border-radius: 999px;
+  margin: var(--e-5) 0 var(--e-3);
+}
+
+/* Marcas em 2, 3 e 4 — os pontos onde a leitura muda de faixa */
+.regua::before,
+.regua::after {
+  content: '';
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  width: 1px;
+  background: var(--linha-forte);
+  z-index: 1;
+}
+.regua::before { left: 30%; }  /* limite entre baixo e médio  (2,2 de 1–5) */
+.regua::after  { left: 60%; }  /* limite entre médio e alto   (3,4 de 1–5) */
+
+.regua-preenchida {
+  position: absolute;
+  top: -1px;
+  bottom: -1px;
+  left: -1px;
+  border-radius: 999px;
+  background: var(--tinta-fraca);
+  /* A curva de assentamento, e mais longa: é a medição acontecendo. O valor
+     avança rápido e desacelera até parar, como ponteiro de instrumento. */
+  transition: width 1.1s var(--assenta);
+}
+
+/* A ponta da régua ganha um ponto sólido: é onde a leitura parou, e o olho
+   precisa achar esse lugar sem procurar. */
+.regua-preenchida::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 50%;
+  width: 12px;
+  height: 12px;
+  transform: translate(45%, -50%);
+  border-radius: 50%;
+  background: inherit;
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.85);
+}
+
+.regua-preenchida.risco-baixo { background: var(--baixo); }
+.regua-preenchida.risco-medio { background: var(--medio); }
+.regua-preenchida.risco-alto  { background: var(--alto); }
+
+.regua-escala {
+  display: flex;
+  justify-content: space-between;
+  font-family: var(--dado);
+  font-size: var(--t-micro);
+  color: var(--tinta-fraca);
+  letter-spacing: 0.04em;
+}
+
+/* Versão compacta, usada dentro de cartões e listas. As marcas de divisão são
+   escondidas: nesse tamanho elas cruzam o preenchimento e parecem falha de
+   renderização, não escala. O ponto da ponta também sai — em 5px de altura
+   ele vira uma bolha maior que a própria régua. */
+.regua.miuda { height: 5px; margin: var(--e-3) 0 0; }
+.regua.miuda::before,
+.regua.miuda::after { display: none; }
+.regua.miuda .regua-preenchida::after { display: none; }
+
+/* --------------------------------------------------------------------------
+   DESTAQUE — a face do instrumento
+
+   É a primeira coisa da página de propósito: o número e o que ele significa,
+   sem exigir que alguém interprete um gráfico antes.
+
+   POR QUE ESCURO — a única quebra da regra "tudo claro" do sistema:
+   a razão daquela regra era sobreviver a projetor e luz de feira. Um bloco
+   escuro isolado no meio de papel claro não prejudica isso — ele concentra o
+   contraste no ponto que precisa ser lido primeiro. E resolve o problema real
+   da versão anterior: o índice geral morava numa caixa branca idêntica à de
+   qualquer lista, então nada na tela dizia que ele era o mais importante.
+   -------------------------------------------------------------------------- */
+
+.destaque {
+  background: var(--face);
+  border: 1px solid var(--face-linha);
+  border-radius: var(--raio-face);
+  box-shadow: var(--sombra-face);
+  display: grid;
+  grid-template-columns: minmax(260px, 360px) 1fr;
+  overflow: hidden;
+  margin-bottom: var(--e-6);
+  /* O mostrador tem um leve vinco de luz no topo, como vidro sobre a face.
+     É a única textura do sistema, e existe para o bloco não parecer um
+     retângulo chapado de cor. */
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.06) 0%,
+    rgba(255, 255, 255, 0) 42%
+  );
+}
+
+.destaque-medida {
+  padding: var(--e-8) var(--e-8);
+  border-right: 1px solid var(--face-linha);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.destaque .sobrescrito { color: var(--face-tinta-fraca); }
+
+.indice-grande {
+  font-size: var(--t-display);
+  font-weight: 600;
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+  margin: var(--e-4) 0 0;
+  display: flex;
+  align-items: baseline;
+  gap: var(--e-3);
+  color: var(--face-tinta);
+}
+
+.indice-grande .de {
+  font-family: var(--corpo);
+  font-size: var(--t-corpo);
+  font-weight: 400;
+  color: var(--face-tinta-fraca);
+  letter-spacing: 0;
+}
+
+/* Semáforo sobre a face: mesma semântica, luminosidade adaptada. */
+.indice-grande.risco-baixo { color: var(--baixo-face); }
+.indice-grande.risco-medio { color: var(--medio-face); }
+.indice-grande.risco-alto  { color: var(--alto-face); }
+
+/* A régua dentro da face inverte as superfícies: o trilho fica mais escuro
+   que o fundo (um sulco), e o preenchimento usa o tom claro do semáforo. */
+.destaque .regua {
+  background: rgba(0, 0, 0, 0.28);
+  border-color: var(--face-linha);
+}
+.destaque .regua::before,
+.destaque .regua::after { background: var(--face-linha); }
+
+.destaque .regua-preenchida { background: var(--face-tinta-fraca); }
+.destaque .regua-preenchida.risco-baixo { background: var(--baixo-face); }
+.destaque .regua-preenchida.risco-medio { background: var(--medio-face); }
+.destaque .regua-preenchida.risco-alto  { background: var(--alto-face); }
+.destaque .regua-preenchida::after { box-shadow: 0 0 0 3px rgba(16, 31, 46, 0.9); }
+
+.destaque .regua-escala { color: var(--face-tinta-fraca); }
+
+/* Selo sobre a face: fundo translúcido em vez dos tons "-fraco", que foram
+   desenhados para papel branco e sobre o escuro viram manchas claras. */
+.destaque .selo {
+  background: rgba(255, 255, 255, 0.07);
+  border-color: var(--face-linha);
+}
+.destaque .selo.risco-baixo { color: var(--baixo-face); border-color: rgba(70, 196, 134, 0.35); }
+.destaque .selo.risco-medio { color: var(--medio-face); border-color: rgba(229, 166, 60, 0.35); }
+.destaque .selo.risco-alto  { color: var(--alto-face);  border-color: rgba(244, 119, 106, 0.35); }
+.destaque .selo.risco-indefinido { color: var(--face-tinta-media); }
+
+.destaque-leitura { padding: var(--e-8) var(--e-8); }
+
+.destaque-titulo {
+  font-family: var(--titulo);
+  font-size: var(--t-titulo-p);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+  margin: var(--e-4) 0 var(--e-4);
+  color: var(--face-tinta);
+}
+
+.destaque-texto {
+  margin: 0;
+  color: var(--face-tinta-media);
+  font-size: var(--t-interface);
+  line-height: 1.7;
+  max-width: 68ch;
+}
+
+/* --------------------------------------------------------------------------
+   Selo — a etiqueta que nomeia uma faixa ou um atributo
+
+   REGRA DE COR — importante, é o que mantém o semáforo com significado:
+     .risco-*  → SÓ para valor de risco medido (nível de um setor, tendência
+                 de piora, classificação de um comentário). Se o dado não
+                 saiu do formulário, não pode usar semáforo.
+     .sistema  → atributo de sistema, não de risco (ex.: papel de Admin).
+                 Usa cobalto, a mesma família da navegação e das ações.
+     .neutro   → estado sem carga de risco (ex.: conta desativada).
+   -------------------------------------------------------------------------- */
+
+.selo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e-2);
+  font-size: var(--t-micro);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: var(--e-1) var(--e-3);
+  border-radius: 999px;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+/* Versão compacta, para dentro de listas, cabeçalhos de setor e metadados —
+   onde o selo acompanha um texto e não deve competir com ele. */
+.selo.miudo {
+  font-size: var(--t-micro);
+  padding: 3px var(--e-3);
+  gap: var(--e-1);
+}
+
+.selo.risco-baixo { background: var(--baixo-fraco); color: var(--baixo); border-color: var(--baixo-borda); }
+.selo.risco-medio { background: var(--medio-fraco); color: var(--medio); border-color: var(--medio-borda); }
+.selo.risco-alto  { background: var(--alto-fraco);  color: var(--alto);  border-color: var(--alto-borda); }
+.selo.risco-indefinido { background: var(--superficie-2); color: var(--tinta-fraca); border-color: var(--linha); }
+
+/* Atributo de sistema — cobalto, nunca semáforo. Um Admin não é "risco alto". */
+.selo.sistema { background: var(--marca-fraca); color: var(--marca); border-color: #C6D4F2; }
+
+.selo.neutro { background: var(--superficie-2); color: var(--tinta-media); border-color: var(--linha-forte); }
+
+/* --------------------------------------------------------------------------
+   Cartões de indicador
+   -------------------------------------------------------------------------- */
+
+.grade-cartoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--e-4);
+  margin-bottom: var(--e-8);
+}
+
+.cartao {
+  position: relative;
+  background: var(--superficie);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  padding: var(--e-6) var(--e-6);
+  box-shadow: var(--plano);
+  overflow: hidden;
+  transition: transform 0.35s var(--assenta), box-shadow 0.35s var(--assenta),
+              border-color 0.35s var(--assenta);
+}
+
+/* Um fio da cor da leitura no topo do cartão. É a mesma informação que o
+   número já dá em cor — mas o fio sobrevive à distância: de longe, numa
+   projeção, dá para varrer a fileira de cartões e ver quais estão em
+   vermelho sem conseguir ler nenhum dígito. */
+.cartao::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: transparent;
+  transition: background var(--transicao);
+}
+
+.cartao:has(.valor.risco-baixo)::before { background: var(--baixo); }
+.cartao:has(.valor.risco-medio)::before { background: var(--medio); }
+.cartao:has(.valor.risco-alto)::before  { background: var(--alto); }
+
+/* Só os cartões de indicador elevam no hover — são os únicos blocos do
+   sistema que resumem um número em destaque, então o gesto confirma "isto é
+   uma leitura, preste atenção nela". Painéis e outros blocos maiores ficam
+   quietos: são contêiner de conteúdo, não um dado isolado, e elevar tudo na
+   tela no hover viraria ruído em vez de destaque. */
+.cartao:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--erguido);
+  border-color: var(--linha-forte);
+}
+
+.cartao .rotulo {
+  font-family: var(--dado);
+  color: var(--tinta-fraca);
+  font-size: var(--t-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: var(--e-4);
+}
+
+.cartao .valor {
+  font-size: var(--t-titulo-g);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.cartao .nota {
+  color: var(--tinta-fraca);
+  font-size: var(--t-mini);
+  margin-top: var(--e-2);
+}
+
+.valor.risco-baixo { color: var(--baixo); }
+.valor.risco-medio { color: var(--medio); }
+.valor.risco-alto  { color: var(--alto); }
+.valor.risco-indefinido { color: var(--tinta-fraca); }
+
+/* --------------------------------------------------------------------------
+   Painéis
+   -------------------------------------------------------------------------- */
+
+.painel {
+  background: var(--superficie);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  padding: var(--e-8) var(--e-8);
+  margin-bottom: var(--e-5);
+  box-shadow: var(--plano);
+}
+
+.painel h2 {
+  font-family: var(--titulo);
+  font-size: var(--t-titulo-p);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--e-2);
+}
+
+.painel .descricao-painel {
+  color: var(--tinta-media);
+  font-size: var(--t-pequeno);
+  line-height: 1.6;
+  margin: 0 0 var(--e-7);
+  max-width: 70ch;
+}
+
+.duas-colunas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--e-5);
+}
+
+/* --------------------------------------------------------------------------
+   Alertas
+   -------------------------------------------------------------------------- */
+
+.lista-alertas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-3);
+  margin-bottom: var(--e-6);
+}
+
+.alerta {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--e-4);
+  padding: var(--e-5) var(--e-6);
+  border-radius: var(--raio-p);
+  border: 1px solid;
+  font-size: var(--t-interface);
+  line-height: 1.55;
+  background: var(--superficie);
+}
+
+.alerta .icone {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  /* Alinha o ícone com a primeira linha de texto, não com o bloco inteiro —
+     importante quando o alerta quebra em duas linhas num celular. */
+  margin-top: 0.2em;
+}
+
+.alerta .icone svg { display: block; }
+
+.alerta.alto { background: var(--alto-fraco); border-color: var(--alto-borda); color: #8E2820; }
+.alerta.medio { background: var(--medio-fraco); border-color: var(--medio-borda); color: #855205; }
+.alerta.tudo-certo { background: var(--baixo-fraco); border-color: var(--baixo-borda); color: #0F6339; }
+
+/* --------------------------------------------------------------------------
+   Gráficos
+
+   O Chart.js só encolhe junto com a tela se o <canvas> estiver num container
+   com altura própria. Sem isso o canvas mantém a largura antiga, empurra o
+   painel, e a página passa a rolar de lado no celular sem nunca se ajustar.
+   -------------------------------------------------------------------------- */
+
+.area-grafico {
+  position: relative;
+  width: 100%;
+  height: 240px;
+}
+
+.area-grafico.alto { height: 296px; }
+.area-grafico canvas { max-width: 100%; }
+
+/* --------------------------------------------------------------------------
+   Leitura automática (insights)
+   -------------------------------------------------------------------------- */
+
+.insight-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: var(--e-4);
+}
+
+.insight-setor {
+  background: var(--superficie-2);
+  border: 1px solid var(--linha);
+  border-left: 3px solid var(--linha-forte);
+  border-radius: var(--raio-p);
+  padding: var(--e-6) var(--e-6);
+  transition: border-color var(--transicao), background var(--transicao);
+}
+
+.insight-setor:hover { background: var(--superficie); }
+
+.insight-setor.risco-baixo { border-left-color: var(--baixo); }
+.insight-setor.risco-medio { border-left-color: var(--medio); }
+.insight-setor.risco-alto  { border-left-color: var(--alto); }
+
+.insight-cabecalho {
+  display: flex;
+  align-items: center;
+  gap: var(--e-3);
+  margin-bottom: var(--e-3);
+  flex-wrap: wrap;
+}
+
+.insight-nome {
+  font-family: var(--titulo);
+  font-weight: 600;
+  font-size: var(--t-interface);
+  letter-spacing: -0.012em;
+}
+
+.insight-texto {
+  margin: 0;
+  font-size: var(--t-pequeno);
+  line-height: 1.65;
+  color: var(--tinta-media);
+}
+
+/* --------------------------------------------------------------------------
+   Recomendações
+   -------------------------------------------------------------------------- */
+
+.setor-recomendacao {
+  border: 1px solid var(--linha);
+  border-radius: var(--raio-p);
+  padding: var(--e-6) var(--e-7);
+  margin-bottom: var(--e-4);
+  background: var(--superficie-2);
+}
+
+.setor-recomendacao:last-child { margin-bottom: 0; }
+
+.cabecalho-setor {
+  display: flex;
+  align-items: center;
+  gap: var(--e-3);
+  margin-bottom: var(--e-5);
+  flex-wrap: wrap;
+}
+
+.cabecalho-setor .nome {
+  font-family: var(--titulo);
+  font-size: var(--t-corpo);
+  font-weight: 600;
+  letter-spacing: -0.015em;
+}
+
+.cabecalho-setor .contagem {
+  font-family: var(--dado);
+  color: var(--tinta-fraca);
+  font-size: var(--t-mini);
+  margin-left: auto;
+}
+
+.bloco-recomendacao { margin-bottom: var(--e-6); }
+.bloco-recomendacao:last-child { margin-bottom: 0; }
+
+.bloco-recomendacao .titulo-rec {
+  font-weight: 600;
+  font-size: var(--t-interface);
+  margin-bottom: var(--e-3);
+  display: flex;
+  align-items: baseline;
+  gap: var(--e-3);
+  flex-wrap: wrap;
+}
+
+.bloco-recomendacao .media-rec {
+  font-family: var(--dado);
+  color: var(--tinta-fraca);
+  font-size: var(--t-mini);
+  font-weight: 500;
+}
+
+.bloco-recomendacao ul {
+  margin: 0;
+  padding-left: var(--e-5);
+  color: var(--tinta-media);
+  font-size: var(--t-pequeno);
+  line-height: 1.65;
+}
+
+.bloco-recomendacao li { margin-bottom: var(--e-2); }
+
+/* Faixa de urgência dentro da recomendação */
+.faixa-urgencia {
+  display: flex;
+  align-items: center;
+  gap: var(--e-3);
+  padding: var(--e-3) var(--e-5);
+  border-radius: var(--raio-p);
+  margin-bottom: var(--e-5);
+  font-size: var(--t-pequeno);
+  background: var(--superficie);
+  border: 1px solid var(--linha);
+}
+
+.faixa-urgencia strong { font-weight: 600; }
+.faixa-urgencia.risco-alto { background: var(--alto-fraco); border-color: var(--alto-borda); color: #8E2820; }
+.faixa-urgencia.risco-medio { background: var(--medio-fraco); border-color: var(--medio-borda); color: #855205; }
+
+/* --------------------------------------------------------------------------
+   Comentários
+   -------------------------------------------------------------------------- */
+
+.lista-comentarios {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e-3);
+  max-height: 440px;
+  overflow-y: auto;
+  padding-right: var(--e-2);
+  /* Barra de rolagem discreta: a lista fica dentro de um painel branco e uma
+     barra padrão do sistema corta o canto arredondado do bloco. */
+  scrollbar-width: thin;
+  scrollbar-color: var(--linha-forte) transparent;
+}
+
+.comentario {
+  background: var(--superficie-2);
+  border: 1px solid var(--linha);
+  border-left: 3px solid var(--linha-forte);
+  border-radius: var(--raio-p);
+  padding: var(--e-5) var(--e-6);
+  transition: background var(--transicao);
+}
+
+.comentario:hover { background: var(--superficie); }
+
+.comentario.risco-alto  { border-left-color: var(--alto); }
+.comentario.risco-medio { border-left-color: var(--medio); }
+.comentario.risco-baixo { border-left-color: var(--baixo); }
+
+.comentario .meta {
+  display: flex;
+  align-items: center;
+  gap: var(--e-3);
+  margin-bottom: var(--e-3);
+  font-size: var(--t-mini);
+  color: var(--tinta-fraca);
+  flex-wrap: wrap;
+}
+
+.comentario .setor-nome {
+  font-family: var(--titulo);
+  font-weight: 600;
+  color: var(--tinta);
+  font-size: var(--t-mini);
+}
+
+.comentario .texto {
+  font-size: var(--t-interface);
+  line-height: 1.65;
+  color: var(--tinta);
+}
+
+/* Aviso de comentários ocultos por proteção de anonimato.
+   Usa cobalto, não semáforo: não é um valor de risco, é o sistema explicando
+   uma decisão sua. Fica ANTES da lista de propósito — a gestão precisa saber
+   que está lendo uma visão parcial antes de tirar conclusão do que leu. */
+.nota-anonimato {
+  display: flex;
+  gap: var(--e-3);
+  background: var(--marca-fraca);
+  border: 1px solid #C6D4F2;
+  border-radius: var(--raio-p);
+  padding: var(--e-5) var(--e-5);
+  margin: 0 0 var(--e-4);
+  font-size: var(--t-pequeno);
+  line-height: 1.6;
+  color: var(--marca);
+}
+
+.nota-anonimato::before {
+  content: '';
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  background-color: var(--marca);
+  /* Cadeado — desenhado aqui em vez de vir como caractere de texto, para não
+     depender de emoji, que muda de forma em cada sistema operacional. */
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 7V5a3.5 3.5 0 1 1 7 0v2h.5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h.5zm1.5 0h4V5a2 2 0 1 0-4 0v2z'/%3E%3C/svg%3E") center / contain no-repeat;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M4.5 7V5a3.5 3.5 0 1 1 7 0v2h.5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1h.5zm1.5 0h4V5a2 2 0 1 0-4 0v2z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* --------------------------------------------------------------------------
+   Formulário
+   -------------------------------------------------------------------------- */
+
+/* fieldset traz borda e recuo por padrão do navegador; zeramos para que um
+   grupo de escala fique visualmente igual a qualquer outro campo. */
+fieldset.campo {
+  border: none;
+  padding: 0;
+  margin-inline: 0;
+}
+
+.campo { margin-bottom: var(--e-8); }
+
+.opcional { font-weight: 400; color: var(--tinta-fraca); }
+
+.campo > label,
+.campo legend {
+  display: block;
+  font-weight: 600;
+  font-size: var(--t-interface);
+  margin-bottom: var(--e-2);
+  padding: 0;
+}
+
+.ajuda {
+  color: var(--tinta-media);
+  font-size: var(--t-pequeno);
+  line-height: 1.55;
+  margin: 0 0 var(--e-4);
+}
+
+select,
+textarea,
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  width: 100%;
+  background: var(--superficie);
+  border: 1px solid var(--linha-forte);
+  color: var(--tinta);
+  padding: var(--e-4) var(--e-5);
+  border-radius: var(--raio-p);
+  font-family: inherit;
+  font-size: var(--t-corpo);
+  transition: border-color var(--transicao), box-shadow var(--transicao);
+}
+
+select:hover, textarea:hover, input:hover { border-color: var(--tinta-fraca); }
+
+select:focus-visible,
+textarea:focus-visible,
+input:focus-visible {
+  outline: none;
+  border-color: var(--marca);
+  box-shadow: 0 0 0 3px var(--marca-fraca);
+}
+
+textarea { resize: vertical; }
+
+/* --------------------------------------------------------------------------
+   Escala 1-5 do formulário — a assinatura aplicada na entrada do dado
+
+   POR QUE O TRILHO É COBALTO E NÃO SEMÁFORO — importante, não trocar:
+   No painel, a régua colore em verde/âmbar/vermelho porque ali o número JÁ É
+   um valor de risco calculado. Aqui não é: as quatro perguntas não apontam
+   para o mesmo lado. Em estresse e carga, 5 é ruim; em sono e ambiente
+   físico, 5 é ótimo. Pintar o trilho de vermelho no 5 diria "você respondeu
+   mal" para quem acabou de informar que dormiu muito bem. Cobalto é a cor de
+   interação do sistema e não afirma nada sobre o valor — a conversão para
+   risco acontece depois, em utils/analise.js.
+   -------------------------------------------------------------------------- */
+
+.escala {
+  display: flex;
+  gap: var(--e-3);
+  position: relative;
+  padding-bottom: var(--e-6); /* espaço reservado para o trilho */
+}
+
+.escala input[type="radio"] {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.escala label {
+  flex: 1;
+  text-align: center;
+  padding: var(--e-5) var(--e-1);
+  background: var(--superficie);
+  border: 1px solid var(--linha-forte);
+  border-radius: var(--raio-p);
+  cursor: pointer;
+  font-family: var(--dado);
+  font-weight: 500;
+  font-size: var(--t-corpo);
+  color: var(--tinta-media);
+  /* Lista explícita em vez de "all": antes o font-weight entrava na transição
+     e o número tremia ao ser clicado, porque mudar o peso muda a largura. */
+  transition: background var(--transicao), border-color var(--transicao),
+              color var(--transicao), transform 0.2s var(--assenta),
+              box-shadow 0.2s var(--assenta);
+  user-select: none;
+}
+
+.escala label:hover {
+  border-color: var(--marca);
+  color: var(--marca);
+  transform: translateY(-2px);
+}
+
+.escala label:active { transform: translateY(0); }
+
+.escala input[type="radio"]:checked + label {
+  border-color: var(--marca);
+  background: var(--marca);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 3px 10px rgba(27, 63, 160, 0.28);
+}
+
+.escala input[type="radio"]:focus-visible + label {
+  outline: 2px solid var(--marca);
+  outline-offset: 2px;
+}
+
+/* O trilho é decorativo (aria-hidden no HTML): quem usa leitor de tela navega
+   pelos botões de rádio, que continuam sendo a informação de verdade. */
+.trilho {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 6px;
+  background: var(--superficie-2);
+  border: 1px solid var(--linha);
+  border-radius: 999px;
+}
+
+.trilho-preenchido {
+  display: block;
+  height: 100%;
+  width: 0;
+  margin: -1px 0 0 -1px;
+  background: var(--marca);
+  border-radius: 999px;
+  transition: width 0.5s var(--assenta);
+}
+
+/* Cada porcentagem é o centro do botão correspondente: com 5 botões de mesma
+   largura, os centros caem em 10%, 30%, 50%, 70% e 90%. O trilho para no
+   centro do botão escolhido, e não no fim dele, para que a leitura seja
+   "a resposta está AQUI na escala" — igual à régua do painel. */
+.escala input[value="1"]:checked ~ .trilho .trilho-preenchido { width: 10%; }
+.escala input[value="2"]:checked ~ .trilho .trilho-preenchido { width: 30%; }
+.escala input[value="3"]:checked ~ .trilho .trilho-preenchido { width: 50%; }
+.escala input[value="4"]:checked ~ .trilho .trilho-preenchido { width: 70%; }
+.escala input[value="5"]:checked ~ .trilho .trilho-preenchido { width: 90%; }
+
+.escala-legenda {
+  display: flex;
+  justify-content: space-between;
+  color: var(--tinta-fraca);
+  font-size: var(--t-mini);
+  margin-top: var(--e-2);
+}
+
+/* --------------------------------------------------------------------------
+   Botões
+   -------------------------------------------------------------------------- */
+
+.botao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e-2);
+  background: var(--marca);
+  color: #fff;
+  border: 1px solid var(--marca);
+  padding: var(--e-4) var(--e-7);
+  border-radius: var(--raio-p);
+  font-family: var(--corpo);
+  font-weight: 600;
+  font-size: var(--t-interface);
+  cursor: pointer;
+  text-decoration: none;
+  box-shadow: 0 1px 2px rgba(27, 63, 160, 0.2);
+  transition: background var(--transicao), transform 0.12s var(--resposta),
+              box-shadow 0.25s var(--assenta);
+}
+
+.botao:hover {
+  background: var(--marca-clara);
+  border-color: var(--marca-clara);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(27, 63, 160, 0.3);
+}
+.botao:active { transform: translateY(1px); box-shadow: none; }
+.botao:focus-visible { outline: 2px solid var(--marca); outline-offset: 2px; }
+.botao.largura-total { width: 100%; }
+
+.botao.secundario {
+  background: var(--superficie);
+  color: var(--tinta-media);
+  border-color: var(--linha-forte);
+  font-weight: 500;
+  font-size: var(--t-pequeno);
+  padding: var(--e-3) var(--e-5);
+  box-shadow: none;
+}
+
+/* O secundário não ganha sombra nem elevação: é a ação de apoio da tela, e um
+   gesto igual ao do botão principal apagaria a diferença de hierarquia entre
+   os dois — a mudança de cor de fundo já avisa que é clicável. */
+.botao.secundario:hover {
+  background: var(--superficie-2);
+  color: var(--tinta);
+  border-color: var(--tinta-fraca);
+  transform: none;
+  box-shadow: none;
+}
+
+.botao.secundario.perigo:hover {
+  color: var(--alto);
+  border-color: var(--alto);
+  background: var(--alto-fraco);
+}
+
+.link-sair {
+  background: none;
+  border: none;
+  color: var(--tinta-fraca);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--t-pequeno);
+  padding: var(--e-3) var(--e-3);
+  border-radius: var(--raio-p);
+  transition: color var(--transicao), background var(--transicao);
+}
+
+.link-sair:hover { color: var(--alto); background: var(--alto-fraco); }
+.link-sair:focus-visible { outline: 2px solid var(--marca); outline-offset: 1px; }
+
+/* --------------------------------------------------------------------------
+   Mensagens
+   -------------------------------------------------------------------------- */
+
+.mensagem {
+  margin-top: var(--e-6);
+  padding: var(--e-5) var(--e-6);
+  border-radius: var(--raio-p);
+  font-size: var(--t-pequeno);
+  line-height: 1.6;
+  display: none;
+  border: 1px solid;
+}
+
+/* A mensagem entra com a mesma curva do resto: aparece deslizando um pouco,
+   em vez de piscar na tela. */
+.mensagem.sucesso,
+.mensagem.erro {
+  animation: surgir 0.45s var(--assenta) backwards;
+}
+
+.mensagem.sucesso {
+  display: block;
+  background: var(--baixo-fraco);
+  border-color: var(--baixo-borda);
+  color: #0F6339;
+}
+
+.mensagem.erro {
+  display: block;
+  background: var(--alto-fraco);
+  border-color: var(--alto-borda);
+  color: #8E2820;
+}
+
+/* --------------------------------------------------------------------------
+   Controles: filtros e ações
+   -------------------------------------------------------------------------- */
+
+.controles {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--e-4);
+  margin-bottom: var(--e-7);
+}
+
+.filtro-periodo {
+  display: inline-flex;
+  background: var(--superficie);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio-p);
+  padding: 3px;
+  gap: 2px;
+  box-shadow: var(--plano);
+}
+
+.filtro-periodo button {
+  background: none;
+  border: none;
+  color: var(--tinta-media);
+  padding: var(--e-2) var(--e-5);
+  border-radius: 5px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: var(--t-pequeno);
+  font-weight: 500;
+  transition: background var(--transicao), color var(--transicao);
+}
+
+.filtro-periodo button:hover { background: var(--superficie-2); color: var(--tinta); }
+
+.filtro-periodo button.ativo {
+  background: var(--marca);
+  color: #fff;
+  font-weight: 600;
+}
+
+.filtro-periodo button:focus-visible { outline: 2px solid var(--marca); outline-offset: 1px; }
+
+/* --------------------------------------------------------------------------
+   Indicador de conexão
+
+   Mostra se o painel ainda está falando com o servidor. Sem ele, uma queda de
+   conexão faria a tela parar de atualizar em silêncio, e alguém continuaria
+   lendo dados velhos achando que estavam atuais.
+   -------------------------------------------------------------------------- */
+
+.indicador-conexao {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e-2);
+  font-size: var(--t-mini);
+  color: var(--tinta-fraca);
+  white-space: nowrap;
+  padding: 0 var(--e-3);
+}
+
+.indicador-conexao .bolinha {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: var(--tinta-fraca);
+  transition: background var(--transicao), box-shadow var(--transicao);
+}
+
+.indicador-conexao.ok .bolinha {
+  background: var(--baixo);
+  box-shadow: 0 0 0 3px var(--baixo-fraco);
+}
+
+.indicador-conexao.erro .bolinha {
+  background: var(--alto);
+  box-shadow: 0 0 0 3px var(--alto-fraco);
+  /* Só o erro pulsa. Chamar atenção quando está tudo bem seria ruído
+     constante durante uma apresentação. */
+  animation: pulsar 1.5s ease-in-out infinite;
+}
+
+.indicador-conexao.erro .texto-conexao { color: var(--alto); font-weight: 500; }
+
+@keyframes pulsar {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.usuario-logado {
+  color: var(--tinta-media);
+  font-size: var(--t-pequeno);
+  font-weight: 500;
+}
+
+/* --------------------------------------------------------------------------
+   Conta do usuário — indicador de conexão, nome e sair
+
+   Fica FORA do <nav> de propósito: nenhum dos três é destino de navegação,
+   então misturá-los com os links de menu confundia leitor de tela (que lê
+   tudo como se fosse a mesma lista de opções) e quebrava mal no celular, onde
+   o grupo tinha que decidir junto com os links quando ia para a linha de
+   baixo. Como dois grupos flex separados, cada um quebra de forma previsível.
+   -------------------------------------------------------------------------- */
+
+.conta-usuario {
+  display: flex;
+  align-items: center;
+  gap: var(--e-4);
+}
+
+/* A borda que separava o nome do indicador antes virou borda do próprio
+   grupo, e só aparece quando há mais de um item para separar. */
+.conta-usuario > :not(:first-child) {
+  padding-left: var(--e-4);
+  border-left: 1px solid var(--linha);
+}
+
+/* --------------------------------------------------------------------------
+   Contas de acesso
+   -------------------------------------------------------------------------- */
+
+.linha-usuario {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e-5);
+  padding: var(--e-5) var(--e-4);
+  margin: 0 calc(var(--e-4) * -1);
+  border-radius: var(--raio-p);
+  border-bottom: 1px solid var(--linha);
+  flex-wrap: wrap;
+  transition: background var(--transicao);
+}
+
+.linha-usuario:hover { background: var(--superficie-2); }
+.linha-usuario:last-child { border-bottom: none; }
+
+/* Conta desativada continua listada, para preservar o histórico, mas não
+   compete visualmente com quem tem acesso ativo. */
+.linha-usuario.inativo { opacity: 0.5; }
+
+.nome-usuario {
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: var(--e-3);
+  flex-wrap: wrap;
+  margin-bottom: 2px;
+}
+
+.email-usuario {
+  font-family: var(--dado);
+  color: var(--tinta-fraca);
+  font-size: var(--t-pequeno);
+}
+
+.meta-usuario {
+  color: var(--tinta-fraca);
+  font-size: var(--t-mini);
+  margin-top: 3px;
+}
+
+.acoes-usuario { display: flex; gap: var(--e-2); flex-shrink: 0; }
+
+.nota-acao {
+  color: var(--tinta-fraca);
+  font-size: var(--t-mini);
+  font-style: italic;
+}
+
+#form-usuario .botao, #form-minha-senha .botao { margin-right: 7px; }
+
+/* --------------------------------------------------------------------------
+   Histórico de acessos
+   -------------------------------------------------------------------------- */
+
+.lista-acessos {
+  display: flex;
+  flex-direction: column;
+  max-height: 560px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--linha-forte) transparent;
+}
+
+.linha-acesso {
+  display: flex;
+  align-items: center;
+  gap: var(--e-4);
+  padding: var(--e-4) var(--e-4);
+  margin: 0 calc(var(--e-4) * -1);
+  border-radius: var(--raio-p);
+  border-bottom: 1px solid var(--linha);
+  transition: background var(--transicao);
+}
+
+.linha-acesso:hover { background: var(--superficie-2); }
+.linha-acesso:last-child { border-bottom: none; }
+
+.marca-acesso {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--t-micro);
+  flex-shrink: 0;
+  background: var(--baixo-fraco);
+  color: var(--baixo);
+}
+
+.linha-acesso.falha .marca-acesso { background: var(--alto-fraco); color: var(--alto); }
+
+.dados-acesso { flex: 1; min-width: 0; }
+
+.identidade {
+  font-weight: 600;
+  font-size: var(--t-interface);
+  display: flex;
+  align-items: baseline;
+  gap: var(--e-3);
+  flex-wrap: wrap;
+}
+
+.identidade em { color: var(--tinta-fraca); font-weight: 400; }
+
+.email-acesso {
+  font-family: var(--dado);
+  color: var(--tinta-fraca);
+  font-size: var(--t-mini);
+  font-weight: 400;
+}
+
+.detalhe-acesso {
+  color: var(--tinta-fraca);
+  font-size: var(--t-mini);
+  margin-top: 1px;
+}
+
+.linha-acesso.falha .detalhe-acesso { color: var(--alto); }
+
+.quando-acesso {
+  font-family: var(--dado);
+  color: var(--tinta-fraca);
+  font-size: var(--t-mini);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Login
+   -------------------------------------------------------------------------- */
+
+.caixa-login {
+  background: var(--superficie);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  padding: var(--e-9);
+  box-shadow: var(--erguido);
+  animation: surgir-login 0.6s var(--assenta) backwards;
+}
+
+.caixa-login h1 { font-size: var(--t-titulo); }
+
+.aviso-login {
+  margin-top: var(--e-8);
+  padding-top: var(--e-6);
+  border-top: 1px solid var(--linha);
+  color: var(--tinta-media);
+  font-size: var(--t-pequeno);
+  line-height: 1.65;
+}
+
+.aviso-login strong { color: var(--tinta); }
+
+@keyframes surgir-login {
+  from { opacity: 0; transform: translateY(12px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+
+/* --------------------------------------------------------------------------
+   Estados vazios e carregamento
+
+   Tela vazia é convite para agir, não recado de erro: diz o que aconteceu e
+   oferece o próximo passo.
+   -------------------------------------------------------------------------- */
+
+.vazio {
+  text-align: center;
+  padding: var(--e-11) var(--e-7);
+  background: var(--superficie);
+  border: 1px dashed var(--linha-forte);
+  border-radius: var(--raio);
+}
+
+.vazio .titulo-vazio {
+  font-family: var(--titulo);
+  font-size: var(--t-titulo-p);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin-bottom: var(--e-3);
+}
+
+.vazio p {
+  color: var(--tinta-media);
+  max-width: 44ch;
+  margin: 0 auto var(--e-6);
+  font-size: var(--t-interface);
+  line-height: 1.6;
+}
+
+.vazio-simples {
+  color: var(--tinta-fraca);
+  text-align: center;
+  padding: var(--e-8) var(--e-6);
+  font-size: var(--t-pequeno);
+}
+
+.carregando {
+  color: var(--tinta-fraca);
+  text-align: center;
+  padding: var(--e-9) var(--e-6);
+  font-size: var(--t-interface);
+}
+
+.carregando::after {
+  content: '';
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  margin-left: 8px;
+  border: 2px solid var(--linha-forte);
+  border-top-color: var(--marca);
+  border-radius: 50%;
+  vertical-align: middle;
+  animation: girar 0.7s linear infinite;
+}
+
+/* --------------------------------------------------------------------------
+   Skeleton — carregamento do painel
+
+   POR QUE SÓ O PAINEL TEM SKELETON, E USUÁRIOS/ACESSOS CONTINUAM COM O
+   SPINNER SIMPLES: o painel é a tela mais pesada (várias agregações e 4
+   gráficos) e tem um layout de blocos previsível — dá para desenhar a forma
+   final antes do dado chegar. As listas de usuários e acessos carregam rápido
+   e o formato de cada linha muda de tamanho conforme o conteúdo; um skeleton
+   ali fingiria uma forma que nem sempre é a real.
+   -------------------------------------------------------------------------- */
+
+.esqueleto-painel { display: flex; flex-direction: column; gap: var(--e-6); }
+
+.esq-bloco {
+  position: relative;
+  overflow: hidden;
+  background: var(--superficie-2);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+}
+
+.esq-bloco::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.6) 50%,
+    transparent 65%
+  );
+  transform: translateX(-100%);
+  animation: brilho-esqueleto 1.6s ease-in-out infinite;
+}
+
+@keyframes brilho-esqueleto {
+  to { transform: translateX(100%); }
+}
+
+.esq-alertas { height: 46px; }
+
+/* O esqueleto do destaque é escuro, como o bloco que ele representa. Um
+   retângulo claro no lugar de um bloco escuro faz a tela dar um salto de
+   contraste no instante em que o dado chega. */
+.esq-destaque {
+  height: 210px;
+  background: var(--face);
+  border-color: var(--face-linha);
+  border-radius: var(--raio-face);
+}
+.esq-destaque::after {
+  background: linear-gradient(
+    100deg,
+    transparent 35%,
+    rgba(255, 255, 255, 0.09) 50%,
+    transparent 65%
+  );
+}
+
+.esq-cartoes {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: var(--e-4);
+}
+.esq-cartoes .esq-bloco { height: 104px; }
+
+.esq-grafico { height: 296px; }
+
+@keyframes girar { to { transform: rotate(360deg); } }
+
+/* --------------------------------------------------------------------------
+   Rodapé
+   -------------------------------------------------------------------------- */
+
+.rodape {
+  border-top: 1px solid var(--linha);
+  padding: var(--e-7) var(--e-7);
+  text-align: center;
+  color: var(--tinta-fraca);
+  font-size: var(--t-mini);
+  background: var(--superficie);
+}
+
+/* --------------------------------------------------------------------------
+   MOVIMENTO — a leitura se assenta
+
+   A carga da página é uma sequência, não quatro fades ao mesmo tempo. A ordem
+   segue a ordem de leitura: primeiro o que exige ação (alertas), depois a
+   medida (o mostrador), depois o detalhe (cartões e painéis). Os atrasos são
+   perceptíveis de propósito — o escalonamento anterior era de 0,02s a 0,1s,
+   diferença que ninguém enxerga, então na prática tudo entrava junto.
+
+   Depois que assenta, fica quieto: a atualização de 20 em 20 segundos NÃO
+   reanima nada. Animação a cada ciclo viraria distração num painel que passa
+   a tarde aberto numa tela.
+   -------------------------------------------------------------------------- */
+
+@keyframes surgir {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* O mostrador entra com um leve avanço de escala junto do deslocamento: ele é
+   o objeto mais pesado da tela e chegar só deslizando o faz parecer leve. */
+@keyframes assentar-face {
+  from { opacity: 0; transform: translateY(14px) scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
+
+.lista-alertas, .grade-cartoes, .painel {
+  animation: surgir 0.55s var(--assenta) backwards;
+}
+
+.destaque {
+  animation: assentar-face 0.7s var(--assenta) backwards;
+}
+
+.lista-alertas  { animation-delay: 0.04s; }
+.destaque       { animation-delay: 0.12s; }
+.grade-cartoes  { animation-delay: 0.26s; }
+
+/* Os painéis entram em cascata, na ordem em que aparecem. Só os seis
+   primeiros recebem atraso — abaixo disso o bloco já está fora da tela na
+   carga, e um atraso longo faria o conteúdo aparecer depois que a pessoa
+   rolou até ele. */
+.painel:nth-of-type(1) { animation-delay: 0.34s; }
+.painel:nth-of-type(2) { animation-delay: 0.40s; }
+.painel:nth-of-type(3) { animation-delay: 0.46s; }
+.painel:nth-of-type(4) { animation-delay: 0.52s; }
+.painel:nth-of-type(5) { animation-delay: 0.56s; }
+.painel:nth-of-type(6) { animation-delay: 0.60s; }
+
+/* Transição entre páginas (fade). O fade-in de cada elemento já existe acima
+   via "surgir" — aqui é só o fade-out no instante de sair, para o corte de
+   tela em branco entre um .html e outro não ficar seco. Ativado por
+   transicoes.js, que intercepta o clique no link e espera esta transição
+   antes de navegar de verdade. */
+html.js-transicoes main { transition: opacity 0.16s ease, transform 0.16s ease; }
+html.js-transicoes.saindo main { opacity: 0; transform: translateY(-4px); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.01ms !important;
+  }
+  .regua-preenchida, .trilho-preenchido { transition: none; }
+  /* Zerar a duração deixaria o brilho "piscando" sem parar; melhor remover a
+     animação inteira e mostrar o bloco neutro parado. */
+  .esq-bloco::after { animation: none; }
+  .cartao:hover, .botao:hover, .escala label:hover { transform: none; }
+}
+
+/* --------------------------------------------------------------------------
+   Responsivo
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .destaque { grid-template-columns: 1fr; }
+  .destaque-medida { border-right: none; border-bottom: 1px solid var(--face-linha); }
+  .duas-colunas { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  body { font-size: 14.5px; }
+
+  .topo {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: var(--e-4) var(--e-5);
+    position: static;
+  }
+
+  /* O menu cresceu com as telas novas e não cabe numa linha só em telas
+     estreitas. Quebrar em linhas é melhor do que empurrar a página. */
+  .topo nav { flex-wrap: wrap; gap: 2px; width: 100%; }
+  .topo nav a { padding: var(--e-2) var(--e-3); font-size: var(--t-pequeno); }
+  /* Empilhado, o traço embaixo do item ativo encosta no item de baixo e lê
+     como sublinhado de link. Aqui a pílula de fundo funciona melhor. */
+  .topo nav a.ativo { background: var(--marca-fraca); border-radius: var(--raio-p); }
+  .topo nav a.ativo::after { display: none; }
+  .marca { padding: var(--e-1) 0 var(--e-3); }
+
+  /* A conta vem numa segunda linha, abaixo do menu. Empilhado, a borda que
+     separava os itens no desktop fica estranha — cada item vira sua própria
+     linha, então a separação já é o espaço entre elas. */
+  .conta-usuario {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 100%;
+    gap: var(--e-2);
+    padding: var(--e-3) 0 var(--e-4);
+  }
+  .conta-usuario > :not(:first-child) {
+    padding-left: 0;
+    border-left: none;
+  }
+
+  main { padding: var(--e-8) var(--e-5) var(--e-11); }
+  main.estreito { padding-top: var(--e-8); }
+
+  h1 { font-size: var(--t-titulo); }
+
+  .destaque-medida, .destaque-leitura { padding: var(--e-7); }
+  .indice-grande { font-size: var(--t-display-p); }
+
+  .painel { padding: var(--e-6); }
+  .caixa-login { padding: var(--e-7); }
+  .insight-lista { grid-template-columns: 1fr; }
+
+  .area-grafico { height: 220px; }
+  .area-grafico.alto { height: 240px; }
+
+  .escala { gap: var(--e-2); }
+  .escala label { padding: var(--e-4) 2px; font-size: var(--t-pequeno); }
+
+  .controles { flex-direction: column; align-items: stretch; }
+  .filtro-periodo { justify-content: center; }
+
+  .linha-usuario { flex-direction: column; align-items: flex-start; }
+  .acoes-usuario { width: 100%; }
+  .acoes-usuario .botao { flex: 1; }
+
+  .linha-acesso { flex-wrap: wrap; }
+  /* Alinha com o texto ao lado da bolinha (24px + 12px de gap): medida
+     óptica, não degrau de espaçamento — por isso fica literal. */
+  .quando-acesso { width: 100%; padding-left: 36px; }
+}

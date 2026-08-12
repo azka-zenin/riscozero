@@ -1,0 +1,1013 @@
+{
+  "info": {
+    "name": "RiscoZero — API",
+    "description": "Rotas da API do RiscoZero (Mostra Técnica 2026 — CEEP-PG — Equipe 1).\n\n## Como usar\n\n1. Suba o servidor com `npm start`\n2. Rode a requisição **Login** na pasta Autenticação — o token é guardado sozinho nas variáveis da coleção, então as demais requisições já funcionam\n3. As rotas marcadas como públicas não precisam de login\n\n## Variáveis\n\n- `baseUrl` — endereço do servidor (padrão: http://localhost:3000)\n- `email` / `senha` — credenciais do administrador criado pelo `npm run seed`\n- `token` — preenchido automaticamente após o login\n- `usuarioId` — preenchido automaticamente ao criar uma conta\n\n## Sobre as permissões\n\n- **Público**: qualquer pessoa (só o envio do formulário)\n- **Logado**: gestor ou administrador\n- **Admin**: apenas administradores (criar, editar e remover contas)",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:3000"
+    },
+    {
+      "key": "email",
+      "value": "admin@riscozero.local"
+    },
+    {
+      "key": "senha",
+      "value": "trocar-esta-senha"
+    },
+    {
+      "key": "token",
+      "value": ""
+    },
+    {
+      "key": "usuarioId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "Sistema",
+      "item": [
+        {
+          "name": "Verificar se está no ar",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/saude",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "saude"
+              ]
+            },
+            "description": "**Público.** Diz se a aplicação e o banco estão de pé.\n\nÉ o endereço que o serviço de hospedagem consulta de tempos em tempos para saber se precisa reiniciar a aplicação. Por isso responde sem login.\n\nSe `banco` vier como \"sem conexão\", o problema está no MongoDB, não na aplicação."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Está no ar', () => pm.response.to.have.status(200));",
+                  "pm.test('Banco conectado', () => pm.expect(pm.response.json().ok).to.be.true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Autenticação",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Login funcionou', () => pm.response.to.have.status(200));",
+                  "",
+                  "const dados = pm.response.json();",
+                  "",
+                  "pm.test('Devolveu um token', () => pm.expect(dados.token).to.be.a('string'));",
+                  "pm.test('Não vaza a senha', () => {",
+                  "  pm.expect(JSON.stringify(dados)).to.not.include('senhaHash');",
+                  "});",
+                  "",
+                  "// Guarda o token para as próximas requisições usarem sozinhas",
+                  "if (dados.token) {",
+                  "  pm.collectionVariables.set('token', dados.token);",
+                  "  console.log('Token salvo. As outras requisições já funcionam.');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"senha\": \"{{senha}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "**Público.** Entra no painel e devolve o token de acesso.\n\nO token vale 8 horas e deve ser enviado no cabeçalho `Authorization: Bearer <token>` nas demais rotas.\n\nA mensagem de erro é a mesma para e-mail inexistente e senha errada — de propósito, para não permitir descobrir quais e-mails têm conta."
+          }
+        },
+        {
+          "name": "Login com senha errada (deve falhar)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Recusa a senha errada', () => pm.response.to.have.status(401));",
+                  "pm.test('Mensagem genérica', () => {",
+                  "  pm.expect(pm.response.json().erro).to.include('incorretos');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{email}}\",\n  \"senha\": \"senha-errada\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Confirma que o sistema recusa senha incorreta e não revela se o e-mail existe."
+          }
+        },
+        {
+          "name": "Quem sou eu",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Traz o e-mail do logado', () => {",
+                  "  pm.expect(pm.response.json().email).to.be.a('string');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/eu",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "eu"
+              ]
+            },
+            "description": "**Logado.** Diz quem está usando o token atual. O painel usa isto para exibir o nome no cabeçalho."
+          }
+        },
+        {
+          "name": "Trocar a própria senha",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/trocar-senha",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "trocar-senha"
+              ]
+            },
+            "description": "**Logado.** A pessoa troca a própria senha, sem depender de administrador.\n\nExige a senha atual de propósito: sem isso, alguém que encontrasse um computador destravado poderia assumir a conta trocando a senha.\n\nA senha nova precisa ter no mínimo 6 caracteres e ser diferente da atual.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"senhaAtual\": \"{{senha}}\",\n  \"senhaNova\": \"nova-senha-123\"\n}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Este teste altera a senha de verdade. Rode com atenção.",
+                  "pm.test('Responde 200 ou explica o motivo', () => {",
+                  "  pm.expect([200, 400, 401]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Sair",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "**Logado.** Encerra a sessão.\n\nComo o sistema usa JWT, o servidor não guarda sessões — quem descarta o token é o navegador. A rota existe para o front ter um lugar único para chamar ao sair."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Formulário (público)",
+      "item": [
+        {
+          "name": "Enviar resposta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Resposta registrada', () => pm.response.to.have.status(201));",
+                  "pm.test('Devolve o id criado', () => {",
+                  "  pm.expect(pm.response.json().id).to.be.a('string');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"setor\": \"Producao\",\n  \"turno\": \"Noite\",\n  \"estresse\": 4,\n  \"sono\": 2,\n  \"carga_trabalho\": 5,\n  \"ambiente_fisico\": 2,\n  \"comentario\": \"Enviado pelo Postman\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/respostas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respostas"
+              ]
+            },
+            "description": "**Público — não precisa de login.**\n\nÉ a única rota aberta: qualquer trabalhador precisa conseguir responder sem ter conta.\n\n**Setores aceitos:** Producao, Manutencao, Qualidade, Logistica, TI, Administrativo\n\n**Turnos aceitos:** Manha, Tarde, Noite\n\n**Escalas (1 a 5, número inteiro):**\n\n| Campo | Nota 5 significa |\n|---|---|\n| estresse | muito estressado (ruim) |\n| sono | dormiu muito bem (bom) |\n| carga_trabalho | sobrecarregado (ruim) |\n| ambiente_fisico | muito confortável (bom) |\n\nRepare que sono e ambiente apontam para o lado oposto — o sistema inverte esses dois ao calcular o índice de risco.\n\n`comentario` é opcional, máximo de 500 caracteres. Todos os outros campos são obrigatórios."
+          }
+        },
+        {
+          "name": "Enviar com setor inválido (deve falhar)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Recusa setor inexistente', () => pm.response.to.have.status(400));",
+                  "pm.test('Explica o problema', () => {",
+                  "  pm.expect(pm.response.json().erro).to.be.a('string');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"setor\": \"SetorInventado\",\n  \"turno\": \"Manha\",\n  \"estresse\": 3,\n  \"sono\": 3,\n  \"carga_trabalho\": 3,\n  \"ambiente_fisico\": 3\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/respostas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respostas"
+              ]
+            },
+            "description": "Mostra que texto arbitrário não vira um \"setor\" novo no banco. Sem essa proteção, os gráficos ficariam poluídos com setores que ninguém sabe o que são."
+          }
+        },
+        {
+          "name": "Enviar com nota fora da escala (deve falhar)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Recusa nota fora de 1 a 5', () => pm.response.to.have.status(400));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"setor\": \"TI\",\n  \"turno\": \"Manha\",\n  \"estresse\": 99,\n  \"sono\": 3,\n  \"carga_trabalho\": 3,\n  \"ambiente_fisico\": 3\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/respostas",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respostas"
+              ]
+            },
+            "description": "A validação está declarada no model (`models/Resposta.js`), então vale para qualquer caminho — pelo formulário, pela API ou por um script."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Painel",
+      "item": [
+        {
+          "name": "Resumo",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "",
+                  "const d = pm.response.json();",
+                  "",
+                  "pm.test('Traz o total de respostas', () => pm.expect(d.geral.total).to.be.a('number'));",
+                  "pm.test('Traz o índice de risco', () => {",
+                  "  if (d.geral.total > 0) pm.expect(d.indiceRisco).to.be.within(1, 5);",
+                  "});",
+                  "pm.test('Traz a lista de setores', () => pm.expect(d.porSetor).to.be.an('array'));",
+                  "pm.test('Traz alertas e recomendações', () => {",
+                  "  pm.expect(d.alertas).to.be.an('array');",
+                  "  pm.expect(d.recomendacoesPorSetor).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/respostas/resumo?periodo=30",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respostas",
+                "resumo"
+              ],
+              "query": [
+                {
+                  "key": "periodo",
+                  "value": "30",
+                  "description": "7, 30 ou tudo"
+                }
+              ]
+            },
+            "description": "**Logado.** É a consulta principal do painel. Devolve, de uma vez:\n\n- `geral` — médias de todos os indicadores no período\n- `indiceRisco` e `classificacao` — nota de 1 a 5 e o nível (Baixo/Médio/Alto)\n- `porSetor` — o mesmo cálculo, separado por setor\n- `alertas` — setores que passaram do limite\n- `recomendacoesPorSetor` — o que fazer em cada setor com problema\n\n**Por que a análise é por setor:** a média geral esconde problemas. Se a Produção está em crise e o TI está ótimo, a média dos dois fica \"aceitável\" e nenhum alerta dispararia — justamente quando mais se precisaria agir."
+          }
+        },
+        {
+          "name": "Resumo sem token (deve falhar)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Bloqueia acesso sem login', () => pm.response.to.have.status(401));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/respostas/resumo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respostas",
+                "resumo"
+              ]
+            },
+            "description": "Confirma que os dados agregados são protegidos. Resposta sobre saúde mental é informação sensível — sem login, nada é devolvido."
+          }
+        },
+        {
+          "name": "Evolução",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Devolve uma lista de dias', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/respostas/evolucao?periodo=30",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respostas",
+                "evolucao"
+              ],
+              "query": [
+                {
+                  "key": "periodo",
+                  "value": "30"
+                }
+              ]
+            },
+            "description": "**Logado.** Índice de risco dia a dia, usado no gráfico de linha.\n\nO agrupamento usa o fuso `America/Sao_Paulo`. Sem isso, o MongoDB agruparia pelo dia em UTC e as respostas do fim da tarde apareceriam no dia seguinte."
+          }
+        },
+        {
+          "name": "Risco por turno",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/respostas/turnos?periodo=30",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respostas",
+                "turnos"
+              ],
+              "query": [
+                {
+                  "key": "periodo",
+                  "value": "30",
+                  "description": "7, 30 ou tudo"
+                }
+              ]
+            },
+            "description": "**Logado.** Índice de risco separado por turno de trabalho.\n\n**Por que separar por turno:** o mesmo setor pode estar tranquilo de manhã e sobrecarregado à noite. O turno noturno costuma ter menos gente e prejudica o sono de quem trabalha nele — a média do dia inteiro esconde isso.\n\nRespostas gravadas antes deste campo existir não têm turno e ficam de fora, para não criar um grupo vazio no gráfico."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Devolve lista de turnos', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Comentários",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/respostas/comentarios?periodo=30",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respostas",
+                "comentarios"
+              ],
+              "query": [
+                {
+                  "key": "periodo",
+                  "value": "30"
+                }
+              ]
+            },
+            "description": "**Logado.** Até 20 comentários mais recentes, cada um já classificado pelo nível de risco da resposta em que foi escrito."
+          }
+        },
+        {
+          "name": "Risco por turno",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Devolve uma lista de turnos', () => pm.expect(pm.response.json()).to.be.an('array'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/respostas/turnos?periodo=30",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respostas",
+                "turnos"
+              ],
+              "query": [
+                {
+                  "key": "periodo",
+                  "value": "30"
+                }
+              ]
+            },
+            "description": "**Logado.** Índice de risco separado por turno de trabalho.\n\nO mesmo setor pode estar tranquilo de manhã e em crise à noite — o turno noturno costuma ter menos gente e prejudica o sono de quem trabalha nele. Sem separar por turno, os dois se misturam numa média que não mostra nem um nem outro.\n\nRespostas gravadas antes deste campo existir são excluídas, para não criarem um grupo vazio no gráfico."
+          }
+        },
+        {
+          "name": "Listar respostas",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/respostas?periodo=7",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respostas"
+              ],
+              "query": [
+                {
+                  "key": "periodo",
+                  "value": "7"
+                }
+              ]
+            },
+            "description": "**Logado.** Respostas individuais, sem agregação. Útil para conferir dados brutos."
+          }
+        },
+        {
+          "name": "Exportar CSV",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('É um arquivo para download', () => {",
+                  "  pm.expect(pm.response.headers.get('Content-Disposition')).to.include('attachment');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/respostas/exportar?periodo=tudo",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respostas",
+                "exportar"
+              ],
+              "query": [
+                {
+                  "key": "periodo",
+                  "value": "tudo"
+                }
+              ]
+            },
+            "description": "**Logado.** Baixa os dados em CSV.\n\nDois detalhes pensados para o Excel em português: o arquivo começa com BOM (senão os acentos quebram) e usa ponto e vírgula como separador, com vírgula nos decimais."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Contas de acesso (CRUD)",
+      "item": [
+        {
+          "name": "Criar conta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Conta criada', () => pm.response.to.have.status(201));",
+                  "",
+                  "const d = pm.response.json();",
+                  "",
+                  "pm.test('Não devolve o hash da senha', () => {",
+                  "  pm.expect(JSON.stringify(d)).to.not.include('senhaHash');",
+                  "});",
+                  "",
+                  "if (d.usuario && d.usuario.id) {",
+                  "  pm.collectionVariables.set('usuarioId', d.usuario.id);",
+                  "  console.log('ID guardado para as próximas requisições:', d.usuario.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Conta de Teste\",\n  \"email\": \"teste.postman@ceeppg.br\",\n  \"senha\": \"senha123\",\n  \"papel\": \"gestor\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuarios"
+              ]
+            },
+            "description": "**Admin.** Cria uma conta de acesso ao painel (o **C** do CRUD).\n\n**Papéis:**\n- `gestor` — vê o painel\n- `admin` — vê o painel e gerencia contas\n\nA senha precisa ter no mínimo 6 caracteres e é gravada como hash bcrypt, nunca em texto puro."
+          }
+        },
+        {
+          "name": "Listar contas",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Nenhuma senha aparece na lista', () => {",
+                  "  pm.expect(pm.response.text()).to.not.include('senhaHash');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuarios"
+              ]
+            },
+            "description": "**Logado.** Lista as contas (o **R** do CRUD).\n\nO campo da senha fica oculto por padrão no model, então não há risco de ele escapar aqui."
+          }
+        },
+        {
+          "name": "Detalhar conta",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuarios",
+                "{{usuarioId}}"
+              ]
+            },
+            "description": "**Logado.** Detalhes de uma conta. Usa o ID guardado pela requisição \"Criar conta\"."
+          }
+        },
+        {
+          "name": "Atualizar conta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Conta atualizada', () => pm.response.to.have.status(200));",
+                  "pm.test('Nome mudou', () => {",
+                  "  pm.expect(pm.response.json().usuario.nome).to.include('Editada');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"nome\": \"Conta de Teste Editada\",\n  \"ativo\": true\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuarios",
+                "{{usuarioId}}"
+              ]
+            },
+            "description": "**Admin.** Atualiza uma conta (o **U** do CRUD).\n\nTodos os campos são opcionais — só o que for enviado muda. Omitir `senha` mantém a senha atual.\n\nUse `\"ativo\": false` para suspender o acesso sem apagar o registro."
+          }
+        },
+        {
+          "name": "Remover conta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Conta removida', () => pm.response.to.have.status(200));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/usuarios/{{usuarioId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "usuarios",
+                "{{usuarioId}}"
+              ]
+            },
+            "description": "**Admin.** Apaga uma conta (o **D** do CRUD).\n\nTravas de segurança:\n- ninguém remove a própria conta\n- o último administrador **ativo** não pode ser removido, senão o sistema ficaria sem quem gerencie contas\n\nPara apenas suspender o acesso, prefira `PUT` com `\"ativo\": false` — assim o histórico é preservado."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Histórico de acessos",
+      "item": [
+        {
+          "name": "Listar acessos",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/logs?periodo=7",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "logs"
+              ],
+              "query": [
+                {
+                  "key": "periodo",
+                  "value": "7",
+                  "description": "número de dias"
+                },
+                {
+                  "key": "apenas",
+                  "value": "",
+                  "description": "falhas ou sucessos (opcional)"
+                }
+              ]
+            },
+            "description": "**Admin.** Registro de quem entrou no painel e de tentativas que falharam.\n\nCada registro traz o motivo: entrou, senha incorreta, conta não existe ou conta desativada.\n\n**Nenhuma senha é guardada**, nem as digitadas por engano numa tentativa que falhou — isso viraria uma coleção de senhas em texto puro."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Nenhuma senha no histórico', () => {",
+                  "  pm.expect(pm.response.text()).to.not.include('senhaHash');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        },
+        {
+          "name": "Resumo do histórico",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/logs/resumo?periodo=7",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "logs",
+                "resumo"
+              ],
+              "query": [
+                {
+                  "key": "periodo",
+                  "value": "7"
+                }
+              ]
+            },
+            "description": "**Admin.** Números gerais e sinais de alerta.\n\nO campo `suspeitos` lista contas que acumularam 3 ou mais tentativas malsucedidas — o padrão típico de quem está tentando adivinhar uma senha."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Responde 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Traz os totais', () => pm.expect(pm.response.json().geral).to.be.an('object'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+# render.yaml
+# Configuração de publicação do RiscoZero no Render.
+#
+# COMO USAR: no painel do Render, escolha "New → Blueprint" e aponte para o
+# repositório do projeto no GitHub. O Render lê este arquivo e monta o serviço
+# sozinho, sem precisar preencher formulário.
+#
+# As variáveis marcadas com `sync: false` NÃO ficam guardadas aqui — o Render
+# pergunta o valor de cada uma na hora de publicar. É de propósito: a senha do
+# banco não pode ficar em arquivo versionado no GitHub.
+
+services:
+  - type: web
+    name: riscozero
+    runtime: node
+    plan: free
+    region: oregon
+
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+
+    # Endereço que o Render consulta para saber se a aplicação continua de pé.
+    healthCheckPath: /api/saude
+
+    envVars:
+      # Endereço do MongoDB Atlas. O Render pergunta na publicação.
+      - key: MONGODB_URI
+        sync: false
+
+      # Chave que assina os tokens de login. Deixando o Render gerar, ela nunca
+      # passa por ninguém — nem por e-mail, nem por mensagem.
+      # ATENÇÃO: se esta chave mudar, todos os logins ativos caem e as pessoas
+      # precisam entrar de novo. É esperado.
+      - key: JWT_SECRET
+        generateValue: true
+
+      - key: NODE_ENV
+        value: production

@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RiscoZero — Histórico de acessos</title>
+  <!-- As fontes vêm do próprio projeto (public/fonts), não de CDN: se a rede
+       da escola bloquear fontes externas, a identidade visual não muda. -->
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topo">
+    <a href="index.html" class="marca">Risco<span>Zero</span></a>
+    <nav>
+      <a href="index.html">Formulário</a>
+      <a href="dashboard.html">Painel</a>
+      <a href="usuarios.html">Usuários</a>
+      <a href="acessos.html" class="ativo">Acessos</a>
+    </nav>
+    <div class="conta-usuario">
+      <span class="usuario-logado" id="usuario-logado"></span>
+      <button type="button" class="link-sair" id="botao-sair">Sair</button>
+    </div>
+  </header>
+
+  <main class="largo">
+    <h1>Histórico de acessos</h1>
+    <p class="subtitulo">
+      Registro de quem entrou no painel e de tentativas que falharam. Serve para
+      perceber acesso indevido ou alguém tentando adivinhar uma senha.
+    </p>
+
+    <div class="controles">
+      <div class="filtro-periodo" role="group" aria-label="Filtrar por período">
+        <button type="button" data-periodo="1">Hoje</button>
+        <button type="button" data-periodo="7" class="ativo">7 dias</button>
+        <button type="button" data-periodo="30">30 dias</button>
+        <button type="button" data-periodo="tudo">Tudo</button>
+      </div>
+      <div class="filtro-periodo" role="group" aria-label="Filtrar por resultado">
+        <button type="button" data-apenas="todos" class="ativo">Todos</button>
+        <button type="button" data-apenas="sucessos">Entradas</button>
+        <button type="button" data-apenas="falhas">Falhas</button>
+      </div>
+    </div>
+
+    <div id="conteudo">
+      <p class="carregando">Carregando histórico</p>
+    </div>
+  </main>
+
+  <footer class="rodape">
+    RiscoZero — Mostra Técnica 2026 · CEEP-PG · Equipe 1
+  </footer>
+
+  <script src="js/transicoes.js"></script>
+  <script src="js/login.js"></script>
+  <script src="js/acessos.js"></script>
+</body>
+</html>

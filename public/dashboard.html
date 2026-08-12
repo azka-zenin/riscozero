@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RiscoZero — Painel de Bem-Estar</title>
+  <!-- As fontes vêm do próprio projeto (public/fonts), não de CDN: se a rede
+       da escola bloquear fontes externas, a identidade visual não muda. -->
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="topo">
+    <a href="index.html" class="marca">Risco<span>Zero</span></a>
+    <nav>
+      <a href="index.html">Formulário</a>
+      <a href="dashboard.html" class="ativo">Painel</a>
+      <!-- Só aparece para administradores; o JS decide ao carregar a página -->
+      <a href="usuarios.html" id="link-usuarios" style="display:none">Usuários</a>
+      <a href="acessos.html" id="link-acessos" style="display:none">Acessos</a>
+    </nav>
+    <div class="conta-usuario">
+      <span class="indicador-conexao" id="indicador-conexao" role="status" aria-live="polite">
+        <span class="bolinha" aria-hidden="true"></span>
+        <span class="texto-conexao">conectando...</span>
+      </span>
+      <span class="usuario-logado" id="usuario-logado"></span>
+      <button type="button" class="link-sair" id="botao-sair">Sair</button>
+    </div>
+  </header>
+
+  <main class="largo">
+    <h1>Painel de bem-estar</h1>
+    <p class="subtitulo" id="subtitulo-periodo">
+      Indicadores de risco psicossocial reportados pela equipe.
+    </p>
+
+    <!-- Filtro de período e exportação -->
+    <div class="controles">
+      <div class="filtro-periodo" role="group" aria-label="Filtrar por período">
+        <button type="button" data-periodo="7">7 dias</button>
+        <button type="button" data-periodo="30" class="ativo">30 dias</button>
+        <button type="button" data-periodo="tudo">Tudo</button>
+      </div>
+      <button type="button" class="botao secundario" id="botao-exportar">
+        Exportar CSV
+      </button>
+    </div>
+
+    <!-- Todo o conteúdo dinâmico entra aqui -->
+    <div id="conteudo">
+      <div class="esqueleto-painel" aria-hidden="true">
+        <div class="esq-bloco esq-alertas"></div>
+        <div class="esq-bloco esq-destaque"></div>
+        <div class="esq-cartoes">
+          <div class="esq-bloco"></div>
+          <div class="esq-bloco"></div>
+          <div class="esq-bloco"></div>
+        </div>
+        <div class="esq-bloco esq-grafico"></div>
+      </div>
+      <p class="vazio-simples" style="position:absolute; width:1px; height:1px; overflow:hidden;" role="status">
+        Carregando dados do painel
+      </p>
+    </div>
+  </main>
+
+  <footer class="rodape">
+    RiscoZero — Mostra Técnica 2026 · CEEP-PG · Equipe 1
+  </footer>
+
+  <!--
+    Chart.js vem de uma cópia local (js/vendor/) e não de um CDN, de propósito:
+    se o computador da apresentação estiver sem internet ou com sites
+    bloqueados pela rede da escola, os gráficos continuam funcionando.
+  -->
+  <script src="js/transicoes.js"></script>
+  <script src="js/vendor/chart.umd.js"></script>
+  <script src="js/login.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
