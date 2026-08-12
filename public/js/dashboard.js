@@ -281,11 +281,12 @@ async function carregarPainel(silencioso = false) {
   conteudo.dataset.montado = 'true';
 
   try {
-    const [resumo, evolucao, comentarios] = await Promise.all([
-      buscarAutenticado(`/api/respostas/resumo?periodo=${periodoAtual}`),
-      buscarAutenticado(`/api/respostas/evolucao?periodo=${periodoAtual}`),
-      buscarAutenticado(`/api/respostas/comentarios?periodo=${periodoAtual}`),
-    ]);
+    // A busca vem em duas etapas de propósito. resumo já traz o suficiente
+    // (geral.total e geral.ultima_resposta) para saber se algo mudou — buscar
+    // evolução e comentários ANTES dessa checagem gastaria duas requisições a
+    // cada ciclo de 20s só para descobrir, na maior parte das vezes, que os
+    // números são os mesmos de antes.
+    const resumo = await buscarAutenticado(`/api/respostas/resumo?periodo=${periodoAtual}`);
 
     subtituloPeriodo.textContent =
       `Indicadores de risco psicossocial reportados pela equipe · ${resumo.periodo}`;
@@ -297,7 +298,8 @@ async function carregarPainel(silencioso = false) {
       return;
     }
 
-    // Na atualização automática, só redesenha se algo realmente mudou.
+    // Na atualização automática, só busca o resto e redesenha se algo
+    // realmente mudou.
     //
     // Reconstruir o painel a cada 20 segundos faria a tela piscar, cancelaria a
     // animação dos gráficos e fecharia qualquer tooltip que a pessoa estivesse
@@ -308,6 +310,11 @@ async function carregarPainel(silencioso = false) {
       return;
     }
     assinaturaAtual = assinatura;
+
+    const [evolucao, comentarios] = await Promise.all([
+      buscarAutenticado(`/api/respostas/evolucao?periodo=${periodoAtual}`),
+      buscarAutenticado(`/api/respostas/comentarios?periodo=${periodoAtual}`),
+    ]);
 
     montarPainel(resumo, evolucao, comentarios);
   } catch (erro) {
@@ -350,6 +357,13 @@ function mostrarVazio() {
 
 function montarPainel(resumo, evolucao, comentarios) {
   const { geral, porSetor, porTurno, indiceRisco, classificacao, alertas, recomendacoesPorSetor } = resumo;
+
+  // O innerHTML logo abaixo recria a lista de comentários do zero. Sem
+  // guardar e devolver a rolagem, quem estivesse lendo um comentário mais
+  // antigo voltava pro topo da lista a cada atualização automática de 20s —
+  // inclusive no meio de uma apresentação.
+  const listaComentariosAntiga = conteudo.querySelector('.lista-comentarios');
+  const rolagemComentarios = listaComentariosAntiga ? listaComentariosAntiga.scrollTop : 0;
 
   conteudo.innerHTML = `
     ${montarAlertas(alertas)}
@@ -411,6 +425,9 @@ function montarPainel(resumo, evolucao, comentarios) {
       ${montarComentarios(comentarios)}
     </div>
   `;
+
+  const novaListaComentarios = conteudo.querySelector('.lista-comentarios');
+  if (novaListaComentarios) novaListaComentarios.scrollTop = rolagemComentarios;
 
   // As animações só podem começar depois que o HTML está na tela, e só na
   // primeira montagem (ver primeiraMontagem).
