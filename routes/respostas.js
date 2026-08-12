@@ -93,8 +93,15 @@ router.post('/', limiteFormulario, async (req, res) => {
   } catch (erro) {
     if (erro.name === 'ValidationError') {
       // Devolve a primeira mensagem de erro, já escrita em português no model
+      // — exceto quando essa "primeira mensagem" é um CastError (ex.: nota
+      // enviada como texto em vez de número). O Mongoose gera a mensagem de
+      // CastError sozinho, em inglês, e não existe onde sobrescrevê-la
+      // campo a campo em models/Resposta.js como existe para min/max/required.
       const primeira = Object.values(erro.errors)[0];
-      return res.status(400).json({ erro: primeira.message });
+      const mensagem = primeira.name === 'CastError'
+        ? 'Alguma resposta está em um formato inválido. Confira se todas as notas são números de 1 a 5.'
+        : primeira.message;
+      return res.status(400).json({ erro: mensagem });
     }
     console.error('Erro ao salvar resposta:', erro.message);
     res.status(500).json({ erro: 'Erro ao salvar resposta no banco.' });
