@@ -17,6 +17,20 @@ function seguranca(req, res, next) {
   // clicando).
   res.setHeader('X-Frame-Options', 'DENY');
 
+  // Não vaza o endereço interno de uma tela do painel para sites externos. Sem
+  // isto, clicar num link que leve para fora a partir de /dashboard.html
+  // entregaria essa URL ao outro site no cabeçalho Referer.
+  res.setHeader('Referrer-Policy', 'same-origin');
+
+  // Publicado, o sistema é servido por HTTPS. Este cabeçalho manda o navegador
+  // lembrar disso e nunca mais tentar a versão sem criptografia — nem que
+  // alguém digite o endereço com http://. Só é enviado quando a requisição já
+  // chegou por HTTPS: em desenvolvimento (localhost, sem TLS) o cabeçalho não
+  // faz sentido e o navegador o ignoraria de qualquer forma.
+  if (req.secure) {
+    res.setHeader('Strict-Transport-Security', 'max-age=15552000; includeSubDomains');
+  }
+
   // Política de conteúdo: só carrega script do próprio domínio. O sistema não
   // usa CDN de propósito (fontes e Chart.js são servidos daqui mesmo), então
   // não precisa liberar nenhuma origem externa.
