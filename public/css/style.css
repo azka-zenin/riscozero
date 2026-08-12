@@ -585,7 +585,9 @@ h1 {
 
 .indice-grande {
   font-size: var(--t-display);
-  font-weight: 600;
+  /* 700, não 600: é o maior e mais importante número do sistema — não faz
+     sentido pesar menos que o h1 da página ou a logo no cabeçalho. */
+  font-weight: 700;
   line-height: 0.95;
   letter-spacing: -0.05em;
   margin: var(--e-4) 0 0;
@@ -1137,6 +1139,13 @@ fieldset.campo {
 
 .campo { margin-bottom: var(--e-8); }
 
+/* Setor e Turno (as duas primeiras perguntas do formulário público) são
+   contexto rápido, não parte da autoavaliação — o mesmo respiro que separa
+   qualquer campo de qualquer campo os colocava tão longe um do outro quanto
+   do resto do formulário. Ficam mais próximos entre si; o respiro padrão
+   volta depois do Turno, marcando onde as perguntas de verdade começam. */
+#form-risco > .campo:first-child { margin-bottom: var(--e-4); }
+
 .opcional { font-weight: 400; color: var(--tinta-fraca); }
 
 .campo > label,
@@ -1324,6 +1333,16 @@ textarea { resize: vertical; }
 .botao:active { transform: translateY(1px); box-shadow: none; }
 .botao:focus-visible { outline: 2px solid var(--marca); outline-offset: 2px; }
 .botao.largura-total { width: 100%; }
+
+/* Alvo de toque maior — reservado pro "Enviar resposta" do formulário
+   público. É a ação mais importante do sistema inteiro (a única razão de
+   ele existir), tocada no celular, na maior parte das vezes uma vez por
+   dia — merece pesar mais na tela do que um botão administrativo qualquer,
+   não só a mesma pílula azul do resto. */
+.botao.grande {
+  padding: var(--e-5) var(--e-8);
+  font-size: var(--t-corpo);
+}
 
 .botao.secundario {
   background: var(--superficie);
