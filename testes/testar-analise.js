@@ -181,6 +181,31 @@ ok('média geral esconde o setor em crise (motivo da análise por setor)',
     || analise.classificarRisco(4.5).nivel === 'alto',
   `indice geral ${indiceGeral.toFixed(2)} vs Producao 4.5`);
 
+// Um setor pode estar piorando de forma consistente sem que nenhum indicador
+// tenha cruzado o limite de alerta ainda — o sistema precisa avisar mesmo
+// assim, e não só depois que o problema já estourou (ver o comentário em
+// analise.js na função gerarRecomendacoesPorSetor).
+const setorPiorandoDentroDoLimite = [
+  { setor: 'Logistica', total: 5, media_estresse: 3.0, media_sono: 3.5,
+    media_carga_trabalho: 3.0, media_ambiente_fisico: 3.5 },
+];
+// Nenhum indicador cruza LIMITE_ALERTA_INDICADOR (3.5): estresse e carga
+// ficam em 3.0, sono e ambiente invertidos ficam em 2.5. Mas a série mostra
+// piora confiável (4 dias, segunda metade bem acima da primeira).
+const seriesPiora = { Logistica: serie(2.0, 2.0, 2.6, 2.7) };
+
+const recsTendencia = analise.gerarRecomendacoesPorSetor(setorPiorandoDentroDoLimite, seriesPiora);
+const recLogistica = recsTendencia.find((s) => s.setor === 'Logistica');
+ok('setor piorando sem indicador crítico ainda gera recomendação',
+  !!recLogistica && recLogistica.recomendacoes.length > 0,
+  JSON.stringify(recsTendencia));
+ok('recomendação é sobre a tendência, não um indicador específico',
+  !!recLogistica && recLogistica.recomendacoes[0].indicador === 'tendencia',
+  recLogistica ? recLogistica.recomendacoes[0].indicador : 'sem recomendacao');
+ok('título da recomendação de tendência é o esperado',
+  !!recLogistica && recLogistica.recomendacoes[0].titulo === 'Piora consistente, ainda dentro do limite',
+  recLogistica ? recLogistica.recomendacoes[0].titulo : 'sem recomendacao');
+
 // ---------------------------------------------------------------------------
 secao('GERADOR DE INSIGHTS');
 
