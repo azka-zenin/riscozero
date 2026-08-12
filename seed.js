@@ -14,6 +14,7 @@
 
 require('dotenv').config();
 
+const crypto = require('crypto');
 const { conectar, desconectar } = require('./database');
 const { Resposta } = require('./models/Resposta');
 const { Usuario } = require('./models/Usuario');
@@ -172,7 +173,11 @@ const DIAS = 30;
 
 async function criarAdmin() {
   const email = (process.env.ADMIN_EMAIL || 'admin@riscozero.local').toLowerCase();
-  const senha = process.env.ADMIN_SENHA || 'trocar-esta-senha';
+  // Sem ADMIN_SENHA no .env, sorteia uma senha em vez de usar um valor fixo:
+  // um literal fixo neste arquivo ficaria commitado no GitHub, e qualquer
+  // pessoa com acesso ao repositório saberia a senha do primeiro admin de
+  // qualquer instalação que esquecesse de preencher a variável.
+  const senha = process.env.ADMIN_SENHA || crypto.randomBytes(9).toString('base64url');
   const nome = process.env.ADMIN_NOME || 'Administrador';
 
   const existente = await Usuario.findOne({ email });
