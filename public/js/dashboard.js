@@ -338,7 +338,7 @@ async function carregarPainel(silencioso = false) {
       <div class="vazio">
         <div class="titulo-vazio">Não foi possível carregar</div>
         <p>Verifique se o servidor está rodando e tente novamente.</p>
-        <button type="button" class="botao" onclick="carregarPainel()">Tentar de novo</button>
+        <button type="button" class="botao" data-recarregar>Tentar de novo</button>
       </div>
     `;
   }
@@ -1102,6 +1102,15 @@ function desenharGraficoTurnos(porTurno, animar = false) {
 // string (montarRecomendacoes) e é recriado a cada carregarPainel — então o
 // clique é ouvido no container estável (#conteudo) e filtrado pelo atributo,
 // em vez de um addEventListener por botão que se perderia no próximo redesenho.
+// O botão "Tentar de novo" da tela de erro nasce dentro de template string e
+// é recriado a cada falha. Antes ele usava onclick="" no próprio HTML, o que
+// a política de conteúdo do sistema (script-src 'self', sem 'unsafe-inline')
+// bloqueia — ou seja, o botão de recuperação não fazia nada justamente quando
+// era necessário. Ouvir o clique no container resolve sem afrouxar a política.
+conteudo.addEventListener('click', (evento) => {
+  if (evento.target.closest('[data-recarregar]')) carregarPainel();
+});
+
 conteudo.addEventListener('click', async (evento) => {
   const botao = evento.target.closest('[data-acao-setor]');
   if (!botao) return;

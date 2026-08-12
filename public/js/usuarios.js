@@ -86,7 +86,7 @@ async function carregarUsuarios() {
       <div class="vazio">
         <div class="titulo-vazio">Não foi possível carregar</div>
         <p>Verifique se o servidor está rodando e tente novamente.</p>
-        <button type="button" class="botao" onclick="carregarUsuarios()">Tentar de novo</button>
+        <button type="button" class="botao" data-recarregar>Tentar de novo</button>
       </div>`;
   }
 }
@@ -142,6 +142,14 @@ function exibirUsuarios(usuarios) {
     b.addEventListener('click', () => remover(usuarios.find((u) => u.id === b.dataset.remover)));
   });
 }
+
+// O botão "Tentar de novo" da tela de erro é recriado a cada falha e antes
+// usava onclick="" no HTML, que a política de conteúdo do sistema bloqueia
+// (script-src 'self', sem 'unsafe-inline') — o botão de recuperação não fazia
+// nada justamente quando era preciso. Ouvir no container resolve.
+listaEl.addEventListener('click', (evento) => {
+  if (evento.target.closest('[data-recarregar]')) carregarUsuarios();
+});
 
 // ---------------------------------------------------------------------------
 // Criar e editar
