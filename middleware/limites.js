@@ -26,10 +26,24 @@ function origemDe(req) {
  */
 function criarLimitador({ limite, janelaMs, chave }) {
   const tentativas = new Map();
+  let ultimaLimpeza = Date.now();
+
+  // Uma chave só é reavaliada quando alguém volta a usá-la. Sem esta varredura,
+  // quem nunca mais aparece fica no Map para sempre — e como a chave do login
+  // inclui o e-mail digitado, bastaria variar o e-mail a cada tentativa para
+  // fazer o Map crescer sem teto e consumir a memória do processo.
+  function limparExpirados(agora) {
+    for (const [id, marcas] of tentativas) {
+      if (marcas.every((t) => agora - t >= janelaMs)) tentativas.delete(id);
+    }
+    ultimaLimpeza = agora;
+  }
 
   return function limitar(req, res, next) {
     const id = chave(req);
     const agora = Date.now();
+
+    if (agora - ultimaLimpeza > janelaMs) limparExpirados(agora);
 
     const lista = (tentativas.get(id) || []).filter((t) => agora - t < janelaMs);
 
@@ -57,6 +71,22 @@ const limiteLogin = criarLimitador({
   chave: (req) => `${origemDe(req)}|${String(req.body?.email || '').toLowerCase().trim()}`,
 });
 
+// LOGIN, teto por IP — segunda trava, mais folgada, sobre a de cima.
+//
+// POR QUE PRECISA DAS DUAS: como a chave do limitador acima inclui o e-mail,
+// cada e-mail diferente estreia com o contador zerado. Quem varia o e-mail a
+// cada tentativa nunca esbarra naquele limite — dá para disparar centenas de
+// tentativas do mesmo lugar, sondando quais contas existem e enchendo o
+// histórico de acessos de lixo. Este teto fecha essa porta sem desfazer o
+// motivo do outro: 40 tentativas em 15 minutos é muito acima do que uma
+// equipe inteira compartilhando o mesmo roteador faria de verdade, e muito
+// abaixo do que uma varredura automatizada precisa.
+const limiteLoginPorIP = criarLimitador({
+  limite: 40,
+  janelaMs: 15 * 60 * 1000,
+  chave: (req) => origemDe(req),
+});
+
 // FORMULÁRIO — só por IP: é rota pública e anônima, não existe e-mail para
 // diferenciar quem envia. O limite é bem mais folgado que o do login porque
 // aqui é normal várias pessoas do mesmo posto de trabalho responderem em
@@ -67,4 +97,4 @@ const limiteFormulario = criarLimitador({
   chave: (req) => origemDe(req),
 });
 
-module.exports = { limiteLogin, limiteFormulario };
+module.exports = { limiteLogin, limiteLoginPorIP, limiteFormulario };

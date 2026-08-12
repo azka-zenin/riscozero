@@ -6,7 +6,7 @@ const router = express.Router();
 const { Usuario } = require('../models/Usuario');
 const { registrar } = require('../models/LogAcesso');
 const { gerarToken, exigirLogin } = require('../middleware/auth');
-const { limiteLogin } = require('../middleware/limites');
+const { limiteLogin, limiteLoginPorIP } = require('../middleware/limites');
 
 /** Descobre de onde veio a requisição, para o registro de acesso. */
 function origemDa(req) {
@@ -16,10 +16,14 @@ function origemDa(req) {
 }
 
 // POST /api/auth/login  { email, senha }
-router.post('/login', limiteLogin, async (req, res) => {
+router.post('/login', limiteLoginPorIP, limiteLogin, async (req, res) => {
   const { email, senha } = req.body;
   const origem = origemDa(req);
-  const emailLimpo = email ? String(email).toLowerCase().trim() : '';
+  // Corta em 254 (o limite de endereço da RFC 5321) em vez de recusar: o que
+  // chega aqui numa tentativa que falhou é texto livre de quem tentou entrar,
+  // e o registro de acesso NÃO pode ser perdido justamente quando alguém manda
+  // algo fora do padrão — é essa tentativa que a auditoria mais precisa ver.
+  const emailLimpo = email ? String(email).toLowerCase().trim().slice(0, 254) : '';
 
   try {
     if (!email || !senha) {

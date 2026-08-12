@@ -23,6 +23,11 @@ const logAcessoSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
       index: true,
+      // O que chega aqui numa tentativa que falhou é texto livre, digitado por
+      // quem tentou entrar — inclusive por quem está sondando o sistema, que
+      // não tem obrigação nenhuma de mandar um e-mail de verdade. O teto evita
+      // que cada tentativa grave um texto gigante no histórico.
+      maxlength: 254, // limite de endereço de e-mail definido pela RFC 5321
     },
 
     // Guardado no momento do login. Se a pessoa mudar de nome depois, o
