@@ -18,11 +18,13 @@ const { instalar } = require('./mongo-falso');
 const { Resposta } = require('../models/Resposta');
 const { Usuario } = require('../models/Usuario');
 const { LogAcesso } = require('../models/LogAcesso');
+const { AcaoAlerta } = require('../models/AcaoAlerta');
 const { seguranca } = require('../middleware/seguranca');
 
 instalar(Resposta, { datas: ['data_envio'] });
 instalar(Usuario, { unicos: ['email'], datas: ['ultimoAcesso', 'createdAt', 'updatedAt'] });
 instalar(LogAcesso, { datas: ['data'] });
+instalar(AcaoAlerta, { datas: ['criadoEm'] });
 
 const authRouter = require('../routes/auth');
 const usuariosRouter = require('../routes/usuarios');

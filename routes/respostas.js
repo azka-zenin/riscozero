@@ -5,15 +5,18 @@
 //   POST /api/respostas             → envia uma resposta
 //
 // Protegidas (exigem login de gestão):
-//   GET  /api/respostas             → lista respostas
-//   GET  /api/respostas/resumo      → médias, índice, alertas e recomendações
-//   GET  /api/respostas/evolucao    → série temporal para o gráfico de linha
-//   GET  /api/respostas/comentarios → comentários deixados
-//   GET  /api/respostas/exportar    → baixa tudo em CSV
+//   GET  /api/respostas                    → lista respostas
+//   GET  /api/respostas/resumo             → médias, índice, alertas e recomendações
+//   POST /api/respostas/setores/:setor/acao → marca que a gestão agiu sobre o alerta
+//   GET  /api/respostas/turnos             → risco por turno de trabalho
+//   GET  /api/respostas/evolucao           → série temporal para o gráfico de linha
+//   GET  /api/respostas/comentarios        → comentários deixados
+//   GET  /api/respostas/exportar           → baixa tudo em CSV
 
 const express = require('express');
 const router = express.Router();
-const { Resposta } = require('../models/Resposta');
+const { Resposta, SETORES } = require('../models/Resposta');
+const { AcaoAlerta } = require('../models/AcaoAlerta');
 const { exigirLogin } = require('../middleware/auth');
 const analise = require('../utils/analise');
 const insights = require('../utils/insights');
@@ -307,6 +310,23 @@ router.get('/resumo', async (req, res) => {
       .map((p) => ({ dia: p.dia, indiceRisco: p.soma / p.qtd }));
 
     const tendenciaGeral = analise.calcularTendencia(seriGeral);
+    const recomendacoesPorSetor = analise.gerarRecomendacoesPorSetor(porSetor, seriesPorSetor);
+
+    // Anexa a última ação registrada (se houver) a cada setor que aparece
+    // nas recomendações — é o que permite ao painel mostrar "ação já
+    // registrada" em vez de deixar o gestor sem saber se alguém já agiu.
+    if (recomendacoesPorSetor.length > 0) {
+      const acoes = await AcaoAlerta.find({
+        setor: { $in: recomendacoesPorSetor.map((s) => s.setor) },
+      }).sort({ criadoEm: -1 }).lean();
+
+      for (const setor of recomendacoesPorSetor) {
+        const ultima = acoes.find((a) => a.setor === setor.setor);
+        setor.ultimaAcao = ultima
+          ? { criadoPor: ultima.criadoPor, criadoEm: ultima.criadoEm, observacao: ultima.observacao }
+          : null;
+      }
+    }
 
     res.json({
       periodo: rotulo,
@@ -318,7 +338,7 @@ router.get('/resumo', async (req, res) => {
       tendencia: tendenciaGeral,
       alertas: analise.gerarAlertas(porSetor, seriesPorSetor),
       recomendacoes: analise.gerarRecomendacoes(medias),
-      recomendacoesPorSetor: analise.gerarRecomendacoesPorSetor(porSetor, seriesPorSetor),
+      recomendacoesPorSetor,
 
       // Textos gerados a partir dos números acima. Ver utils/insights.js —
       // são regras explícitas, não modelo de linguagem.
@@ -344,6 +364,39 @@ router.get('/resumo', async (req, res) => {
   } catch (erro) {
     console.error('Erro ao calcular resumo:', erro.message);
     res.status(500).json({ erro: 'Erro ao calcular resumo.' });
+  }
+});
+
+// POST /api/respostas/setores/:setor/acao — marca que a gestão agiu sobre o
+// alerta daquele setor. Não mede se o índice melhorou depois (fica para uma
+// evolução futura) — só registra que alguém viu e fez algo a respeito.
+router.post('/setores/:setor/acao', async (req, res) => {
+  const { setor } = req.params;
+
+  if (!Object.keys(SETORES).includes(setor)) {
+    return res.status(400).json({ erro: 'Setor inválido.' });
+  }
+
+  const observacao = req.body?.observacao ? String(req.body.observacao).trim() : null;
+  if (observacao && observacao.length > 300) {
+    return res.status(400).json({ erro: 'A observação pode ter no máximo 300 caracteres.' });
+  }
+
+  try {
+    const acao = await AcaoAlerta.create({
+      setor,
+      criadoPor: req.usuario.nome || req.usuario.email,
+      observacao,
+    });
+    res.status(201).json({
+      setor: acao.setor,
+      criadoPor: acao.criadoPor,
+      criadoEm: acao.criadoEm,
+      observacao: acao.observacao,
+    });
+  } catch (erro) {
+    console.error('Erro ao registrar ação de alerta:', erro.message);
+    res.status(500).json({ erro: 'Erro ao registrar a ação.' });
   }
 });
 
@@ -540,7 +593,18 @@ router.get('/comentarios', async (req, res) => {
 // ---------------------------------------------------------------------------
 function escaparCSV(valor) {
   if (valor === null || valor === undefined) return '';
-  const texto = String(valor);
+  let texto = String(valor);
+
+  // Proteção contra "CSV/formula injection": se o texto começa com =, +, -
+  // ou @, o Excel abre a célula como fórmula em vez de texto. Como o
+  // comentário vem de um formulário público sem login, alguém poderia
+  // enviar algo como "=cmd|'/c calc'!A1" esperando que rodasse na máquina
+  // de quem exportar. O apóstrofo força o Excel a tratar como texto puro,
+  // sem mudar o valor visível na célula.
+  if (/^[=+\-@]/.test(texto)) {
+    texto = `'${texto}`;
+  }
+
   if (/[";\n\r]/.test(texto)) {
     return `"${texto.replace(/"/g, '""')}"`;
   }

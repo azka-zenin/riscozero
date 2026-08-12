@@ -26,6 +26,17 @@ if (!SEGREDO) {
   );
 }
 
+if (SEGREDO.length < 32) {
+  // Um segredo curto (ex.: "123" ou "senha") passaria na checagem acima —
+  // ela só confere que a variável existe, não que é forte o suficiente para
+  // assinar um token que não pode ser forjado. 32 caracteres é o mínimo
+  // recomendado para HMAC-SHA256, que é o algoritmo padrão do jsonwebtoken.
+  throw new Error(
+    'JWT_SECRET é curto demais (mínimo 32 caracteres). Gere um novo com: ' +
+    'node -e "console.log(require(\'crypto\').randomBytes(48).toString(\'hex\'))"'
+  );
+}
+
 // 8h cobre um turno de trabalho inteiro sem pedir login de novo no meio do
 // expediente, mas expira sozinha se alguém esquecer a sessão aberta.
 const VALIDADE = '8h';

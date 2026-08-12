@@ -10,11 +10,9 @@ const { limiteLogin } = require('../middleware/limites');
 
 /** Descobre de onde veio a requisição, para o registro de acesso. */
 function origemDa(req) {
-  // Quando o sistema está publicado atrás de um serviço de hospedagem, o
-  // endereço real vem neste cabeçalho; localmente, usamos o da conexão.
-  const encaminhado = req.headers['x-forwarded-for'];
-  if (encaminhado) return String(encaminhado).split(',')[0].trim();
-  return req.socket?.remoteAddress || null;
+  // req.ip, não o cabeçalho lido na mão: ver middleware/limites.js para o
+  // motivo (o valor manual é forjável pelo próprio cliente).
+  return req.ip || null;
 }
 
 // POST /api/auth/login  { email, senha }

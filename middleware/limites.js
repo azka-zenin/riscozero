@@ -8,11 +8,13 @@
 // não vale a complexidade de um limitador distribuído.
 
 function origemDe(req) {
-  // Mesma lógica de routes/auth.js: atrás da hospedagem, o endereço real vem
-  // neste cabeçalho; localmente, usamos o da conexão.
-  const encaminhado = req.headers['x-forwarded-for'];
-  if (encaminhado) return String(encaminhado).split(',')[0].trim();
-  return req.socket?.remoteAddress || 'desconhecido';
+  // req.ip (não o cabeçalho x-forwarded-for lido na mão): com
+  // app.set('trust proxy', 1) em server.js, o Express já anda um salto de
+  // confiança a partir do lado do servidor da cadeia. Pegar o primeiro
+  // valor do cabeçalho manualmente é forjável — quem faz a requisição pode
+  // prependar qualquer IP falso antes do proxy anexar o real, e o código
+  // antigo confiava nesse valor de origem do próprio cliente.
+  return req.ip || 'desconhecido';
 }
 
 /**

@@ -15,12 +15,14 @@ const { instalar } = require('./mongo-falso');
 const { Resposta } = require('../models/Resposta');
 const { Usuario } = require('../models/Usuario');
 const { LogAcesso } = require('../models/LogAcesso');
+const { AcaoAlerta } = require('../models/AcaoAlerta');
 const { seguranca } = require('../middleware/seguranca');
 
 // Substitui o acesso ao banco ANTES de carregar as rotas
 instalar(Resposta, { datas: ['data_envio'] });
 instalar(Usuario, { unicos: ['email'], datas: ['ultimoAcesso', 'createdAt', 'updatedAt'] });
 instalar(LogAcesso, { datas: ['data'] });
+instalar(AcaoAlerta, { datas: ['criadoEm'] });
 
 const authRouter = require('../routes/auth');
 const usuariosRouter = require('../routes/usuarios');
@@ -243,6 +245,28 @@ async function rodar() {
     recProducao.recomendacoes.some((x) => x.indicador === 'carga_trabalho'));
   ok('TI nao aparece nas recomendacoes',
     !r.dados.recomendacoesPorSetor.some((s) => s.setor === 'TI'));
+  ok('setor em alerta comeca sem acao registrada', recProducao.ultimaAcao === null);
+
+  // -------------------------------------------------------------------------
+  secao('AÇÃO PÓS-ALERTA');
+
+  r = await pedir('POST', '/api/respostas/setores/SetorFalso/acao', { token: tokenAdmin });
+  ok('setor invalido barrado', r.status === 400, `status ${r.status}`);
+
+  r = await pedir('POST', '/api/respostas/setores/Producao/acao', {});
+  ok('exige login', r.status === 401, `status ${r.status}`);
+
+  r = await pedir('POST', '/api/respostas/setores/Producao/acao', {
+    token: tokenAdmin,
+    corpo: { observacao: 'Conversamos com a liderança do turno da noite.' },
+  });
+  ok('acao registrada', r.status === 201, `status ${r.status}`);
+  ok('acao traz quem registrou', r.dados.criadoPor === 'Pedro Marques', r.dados.criadoPor);
+
+  const resumoComAcao = await pedir('GET', '/api/respostas/resumo?periodo=tudo', { token: tokenAdmin });
+  const producaoComAcao = resumoComAcao.dados.recomendacoesPorSetor.find((s) => s.setor === 'Producao');
+  ok('resumo passa a trazer a ultima acao do setor',
+    !!producaoComAcao.ultimaAcao && producaoComAcao.ultimaAcao.criadoPor === 'Pedro Marques');
 
   // -------------------------------------------------------------------------
   secao('PAINEL — filtro de período');
@@ -301,6 +325,21 @@ async function rodar() {
     csv.trim().split('\r\n').length === 9, String(csv.trim().split('\r\n').length));
   ok('nome do setor acentuado no CSV', csv.includes('Produção'));
   ok('decimal com virgula', /\d,\d\d;/.test(csv));
+
+  // Proteção contra "formula injection": um comentário começando com =, +,
+  // - ou @ não pode virar fórmula executável ao abrir o CSV no Excel.
+  await pedir('POST', '/api/respostas', {
+    corpo: {
+      setor: 'TI', turno: 'Manha', estresse: 1, sono: 1, carga_trabalho: 1, ambiente_fisico: 1,
+      comentario: "=cmd|'/c calc'!A1",
+    },
+  });
+  const csvInjResp = await fetch(base + '/api/respostas/exportar?periodo=tudo', {
+    headers: { Authorization: `Bearer ${tokenAdmin}` },
+  });
+  const csvInj = (await csvInjResp.text()).replace(/^﻿/, '');
+  ok('comentario com formula vem prefixado com apostrofo',
+    csvInj.includes("'=cmd|'/c calc'!A1") && !csvInj.includes(";=cmd|"), csvInj);
 
   // -------------------------------------------------------------------------
   secao('CRUD DE CONTAS');
