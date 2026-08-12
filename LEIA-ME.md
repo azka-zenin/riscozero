@@ -266,7 +266,8 @@ riscozero/
 ├── models/
 │   ├── Resposta.js        Formato de uma resposta + setores e turnos válidos
 │   ├── Usuario.js         Contas de acesso + criptografia de senha
-│   └── LogAcesso.js       Registro de entradas e tentativas que falharam
+│   ├── LogAcesso.js       Registro de entradas e tentativas que falharam
+│   └── AcaoAlerta.js      Registro de que a gestão agiu sobre um alerta
 │
 ├── utils/
 │   ├── analise.js         ★ Cérebro: risco, tendência e recomendações
@@ -325,6 +326,7 @@ riscozero/
 | POST | `/api/respostas` | **Público** | Grava uma resposta |
 | GET | `/api/respostas` | Logado | Lista as respostas |
 | GET | `/api/respostas/resumo` | Logado | Médias, índice, alertas, recomendações |
+| POST | `/api/respostas/setores/:setor/acao` | Logado | Marca que a gestão agiu sobre o alerta do setor |
 | GET | `/api/respostas/evolucao` | Logado | Índice de risco dia a dia |
 | GET | `/api/respostas/turnos` | Logado | Risco por turno de trabalho |
 | GET | `/api/respostas/comentarios` | Logado | Comentários deixados |
@@ -348,7 +350,7 @@ automaticamente.
 ## Testes
 
 ```bash
-npm test           # 213 testes, sem precisar de banco
+npm test           # 220 testes, sem precisar de banco
 npm run verificar  # testa o MongoDB de verdade (precisa do .env)
 ```
 
@@ -431,12 +433,13 @@ banca, a pergunta pode cair para qualquer integrante.
 - [x] Recomendações que consideram a tendência, não só o momento
 - [x] Gerador automático de insights em texto
 - [x] Publicação online (ver `PUBLICAR.md`)
+- [x] Exportar relatório em PDF, além do CSV
+- [x] Registro de ações: anotar o que a gestão fez após cada alerta
 
 ## Ideias para adiante
 
 - [ ] Envio de e-mail automático quando um setor entra em risco alto
-- [ ] Exportar relatório em PDF, além do CSV
-- [ ] Registro de ações: anotar o que a gestão fez após cada alerta e verificar
-      se o índice melhorou depois — fecharia o ciclo do sistema
+- [ ] Medir automaticamente se o índice melhorou depois de uma ação
+      registrada — o registro em si já existe, falta a comparação antes/depois
 - [ ] Modo quiosque: um tablet no chão de fábrica com o formulário sempre aberto
 - [ ] Atualização instantânea via WebSockets, em vez do ciclo de 20 segundos

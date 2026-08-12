@@ -200,12 +200,12 @@ riscozero/
 
 ## 7. Qualidade e testes
 
-- **213 testes automatizados** (`npm test`), rodando contra um MongoDB
+- **220 testes automatizados** (`npm test`), rodando contra um MongoDB
   simulado em memória — funcionam em qualquer máquina, sem banco instalado e
   sem internet. Cobrem a lógica de risco e tendência (inclusive casos de
   borda, como série vazia ou um dia atípico que não deve virar tendência), as
   rotas da API, login, permissões, CRUD de contas e agregações.
-- **23 testes de API via Postman** (`node testes/rodar-postman.js`),
+- **24 testes de API via Postman** (`node testes/rodar-postman.js`),
   validando a coleção publicada em `postman/RiscoZero.postman_collection.json`
   contra um servidor real.
 - **Servidor de demonstração offline** (`testes/servidor-demo.js`) — sobe o
@@ -274,6 +274,37 @@ renomear nenhuma classe referenciada por JavaScript, com a suíte completa de
 213 + 23 testes passando e verificação visual em desktop e mobile antes de
 cada mudança ser integrada.
 
+### 8.3 — Segurança, fechamento do ciclo de alerta e exportação em PDF
+
+Uma rodada seguinte, motivada por uma pergunta simples ("o que mais dá pra
+fazer?"), levantou oportunidades concretas fora do design visual — robustez,
+segurança e itens do roadmap ainda em aberto.
+
+- **Dois bugs de segurança reais, corrigidos.** O CSV exportado era
+  vulnerável a "formula injection": um comentário do formulário público
+  começando com `=`, `+`, `-` ou `@` virava fórmula executável ao abrir no
+  Excel — um vetor documentado pela OWASP. E o endereço de origem usado no
+  limitador de tentativas de login e no histórico de acessos era lido
+  manualmente do cabeçalho `x-forwarded-for`, que é forjável pelo próprio
+  cliente; passou a usar `req.ip`, que o Express já calcula corretamente a
+  partir da configuração de proxy confiável do servidor.
+- **Acompanhamento de ação pós-alerta**, fechando um item do roadmap: cada
+  alerta de setor no painel agora pode ser marcado como "ação tomada", com
+  registro de quem e quando — um novo model (`AcaoAlerta`) e uma rota
+  dedicada, sem tocar em nenhuma resposta individual nem no cálculo de
+  risco em si. É deliberadamente o primeiro elo da corrente (alerta → ação
+  registrada), não uma medição automática de "melhorou depois".
+- **Exportar em PDF**, quase de graça: a folha de estilo de impressão já
+  existia; faltava só um botão que chama a impressão do navegador.
+- **Polimento menor**: estado vazio explícito para o gráfico de risco por
+  turno quando nenhuma resposta do período informou turno, e uma checagem
+  de força mínima do `JWT_SECRET` no arranque do servidor (antes só se
+  conferia que a variável existia, não que era forte o suficiente).
+
+Mesmo padrão de disciplina das rodadas anteriores: tudo aditivo, nenhuma
+mudança na lógica de cálculo de risco, suíte completa (220 testes + 24 do
+Postman) e verificação visual antes de integrar.
+
 ---
 
 ## 9. Limitações conhecidas
@@ -299,9 +330,8 @@ Simplificações conscientes, assumidas abertamente:
 ## 10. Evolução futura mapeada
 
 - Envio de e-mail automático quando um setor entra em risco alto
-- Exportação de relatório em PDF, além do CSV atual
-- Registro de ações da gestão após cada alerta, para fechar o ciclo
-  (alerta → ação → o índice melhorou?)
+- Medir automaticamente se o índice melhorou depois de uma ação registrada
+  (o registro em si já existe — falta a comparação antes/depois)
 - Modo quiosque para tablet fixo no chão de fábrica
 - Atualização instantânea via WebSockets
 
