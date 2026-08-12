@@ -525,18 +525,36 @@ router.get('/comentarios', async (req, res) => {
       { $group: { _id: '$setor', total: { $sum: 1 } } },
     ]);
 
-    const totalPorSetor = new Map(contagens.map((c) => [c._id, c.total]));
     const minimo = config.MINIMO_RESPOSTAS_COMENTARIO;
+
+    // Quais setores têm respostas suficientes para que seus comentários possam
+    // aparecer. A separação é feita AQUI, e daí em diante vira filtro de banco:
+    // a versão anterior buscava um lote de comentários e decidia na mão, dentro
+    // do laço — o que fazia a contagem de ocultos parar no meio (ela só via o
+    // que tinha vindo no lote, e o laço ainda interrompia ao juntar 20
+    // visíveis). O painel chegava a anunciar "nenhum comentário oculto" com
+    // comentários ocultos de verdade, que é exatamente o sumiço silencioso que
+    // o comentário acima diz que não pode acontecer.
+    const setoresPermitidos = [];
+    for (const c of contagens) {
+      if (c.total >= minimo) setoresPermitidos.push(c._id);
+    }
 
     // O model já aplica trim ao salvar, então um comentário só de espaços
     // vira string vazia e é descartado por este filtro.
-    const linhas = await Resposta.find({
-      ...match,
-      comentario: { $nin: [null, ''] },
-    })
-      .sort({ data_envio: -1 })
-      .limit(40) // busca a mais porque parte será ocultada pelo limite abaixo
-      .lean();
+    const comComentario = { ...match, comentario: { $nin: [null, ''] } };
+
+    // Visíveis e ocultos saem de duas consultas complementares sobre o mesmo
+    // conjunto, então a soma sempre fecha, independente de quantos existam.
+    // (Com setoresPermitidos vazio, $in não casa com nada e $nin casa com
+    // tudo — ou seja, tudo oculto, que é o resultado correto.)
+    const [linhas, ocultos] = await Promise.all([
+      Resposta.find({ ...comComentario, setor: { $in: setoresPermitidos } })
+        .sort({ data_envio: -1 })
+        .limit(20)
+        .lean(),
+      Resposta.countDocuments({ ...comComentario, setor: { $nin: setoresPermitidos } }),
+    ]);
 
     const dataSemHora = new Intl.DateTimeFormat('pt-BR', {
       timeZone: config.FUSO_HORARIO,
@@ -545,17 +563,7 @@ router.get('/comentarios', async (req, res) => {
       year: 'numeric',
     });
 
-    let ocultos = 0;
-    const visiveis = [];
-
-    for (const l of linhas) {
-      if ((totalPorSetor.get(l.setor) || 0) < minimo) {
-        ocultos++;
-        continue;
-      }
-
-      if (visiveis.length >= 20) break;
-
+    const visiveis = linhas.map((l) => {
       const medias = {
         estresse: l.estresse,
         sono: l.sono,
@@ -564,7 +572,7 @@ router.get('/comentarios', async (req, res) => {
       };
       const indice = analise.calcularIndiceRisco(medias);
 
-      visiveis.push({
+      return {
         id: l._id,
         setor: l.setor,
         setorNome: analise.nomeSetor(l.setor),
@@ -572,8 +580,8 @@ router.get('/comentarios', async (req, res) => {
         data: dataSemHora.format(new Date(l.data_envio)),
         indiceRisco: Number(indice.toFixed(2)),
         classificacao: analise.classificarRisco(indice),
-      });
-    }
+      };
+    });
 
     res.json({ comentarios: visiveis, ocultos, minimo });
   } catch (erro) {

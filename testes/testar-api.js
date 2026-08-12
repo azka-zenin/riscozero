@@ -743,6 +743,32 @@ async function rodar() {
       && !/\d{1,2}:\d{2}/.test(String(c.data || ''))),
     (r.dados.comentarios || [])[0]?.data);
 
+  // A contagem de ocultos precisa valer mesmo quando há MAIS comentários
+  // visíveis do que a página devolve. A versão anterior decidia o que era
+  // oculto dentro de um laço que parava ao juntar 20 visíveis, então os
+  // ocultos que vinham depois disso nunca eram contados — e o painel podia
+  // anunciar "nenhum comentário oculto" com comentários ocultos de verdade.
+  const antesDoLote = (await pedir('GET', '/api/respostas/comentarios', { token: tokenAdmin })).dados.ocultos;
+
+  const lote = [];
+  for (let i = 0; i < 25; i++) {
+    lote.push({
+      setor: 'Producao', turno: 'Manha',
+      estresse: 3, sono: 3, carga_trabalho: 3, ambiente_fisico: 3,
+      comentario: `comentario de lote ${i}`,
+      data_envio: new Date(),
+    });
+  }
+  await Resposta.insertMany(lote);
+
+  r = await pedir('GET', '/api/respostas/comentarios', { token: tokenAdmin });
+  ok('ocultos continuam contados com a página de visíveis cheia',
+    r.dados.comentarios.length === 20 && r.dados.ocultos >= antesDoLote,
+    `visiveis=${r.dados.comentarios.length} ocultos=${r.dados.ocultos} (antes=${antesDoLote})`);
+
+  ok('nenhum comentário de setor pequeno vaza mesmo com a página cheia',
+    !(r.dados.comentarios || []).some((c) => c.comentario.includes('SETOR PEQUENO')));
+
   // -------------------------------------------------------------------------
   secao('TRAVA CONTRA ADIVINHAR SENHA');
 
@@ -768,6 +794,19 @@ async function rodar() {
     corpo: { email: 'pedro@ceeppg.br', senha: 'senha123' },
   });
   ok('trava não derruba o login de outra conta no mesmo IP', r.status === 200, `status ${r.status}`);
+
+  // Como a chave da trava acima inclui o e-mail, variar o e-mail a cada
+  // tentativa estreia sempre com o contador zerado. Sem um teto por IP em
+  // cima dela, dava para disparar tentativa sem fim do mesmo lugar, sondando
+  // quais contas existem e enchendo o histórico de acessos.
+  let bloqueouPorIP = false;
+  for (let i = 0; i < 60; i++) {
+    const tentativa = await pedir('POST', '/api/auth/login', {
+      corpo: { email: `varredura-${i}@ceeppg.br`, senha: 'x' },
+    });
+    if (tentativa.status === 429) { bloqueouPorIP = true; break; }
+  }
+  ok('teto por IP barra varredura que troca de e-mail a cada tentativa', bloqueouPorIP);
 
   // -------------------------------------------------------------------------
   secao('CABEÇALHOS DE SEGURANÇA');
