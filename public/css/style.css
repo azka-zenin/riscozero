@@ -282,7 +282,7 @@ main { flex: 1; }
 
 /* Todo número do sistema usa a fonte de dados e dígitos de largura fixa, para
    que colunas de valores alinhem sem precisar de tabela. */
-.num, .valor, .indice-grande, .regua-marca-rotulo {
+.num, .valor, .indice-grande {
   font-family: var(--dado);
   font-variant-numeric: tabular-nums;
   font-feature-settings: 'tnum' 1;
