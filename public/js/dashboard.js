@@ -145,6 +145,16 @@ const ICONES_ALERTA = {
   ok: '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 8.5 6.3 12 13 4"/></svg>',
 };
 
+// Mesma razão dos ícones de alerta acima: sem isto, a seta de tendência era
+// desenhada com os caracteres ▲ ▼ =, que mudam de peso visual conforme a
+// fonte do sistema operacional. currentColor herda a cor do .selo que os
+// envolve (risco-alto/risco-baixo), então não precisa de cor própria.
+const ICONES_TENDENCIA = {
+  piorando: '<svg viewBox="0 0 16 16" width="10" height="10" aria-hidden="true"><path fill="currentColor" d="M8 2 14 12H2L8 2Z"/></svg>',
+  melhorando: '<svg viewBox="0 0 16 16" width="10" height="10" aria-hidden="true"><path fill="currentColor" d="M8 14 2 4h12L8 14Z"/></svg>',
+  estavel: '<svg viewBox="0 0 16 16" width="10" height="10" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M3 6h10M3 10h10"/></svg>',
+};
+
 /** Se o token expirou ou não existe, manda de volta ao login */
 function exigirSessao() {
   if (!Sessao.obterToken()) {
@@ -353,7 +363,7 @@ function montarPainel(resumo, evolucao, comentarios) {
         Índice diário de 1 a 5. A linha subindo indica piora — é o sinal para agir
         antes que o quadro se agrave.
       </p>
-      <div class="area-grafico alto"><canvas id="grafico-evolucao"></canvas></div>
+      <div class="area-grafico alto"><canvas id="grafico-evolucao" role="img" aria-label="Gráfico de linha: evolução do índice de risco ao longo do tempo, escala de 1 a 5."></canvas></div>
     </div>
 
     <div class="duas-colunas">
@@ -362,7 +372,7 @@ function montarPainel(resumo, evolucao, comentarios) {
         <p class="descricao-painel">
           Escala 1 a 5 conforme respondido no formulário.
         </p>
-        <div class="area-grafico"><canvas id="grafico-indicadores"></canvas></div>
+        <div class="area-grafico"><canvas id="grafico-indicadores" role="img" aria-label="Gráfico de barras: médias de estresse, sono, carga de trabalho e ambiente físico, escala de 1 a 5."></canvas></div>
       </div>
 
       <div class="painel">
@@ -370,7 +380,7 @@ function montarPainel(resumo, evolucao, comentarios) {
         <p class="descricao-painel">
           Índice combinado — maior significa mais risco.
         </p>
-        <div class="area-grafico"><canvas id="grafico-setores"></canvas></div>
+        <div class="area-grafico"><canvas id="grafico-setores" role="img" aria-label="Gráfico de barras horizontais: índice de risco combinado por setor, do maior para o menor."></canvas></div>
       </div>
     </div>
 
@@ -380,7 +390,7 @@ function montarPainel(resumo, evolucao, comentarios) {
         O mesmo setor pode estar tranquilo de manhã e sobrecarregado à noite.
         Separar por turno revela diferenças que a média do dia esconde.
       </p>
-      <div class="area-grafico"><canvas id="grafico-turnos"></canvas></div>
+      <div class="area-grafico"><canvas id="grafico-turnos" role="img" aria-label="Gráfico de barras: índice de risco por turno de trabalho — manhã, tarde e noite."></canvas></div>
     </div>
 
     <div class="painel">
@@ -430,9 +440,9 @@ function montarInsights(insights) {
       <div class="insight-cabecalho">
         <span class="insight-nome">${escaparHTML(s.setorNome)}</span>
         ${s.tendencia === 'piorando'
-          ? '<span class="selo miudo risco-alto">▲ piorando</span>'
+          ? `<span class="selo miudo risco-alto">${ICONES_TENDENCIA.piorando} piorando</span>`
           : s.tendencia === 'melhorando'
-            ? '<span class="selo miudo risco-baixo">▼ melhorando</span>'
+            ? `<span class="selo miudo risco-baixo">${ICONES_TENDENCIA.melhorando} melhorando</span>`
             : ''}
       </div>
       <p class="insight-texto">${escaparHTML(s.texto)}</p>
@@ -464,7 +474,7 @@ function montarInsights(insights) {
 function montarAlertas(alertas) {
   if (!alertas || alertas.length === 0) {
     return `
-      <div class="lista-alertas">
+      <div class="lista-alertas" role="status" aria-live="polite">
         <div class="alerta tudo-certo">
           <span class="icone">${ICONES_ALERTA.ok}</span>
           <span>Nenhum setor em situação crítica no período. Continue acompanhando.</span>
@@ -506,7 +516,7 @@ function montarAlertas(alertas) {
     });
   }
 
-  return `<div class="lista-alertas">${linhas.join('')}</div>`;
+  return `<div class="lista-alertas" role="status" aria-live="polite">${linhas.join('')}</div>`;
 }
 
 /**
@@ -719,7 +729,6 @@ function montarTendencia(setor) {
   const t = setor.tendencia;
   if (!t || !t.confiavel) return '';
 
-  const simbolos = { piorando: '▲', melhorando: '▼', estavel: '=' };
   const classes = { piorando: 'risco-alto', melhorando: 'risco-baixo', estavel: '' };
 
   const detalhe = t.direcao === 'piorando' && setor.diasPiorando >= 2
@@ -728,7 +737,7 @@ function montarTendencia(setor) {
 
   return `<span class="selo miudo ${classes[t.direcao] || 'neutro'}"
     title="Comparação entre o começo e o fim do período (${t.diasAnalisados} dias)">
-    ${simbolos[t.direcao] || ''} ${escaparHTML(t.rotulo)}${detalhe}
+    ${ICONES_TENDENCIA[t.direcao] || ''} ${escaparHTML(t.rotulo)}${detalhe}
   </span>`;
 }
 
