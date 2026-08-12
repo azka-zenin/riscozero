@@ -1040,6 +1040,29 @@ h1 {
 .faixa-urgencia.risco-alto { background: var(--alto-fraco); border-color: var(--alto-borda); color: #8E2820; }
 .faixa-urgencia.risco-medio { background: var(--medio-fraco); border-color: var(--medio-borda); color: #855205; }
 
+/* Ação pós-alerta: fecha o ciclo "alerta → o que a gestão fez a respeito".
+   Segue o mesmo tratamento discreto do .selo.sistema/.selo.neutro — texto
+   com traço fino embaixo, não um botão colorido novo — porque é uma ação
+   administrativa, não um valor de risco que precisa saltar aos olhos. */
+.acao-alerta { margin-top: var(--e-4); font-size: var(--t-mini); }
+
+.botao-acao-alerta {
+  background: none;
+  border: none;
+  padding: 0 0 2px;
+  border-bottom: 1.5px solid currentColor;
+  color: var(--tinta-media);
+  font: inherit;
+  font-size: var(--t-mini);
+  font-weight: 600;
+  cursor: pointer;
+}
+.botao-acao-alerta:hover { color: var(--tinta); }
+.botao-acao-alerta:disabled { opacity: 0.6; cursor: default; }
+.botao-acao-alerta:focus-visible { outline: 2px solid var(--marca); outline-offset: 2px; }
+
+.acao-alerta-registrada { color: var(--tinta-fraca); }
+
 /* --------------------------------------------------------------------------
    Comentários
    -------------------------------------------------------------------------- */
@@ -1432,6 +1455,11 @@ textarea { resize: vertical; }
   flex-wrap: wrap;
   gap: var(--e-4);
   margin-bottom: var(--e-7);
+}
+
+.grupo-exportar {
+  display: flex;
+  gap: var(--e-3);
 }
 
 .filtro-periodo {
@@ -2091,9 +2119,11 @@ html.js-transicoes.saindo main { opacity: 0; transform: translateY(-4px); }
   .topo, .rodape { display: none; }
 
   /* Botões, filtros, ações por linha e o link de sair só fazem sentido
-     clicados — em papel só tiram espaço da folha. */
+     clicados — em papel só tiram espaço da folha. O botão "Marcar ação
+     tomada" some pelo mesmo motivo; o texto "ação registrada" (quando já
+     existe) continua, porque é informação de leitura, não um controle. */
   .controles, .botao, .link-sair, .acoes-usuario, .filtro-periodo,
-  .indicador-conexao { display: none; }
+  .indicador-conexao, .botao-acao-alerta { display: none; }
 
   /* Sombra é hierarquia de elevação na tela; em papel vira só um borrão
      cinza ao redor do bloco. */

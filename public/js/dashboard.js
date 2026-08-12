@@ -6,6 +6,7 @@ const conteudo = document.getElementById('conteudo');
 const subtituloPeriodo = document.getElementById('subtitulo-periodo');
 const botoesPeriodo = document.querySelectorAll('.filtro-periodo button');
 const botaoExportar = document.getElementById('botao-exportar');
+const botaoExportarPDF = document.getElementById('botao-exportar-pdf');
 const botaoSair = document.getElementById('botao-sair');
 
 let periodoAtual = '30';
@@ -409,7 +410,12 @@ function montarPainel(resumo, evolucao, comentarios) {
         O mesmo setor pode estar tranquilo de manhã e sobrecarregado à noite.
         Separar por turno revela diferenças que a média do dia esconde.
       </p>
-      <div class="area-grafico"><canvas id="grafico-turnos" role="img" aria-label="Gráfico de barras: índice de risco por turno de trabalho — manhã, tarde e noite."></canvas></div>
+      ${porTurno && porTurno.length > 0
+        ? `<div class="area-grafico"><canvas id="grafico-turnos" role="img" aria-label="Gráfico de barras: índice de risco por turno de trabalho — manhã, tarde e noite."></canvas></div>`
+        : `<p class="vazio-simples">
+             Nenhuma resposta neste período informou o turno. Respostas
+             gravadas antes desse campo existir não entram nesta comparação.
+           </p>`}
     </div>
 
     <div class="painel">
@@ -746,6 +752,15 @@ function montarRecomendacoes(recomendacoesPorSetor) {
           ${escaparHTML(setor.urgencia.descricao)}
         </div>` : ''}
         ${blocos}
+        <div class="acao-alerta">
+          ${setor.ultimaAcao
+            ? `<span class="acao-alerta-registrada">Ação registrada em
+                ${formatarDataHora(setor.ultimaAcao.criadoEm)} por
+                ${escaparHTML(setor.ultimaAcao.criadoPor)}</span>`
+            : `<button type="button" class="botao-acao-alerta" data-acao-setor="${escaparHTML(setor.setor)}">
+                Marcar ação tomada
+              </button>`}
+        </div>
       </div>
     `;
   }).join('');
@@ -1083,6 +1098,33 @@ function desenharGraficoTurnos(porTurno, animar = false) {
   });
 }
 
+// O botão "Marcar ação tomada" nasce dentro de HTML gerado por template
+// string (montarRecomendacoes) e é recriado a cada carregarPainel — então o
+// clique é ouvido no container estável (#conteudo) e filtrado pelo atributo,
+// em vez de um addEventListener por botão que se perderia no próximo redesenho.
+conteudo.addEventListener('click', async (evento) => {
+  const botao = evento.target.closest('[data-acao-setor]');
+  if (!botao) return;
+
+  const setor = botao.dataset.acaoSetor;
+  botao.disabled = true;
+  botao.textContent = 'Registrando...';
+
+  try {
+    const resposta = await requisitar(`/api/respostas/setores/${setor}/acao`, { method: 'POST' });
+    if (!resposta.ok) throw new Error('Falha ao registrar ação');
+
+    // Recarrega o painel para trocar o botão pela etiqueta "ação registrada"
+    // vinda do servidor — mais simples e confiável do que remontar só o
+    // cartão à mão, e é a mesma chamada já usada ao trocar de período.
+    await carregarPainel();
+  } catch (erro) {
+    console.error(erro);
+    botao.disabled = false;
+    botao.textContent = 'Erro ao registrar — tentar de novo';
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Controles: filtro, exportação e saída
 // ---------------------------------------------------------------------------
@@ -1143,6 +1185,14 @@ botaoExportar.addEventListener('click', async () => {
   } finally {
     botaoExportar.disabled = false;
   }
+});
+
+// A folha de estilo de impressão (style.css, @media print) já esconde
+// cabeçalho, rodapé e controles e evita cortar cartões entre páginas — o
+// botão só precisa disparar a impressão do navegador, que também é o "Salvar
+// como PDF" de qualquer impressora do sistema.
+botaoExportarPDF.addEventListener('click', () => {
+  window.print();
 });
 
 botaoSair.addEventListener('click', async () => {
