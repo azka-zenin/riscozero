@@ -273,7 +273,9 @@ riscozero/
 │   └── insights.js        Transforma os números em texto lido por humanos
 │
 ├── middleware/
-│   └── auth.js            Verifica o token JWT e o papel do usuário
+│   ├── auth.js            Verifica o token JWT e o papel do usuário
+│   ├── limites.js         Freio contra força bruta no login e envio em massa
+│   └── seguranca.js       Cabeçalhos de segurança (CSP, X-Frame-Options...)
 │
 ├── routes/
 │   ├── respostas.js       API do formulário e do painel
