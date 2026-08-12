@@ -1,8 +1,8 @@
 // limpar.js
-// Apaga as respostas do banco.
+// Apaga as respostas (e as ações pós-alerta registradas sobre elas) do banco.
 //
-//   npm run limpar            → apaga só as respostas (mantém os usuários)
-//   npm run limpar -- --tudo  → apaga respostas E usuários
+//   npm run limpar            → apaga respostas e ações (mantém os usuários)
+//   npm run limpar -- --tudo  → apaga respostas, ações E usuários
 //
 // O uso normal é antes de uma apresentação em que vocês queiram coletar
 // respostas ao vivo da plateia, começando com o painel zerado.
@@ -16,6 +16,7 @@ const readline = require('node:readline');
 const { conectar, desconectar } = require('./database');
 const { Resposta } = require('./models/Resposta');
 const { Usuario } = require('./models/Usuario');
+const { AcaoAlerta } = require('./models/AcaoAlerta');
 
 const apagarTudo = process.argv.includes('--tudo');
 
@@ -43,11 +44,13 @@ function confirmar(pergunta) {
     await conectar();
 
     const totalRespostas = await Resposta.countDocuments();
+    const totalAcoes = await AcaoAlerta.countDocuments();
     const totalUsuarios = apagarTudo ? await Usuario.countDocuments() : 0;
 
     console.log('');
     console.log('Isto vai apagar:');
     console.log(`  ${totalRespostas} resposta(s)`);
+    console.log(`  ${totalAcoes} ação(ões) pós-alerta registrada(s)`);
     if (apagarTudo) console.log(`  ${totalUsuarios} usuário(s) (incluindo administradores)`);
     console.log('');
 
@@ -60,6 +63,13 @@ function confirmar(pergunta) {
 
     const respostas = await Resposta.deleteMany({});
     console.log(`${respostas.deletedCount} resposta(s) removida(s).`);
+
+    // As ações seguem o mesmo ciclo de vida das respostas, não das contas: são
+    // sobre alertas derivados dos dados, não sobre quem tem acesso ao painel.
+    // Sem isso, um clique de ensaio em "Marcar ação tomada" continuaria
+    // aparecendo no painel na hora da apresentação de verdade.
+    const acoes = await AcaoAlerta.deleteMany({});
+    console.log(`${acoes.deletedCount} ação(ões) pós-alerta removida(s).`);
 
     if (apagarTudo) {
       const usuarios = await Usuario.deleteMany({});

@@ -15,6 +15,9 @@ Equipe 1 · Mostra Técnica 2026 · CEEP-PG
 - [ ] Testado no computador que será usado de verdade, não só no de casa
 - [ ] Alguém do grupo sabe reiniciar o servidor se travar
 - [ ] Capturas de tela salvas como plano B
+- [ ] Se alguém clicou em "Marcar ação tomada" durante o ensaio, rode
+      `npm run limpar` de novo antes de apresentar — senão o painel real
+      mostra "ação registrada" do ensaio, não da apresentação
 
 > **Se o sistema estiver publicado:** abra o link **5 minutos antes** de
 > apresentar. No plano gratuito o serviço dorme após 15 minutos sem acesso e
@@ -86,6 +89,11 @@ Aponte, nesta ordem:
    Note que ele distingue 'risco alto e piorando', que pede ação hoje, de
    'risco alto mas melhorando', que pode esperar"
 
+   Clique em **"Marcar ação tomada"** num dos cartões:
+   > "E o ciclo não para na recomendação. Quando o gestor faz algo a respeito,
+   > ele marca aqui — fica registrado quem agiu e quando. Fecha o loop entre
+   > 'o sistema apontou o problema' e 'alguém cuidou disso'."
+
 **Passo 3 — A atualização automática**
 
 Mostre o indicador verde no cabeçalho ("atualizado agora").
@@ -99,10 +107,12 @@ o número subindo sozinho no painel.
 
 **Passo 4 — Filtro e exportação**
 
-Clique em "7 dias" e mostre os gráficos mudando. Depois "Exportar CSV".
+Clique em "7 dias" e mostre os gráficos mudando. Depois "Exportar CSV" e
+"Exportar PDF".
 
 > "O RH pode levar esses dados para uma reunião ou cruzar com registros de
-> afastamento."
+> afastamento. O CSV serve para quem vai cruzar os números numa planilha; o
+> PDF é o painel inteiro pronto para imprimir ou anexar num relatório."
 
 **Passo 5 — Contas de acesso** (aba 3)
 
@@ -212,6 +222,14 @@ Mostre a estrutura de pastas e explique o caminho do dado:
 > permissões, o CRUD, os cálculos e a geração dos textos — incluindo casos de
 > borda, como um dia atípico que não deve virar tendência. Vários bugs reais
 > foram encontrados por eles durante o desenvolvimento.
+
+**"Vocês fizeram alguma revisão de segurança?"**
+> Sim, e achamos dois problemas reais que corrigimos. O CSV exportado deixava
+> passar "injeção de fórmula": um comentário do formulário começando com `=`
+> vinha, e se alguém abrisse o arquivo no Excel, aquele texto rodava como
+> fórmula — um ataque conhecido e documentado. E o endereço de IP usado para
+> travar tentativas de login era lido de um jeito que o próprio usuário
+> podia forjar. Os dois foram corrigidos e cobertos por teste automatizado.
 
 **"As senhas estão seguras?"**
 > São guardadas como hash bcrypt, não em texto puro. Um hash é uma conta que só
