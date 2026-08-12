@@ -14,19 +14,22 @@ module.exports = {
   // risco em dias errados, e ninguém entenderia o porquê.
   FUSO_HORARIO: 'America/Sao_Paulo',
 
-  // Faixas do índice de risco (escala 1 a 5, onde maior = mais risco)
+  // Faixas do índice de risco (escala 1 a 5, onde maior = mais risco).
+  // Como MINIMO_RESPOSTAS_COMENTARIO logo abaixo, dá para ajustar por
+  // variável de ambiente sem mexer no código — útil se a banca ou a empresa
+  // pedir um critério diferente de última hora, sem precisar de novo deploy.
   LIMITES_RISCO: {
-    BAIXO_ATE: 2.2,
-    MEDIO_ATE: 3.4,
+    BAIXO_ATE: Number(process.env.LIMITE_RISCO_BAIXO_ATE) || 2.2,
+    MEDIO_ATE: Number(process.env.LIMITE_RISCO_MEDIO_ATE) || 3.4,
     // acima de MEDIO_ATE é considerado ALTO
   },
 
   // A partir de qual média um indicador individual já vira motivo de alerta
-  LIMITE_ALERTA_INDICADOR: 3.5,
+  LIMITE_ALERTA_INDICADOR: Number(process.env.LIMITE_ALERTA_INDICADOR) || 3.5,
 
   // Mínimo de respostas em um setor para que ele gere alerta.
   // Evita que uma única resposta ruim dispare alarme falso.
-  MINIMO_RESPOSTAS_ALERTA: 3,
+  MINIMO_RESPOSTAS_ALERTA: Number(process.env.MINIMO_RESPOSTAS_ALERTA) || 3,
 
   // Mínimo de respostas em um setor para que os COMENTÁRIOS daquele setor
   // apareçam no painel.
