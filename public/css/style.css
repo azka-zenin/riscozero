@@ -364,10 +364,14 @@ main { flex: 1; }
 /* O item ativo é marcado por um traço embaixo, não por pílula de fundo. O
    traço encosta na borda do cabeçalho e lê como "você está nesta aba" —
    a pílula competia visualmente com os botões de filtro logo abaixo, que têm
-   exatamente o mesmo desenho e um significado diferente. */
+   exatamente o mesmo desenho e um significado diferente.
+
+   Ativo é peso + traço em tinta, não cor de marca: navegação é orientação,
+   não ação — o cobalto fica reservado pra quando alguém está prestes a
+   fazer alguma coisa (um .botao), não pra dizer "você está aqui". */
 .topo nav a.ativo {
-  color: var(--marca);
-  font-weight: 600;
+  color: var(--tinta);
+  font-weight: 700;
 }
 
 .topo nav a.ativo::after {
@@ -378,7 +382,7 @@ main { flex: 1; }
   bottom: -1px;
   height: 2px;
   border-radius: 2px 2px 0 0;
-  background: var(--marca);
+  background: var(--tinta);
 }
 
 /* --------------------------------------------------------------------------
@@ -530,6 +534,7 @@ h1 {
    -------------------------------------------------------------------------- */
 
 .destaque {
+  position: relative;
   background: var(--face);
   border: 1px solid var(--face-linha);
   border-radius: var(--raio-face);
@@ -538,13 +543,32 @@ h1 {
   grid-template-columns: minmax(260px, 360px) 1fr;
   overflow: hidden;
   margin-bottom: var(--e-6);
-  /* O mostrador tem um leve vinco de luz no topo, como vidro sobre a face.
-     É a única textura do sistema, e existe para o bloco não parecer um
-     retângulo chapado de cor. */
+  /* O mostrador tem um leve vinco de luz no topo, como vidro sobre a face —
+     existe pra ele não parecer um retângulo chapado de cor. */
   background-image: linear-gradient(
     to bottom,
     rgba(255, 255, 255, 0.06) 0%,
     rgba(255, 255, 255, 0) 42%
+  );
+}
+
+/* Marcação ao pé do mostrador — a régua da escala 1-5 impressa na própria
+   face do instrumento, não só dentro dele. Segunda (e última) textura do
+   sistema, ao lado do vinco de luz acima; discreta o bastante pra não
+   competir com o número. */
+.destaque::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 5px;
+  background-image: repeating-linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0.14) 0,
+    rgba(255, 255, 255, 0.14) 1px,
+    transparent 1px,
+    transparent 12px
   );
 }
 
@@ -635,10 +659,19 @@ h1 {
    REGRA DE COR — importante, é o que mantém o semáforo com significado:
      .risco-*  → SÓ para valor de risco medido (nível de um setor, tendência
                  de piora, classificação de um comentário). Se o dado não
-                 saiu do formulário, não pode usar semáforo.
+                 saiu do formulário, não pode usar semáforo. Continua pílula
+                 preenchida: é o único caso em que o selo precisa saltar aos
+                 olhos, porque o valor por trás dele é o que importa de
+                 verdade na tela.
      .sistema  → atributo de sistema, não de risco (ex.: papel de Admin).
-                 Usa cobalto, a mesma família da navegação e das ações.
      .neutro   → estado sem carga de risco (ex.: conta desativada).
+
+   .sistema e .neutro NÃO usam cor de marca nem pílula preenchida — nem tudo
+   que aparece na tela precisa da mesma insígnia do semáforo. Viram etiqueta
+   de instrumento: texto pequeno com um traço fino embaixo, a mesma
+   linguagem da régua (uma marcação, não um botão). A cor deixa de ser
+   emprestada da marca e vira só peso de tinta — reserva o cobalto pra ação
+   de verdade (ver .botao), não pra rótulo de status.
    -------------------------------------------------------------------------- */
 
 .selo {
@@ -668,10 +701,21 @@ h1 {
 .selo.risco-alto  { background: var(--alto-fraco);  color: var(--alto);  border-color: var(--alto-borda); }
 .selo.risco-indefinido { background: var(--superficie-2); color: var(--tinta-fraca); border-color: var(--linha); }
 
-/* Atributo de sistema — cobalto, nunca semáforo. Um Admin não é "risco alto". */
-.selo.sistema { background: var(--marca-fraca); color: var(--marca); border-color: #C6D4F2; }
+.selo.sistema,
+.selo.neutro {
+  background: none;
+  border: none;
+  border-radius: 0;
+  padding: 0 0 3px;
+  border-bottom: 1.5px solid currentColor;
+}
 
-.selo.neutro { background: var(--superficie-2); color: var(--tinta-media); border-color: var(--linha-forte); }
+/* Admin é a designação mais "cheia" das duas — tinta sólida, traço firme. */
+.selo.sistema { color: var(--tinta); }
+
+/* Desativada é o oposto: tinta fraca, o mesmo tom usado pra texto
+   secundário no resto do sistema — a conta já não compete por atenção. */
+.selo.neutro { color: var(--tinta-fraca); }
 
 /* --------------------------------------------------------------------------
    Cartões de indicador
@@ -1188,18 +1232,6 @@ textarea { resize: vertical; }
   color: #fff;
   font-weight: 600;
   box-shadow: 0 3px 10px rgba(27, 63, 160, 0.28);
-  /* Um "pop" rápido a cada escolha — sem isso a resposta só troca de cor,
-     e a mesma pergunta respondida 4 vezes por formulário merece um toque
-     que pareça físico, não só uma mudança de estado. Toca de novo a cada
-     escolha nova, porque a label perde e ganha :checked entre uma opção e
-     outra. */
-  animation: selecao-pop 0.32s var(--assenta);
-}
-
-@keyframes selecao-pop {
-  0% { transform: scale(1); }
-  45% { transform: scale(1.08); }
-  100% { transform: scale(1); }
 }
 
 .escala input[type="radio"]:focus-visible + label {
@@ -1397,13 +1429,13 @@ textarea { resize: vertical; }
 
 .filtro-periodo button:hover { background: var(--superficie-2); color: var(--tinta); }
 
+/* Ativo é tinta escura, não cobalto — o filtro troca o período de leitura,
+   não é uma ação. Mesmo raciocínio da aba do cabeçalho: cor de marca fica
+   reservada pra quando existe algo pra clicar de propósito (.botao). */
 .filtro-periodo button.ativo {
-  background: var(--marca);
+  background: var(--tinta);
   color: #fff;
   font-weight: 600;
-  /* Mesmo "pop" da escala do formulário (ver selecao-pop) — o botão
-     de filtro é a ação mais repetida do painel, e merece o mesmo toque. */
-  animation: selecao-pop 0.28s var(--assenta);
 }
 
 .filtro-periodo button:focus-visible { outline: 2px solid var(--marca); outline-offset: 1px; }
@@ -1692,10 +1724,13 @@ textarea { resize: vertical; }
    É o momento mais importante da experiência de quem responde: acabou de
    compartilhar algo real — estresse, sono ruim, um dia difícil — e precisa
    sentir que aquilo foi recebido, não cair numa tela genérica de "vazio, vá
-   fazer outra coisa" reaproveitada. Por isso tem tratamento próprio: a
-   família de cor do "tudo certo" (verde/baixo risco), um selo circular e um
-   traço de confirmação que se desenha na tela, seguindo a mesma curva de
-   assentamento do resto do sistema.
+   fazer outra coisa" reaproveitada.
+
+   A confirmação usa a própria régua — a assinatura visual do sistema, já
+   carregada de significado (é como toda resposta do formulário é lida) —
+   preenchendo até o fim como o gesto de "medição concluída". Não é um
+   ícone de sucesso importado de fora: é o mesmo vocabulário que a pessoa
+   acabou de usar quatro vezes pra responder.
    -------------------------------------------------------------------------- */
 
 .confirmacao {
@@ -1708,31 +1743,15 @@ textarea { resize: vertical; }
   animation: confirmacao-entra 0.5s var(--assenta) backwards;
 }
 
-.confirmacao-selo {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto var(--e-6);
-  border-radius: 50%;
-  background: var(--baixo-fraco);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.confirmacao-regua {
+  max-width: 220px;
+  margin: 0 auto var(--e-7);
 }
 
-.confirmacao-selo svg { width: 28px; height: 28px; overflow: visible; }
-
-.confirmacao-selo path {
-  fill: none;
-  stroke: var(--baixo);
-  stroke-width: 2.5;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  /* Comprimento aproximado do traço do check — dá para conferir no próprio
-     navegador com path.getTotalLength(), mas um valor generoso já cobre o
-     desenho inteiro sem cortar a ponta. */
-  stroke-dasharray: 30;
-  stroke-dashoffset: 30;
-  animation: confirmacao-traco 0.45s 0.3s var(--assenta) forwards;
+.confirmacao-regua .regua-preenchida {
+  width: 0;
+  transition: none; /* a régua aqui é conduzida pela animação abaixo, não por mudança de estado */
+  animation: confirmacao-regua-preenche 0.9s 0.2s var(--assenta) forwards;
 }
 
 .confirmacao-titulo {
@@ -1740,7 +1759,6 @@ textarea { resize: vertical; }
   font-size: var(--t-titulo-p);
   font-weight: 600;
   letter-spacing: -0.02em;
-  color: var(--baixo);
   margin-bottom: var(--e-3);
 }
 
@@ -1757,8 +1775,8 @@ textarea { resize: vertical; }
   to { opacity: 1; transform: none; }
 }
 
-@keyframes confirmacao-traco {
-  to { stroke-dashoffset: 0; }
+@keyframes confirmacao-regua-preenche {
+  to { width: 100%; }
 }
 
 .carregando {
@@ -1975,7 +1993,7 @@ html.js-transicoes.saindo main { opacity: 0; transform: translateY(-4px); }
   .topo nav a { padding: var(--e-2) var(--e-3); font-size: var(--t-pequeno); white-space: nowrap; }
   /* Empilhado, o traço embaixo do item ativo encosta no item de baixo e lê
      como sublinhado de link. Aqui a pílula de fundo funciona melhor. */
-  .topo nav a.ativo { background: var(--marca-fraca); border-radius: var(--raio-p); }
+  .topo nav a.ativo { background: var(--superficie-2); border-radius: var(--raio-p); }
   .topo nav a.ativo::after { display: none; }
   .marca { padding: var(--e-1) 0 var(--e-2); }
 
