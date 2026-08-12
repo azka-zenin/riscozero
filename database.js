@@ -41,16 +41,44 @@ async function conectar(uri) {
     console.log('Conexão com o MongoDB restabelecida.');
   });
 
-  await mongoose.connect(endereco, {
-    // Se o banco não responder em 10s, falha com mensagem clara em vez de
-    // deixar a requisição pendurada até o navegador desistir.
-    serverSelectionTimeoutMS: 10000,
-  });
+  await conectarComRetentativa(endereco);
 
   const nomeDoBanco = mongoose.connection.name;
   console.log(`Conectado ao MongoDB (banco: ${nomeDoBanco})`);
 
   return mongoose.connection;
+}
+
+// Só a conexão INICIAL passa por aqui. Uma vez estabelecida, quem cuida de
+// reconectar depois de uma queda é o próprio Mongoose (os listeners de
+// 'disconnected'/'reconnected' acima só deixam isso visível no terminal).
+//
+// POR QUE ISTO IMPORTA: sem retentativa, uma falha passageira de rede bem no
+// instante de subir o servidor derruba o processo inteiro (server.js sai com
+// process.exit(1)) — e no plano gratuito do Render isso significa reiniciar
+// manualmente pelo painel deles, possivelmente no meio de uma apresentação.
+const TENTATIVAS_CONEXAO = 3;
+const ESPERA_ENTRE_TENTATIVAS_MS = 3000;
+
+async function conectarComRetentativa(endereco) {
+  for (let tentativa = 1; tentativa <= TENTATIVAS_CONEXAO; tentativa++) {
+    try {
+      await mongoose.connect(endereco, {
+        // Se o banco não responder em 10s, falha com mensagem clara em vez de
+        // deixar a requisição pendurada até o navegador desistir.
+        serverSelectionTimeoutMS: 10000,
+      });
+      return;
+    } catch (erro) {
+      const ultimaTentativa = tentativa === TENTATIVAS_CONEXAO;
+      console.error(
+        `Falha ao conectar no MongoDB (tentativa ${tentativa}/${TENTATIVAS_CONEXAO}): ${erro.message}`
+      );
+      if (ultimaTentativa) throw erro;
+      console.log(`Tentando de novo em ${ESPERA_ENTRE_TENTATIVAS_MS / 1000}s...`);
+      await new Promise((resolve) => setTimeout(resolve, ESPERA_ENTRE_TENTATIVAS_MS));
+    }
+  }
 }
 
 /** Fecha a conexão. Usado pelos scripts de seed e limpeza para o processo terminar. */
