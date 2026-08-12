@@ -2019,3 +2019,44 @@ html.js-transicoes.saindo main { opacity: 0; transform: translateY(-4px); }
      óptica, não degrau de espaçamento — por isso fica literal. */
   .quando-acesso { width: 100%; padding-left: 36px; }
 }
+
+/* --------------------------------------------------------------------------
+   Impressão
+
+   Caso de uso real: um gestor imprime o painel pra levar numa reunião.
+   -------------------------------------------------------------------------- */
+
+@media print {
+  /* Sem isto, muitos navegadores tiram cor de fundo ao imprimir "pra
+     economizar tinta" — e cor de fundo aqui não é enfeite, é a distinção
+     entre risco baixo/médio/alto e o mostrador escuro do índice geral.
+     Herda pra tudo dentro do body, propriedade é herdável por natureza. */
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  /* Cabeçalho fixo e rodapé não servem de nada em papel — o cabeçalho
+     sticky com desfoque de fundo (backdrop-filter) pode renderizar como
+     uma caixa sólida em vez de transparente, dependendo do motor de
+     impressão. */
+  .topo, .rodape { display: none; }
+
+  /* Botões, filtros, ações por linha e o link de sair só fazem sentido
+     clicados — em papel só tiram espaço da folha. */
+  .controles, .botao, .link-sair, .acoes-usuario, .filtro-periodo,
+  .indicador-conexao { display: none; }
+
+  /* Sombra é hierarquia de elevação na tela; em papel vira só um borrão
+     cinza ao redor do bloco. */
+  .cartao, .painel, .destaque, .caixa-login, .filtro-periodo {
+    box-shadow: none !important;
+  }
+
+  /* Evita que um cartão, painel ou o mostrador seja cortado ao meio entre
+     duas páginas impressas. */
+  .cartao, .painel, .destaque, .insight-setor, .setor-recomendacao,
+  .comentario {
+    break-inside: avoid;
+  }
+}
