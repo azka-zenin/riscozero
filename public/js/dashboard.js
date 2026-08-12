@@ -34,6 +34,11 @@ let ultimaAtualizacao = null;
 // mudar de 197 para 198 — distração pura, e ruim numa apresentação.
 let primeiraMontagem = true;
 
+// Último valor mostrado de cada número animado (chave em data-chave), para a
+// contagem partir dali na atualização seguinte em vez de sempre recomeçar do
+// zero — ver animarNumero e animarEntrada logo abaixo.
+const ultimosValoresAnimados = {};
+
 // Guarda as instâncias do Chart.js para poder destruí-las antes de redesenhar.
 // Sem isso, trocar o filtro de período empilha gráficos sobre o mesmo <canvas>
 // e o Chart.js lança erro de "canvas já em uso".
@@ -544,7 +549,7 @@ function montarAlertas(alertas) {
  * valor que precisa ser interpretado numa leitura de relance.
  */
 /**
- * Anima um número contando de zero até o valor final.
+ * Anima um número contando de um valor inicial até o valor final.
  *
  * POR QUE ISSO EXISTE: um número que aparece pronto na tela é lido e
  * esquecido. Um número que se forma na frente da pessoa segura o olhar por um
@@ -553,11 +558,17 @@ function montarAlertas(alertas) {
  *
  * A duração é curta de propósito (900ms). Numa apresentação ao vivo, quem
  * assiste não pode ficar esperando a tela terminar de se montar.
+ *
+ * valorInicial normalmente é 0 (primeira vez que o número aparece), mas numa
+ * atualização ao vivo com resposta nova é o valor que já estava na tela — ver
+ * ultimosValoresAnimados em animarEntrada. Sem isso, "205" viraria "206"
+ * recomeçando a contagem lá do zero a cada 20 segundos, que é exatamente a
+ * distração que este recurso existe para evitar.
  */
-function animarNumero(elemento, valorFinal, { casas = 2, duracao = 900 } = {}) {
+function animarNumero(elemento, valorFinal, { casas = 2, duracao = 900, valorInicial = 0 } = {}) {
   // Quem pediu menos movimento no sistema recebe o valor direto, sem animação.
   const preferSemMovimento = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (preferSemMovimento) {
+  if (preferSemMovimento || valorInicial === valorFinal) {
     elemento.textContent = valorFinal.toFixed(casas).replace('.', ',');
     return;
   }
@@ -570,7 +581,7 @@ function animarNumero(elemento, valorFinal, { casas = 2, duracao = 900 } = {}) {
     // Desaceleração no fim (ease-out): o número corre rápido no começo e
     // "assenta" no valor final, em vez de parar de repente.
     const progresso = 1 - Math.pow(1 - decorrido, 3);
-    const valor = valorFinal * progresso;
+    const valor = valorInicial + (valorFinal - valorInicial) * progresso;
 
     elemento.textContent = valor.toFixed(casas).replace('.', ',');
 
@@ -588,12 +599,16 @@ function animarEntrada({ animar = true } = {}) {
   const preferSemMovimento =
     !animar || window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Números marcados com data-animar contam do zero até o valor
+  // Números marcados com data-animar contam do último valor mostrado (ou de
+  // zero, na primeira vez que aparecem) até o valor novo.
   document.querySelectorAll('[data-animar]').forEach((el) => {
     const valor = parseFloat(el.dataset.animar);
     if (Number.isNaN(valor)) return;
     const casas = Number(el.dataset.casas ?? 2);
-    animarNumero(el, valor, { casas });
+    const chave = el.dataset.chave;
+    const valorInicial = chave ? (ultimosValoresAnimados[chave] ?? 0) : 0;
+    animarNumero(el, valor, { casas, valorInicial });
+    if (chave) ultimosValoresAnimados[chave] = valor;
   });
 
   // As réguas nascem com largura zero e crescem até a posição real. Como a
@@ -644,7 +659,7 @@ function montarDestaque(geral, indiceRisco, classificacao, insights, periodo) {
       <div class="destaque-medida">
         <div class="sobrescrito">Índice geral de risco</div>
         <div class="indice-grande ${classeRisco(classificacao.nivel)}">
-          <span data-animar="${indiceRisco}" data-casas="2">0,00</span><span class="de">de 5,0</span>
+          <span data-animar="${indiceRisco}" data-casas="2" data-chave="indice">0,00</span><span class="de">de 5,0</span>
         </div>
         ${montarRegua(indiceRisco, classificacao.nivel)}
         <span class="selo ${classeRisco(classificacao.nivel)}">${classificacao.rotulo}</span>
@@ -671,7 +686,7 @@ function montarCartoes(geral, indiceRisco, classificacao, porSetor) {
     <div class="grade-cartoes">
       <div class="cartao">
         <div class="rotulo">Respostas no período</div>
-        <div class="valor"><span data-animar="${geral.total}" data-casas="0">0</span></div>
+        <div class="valor"><span data-animar="${geral.total}" data-casas="0" data-chave="total">0</span></div>
         <div class="nota">última ${tempoDesde(geral.ultima_resposta)}</div>
       </div>
       <div class="cartao">
@@ -684,7 +699,7 @@ function montarCartoes(geral, indiceRisco, classificacao, porSetor) {
       </div>
       <div class="cartao">
         <div class="rotulo">Setores em risco alto</div>
-        <div class="valor ${emAlerta > 0 ? 'risco-alto' : 'risco-baixo'}"><span data-animar="${emAlerta}" data-casas="0">0</span></div>
+        <div class="valor ${emAlerta > 0 ? 'risco-alto' : 'risco-baixo'}"><span data-animar="${emAlerta}" data-casas="0" data-chave="emAlerta">0</span></div>
         <div class="nota">de ${porSetor.length} monitorado${porSetor.length !== 1 ? 's' : ''}</div>
       </div>
     </div>
