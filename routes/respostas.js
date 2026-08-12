@@ -117,7 +117,12 @@ router.use(exigirLogin);
 router.get('/', async (req, res) => {
   try {
     const { match } = filtroPeriodo(req.query.periodo);
-    const respostas = await Resposta.find(match).sort({ data_envio: -1 }).lean();
+    // Mesmo limite de routes/logs.js: sem um teto, a listagem cresce junto
+    // com o banco. Não afeta /exportar, que é a rota feita de propósito para
+    // trazer tudo — só esta, que ninguém no front-end usa hoje para carregar
+    // uma lista inteira de uma vez.
+    const limite = Math.min(Number(req.query.limite) || 100, 500);
+    const respostas = await Resposta.find(match).sort({ data_envio: -1 }).limit(limite).lean();
     res.json(respostas);
   } catch (erro) {
     console.error('Erro ao buscar respostas:', erro.message);
