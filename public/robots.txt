@@ -1,0 +1,5 @@
+# O painel de gestão já exige login; isto é só uma camada extra de cautela
+# caso o endereço de demonstração fique publicamente acessível antes ou
+# depois da apresentação.
+User-agent: *
+Disallow: /
