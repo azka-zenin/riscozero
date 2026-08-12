@@ -13,6 +13,12 @@ let apenasAtual = 'todos';
 // Utilitários
 // ---------------------------------------------------------------------------
 
+// Mesmo ícone (e mesma razão) do ICONES_ALERTA.alto em dashboard.js: um
+// caractere ▲ muda de peso visual conforme a fonte do sistema operacional,
+// e este alerta tem o mesmo significado — situação que pede atenção —, então
+// usa o mesmo traço. currentColor herda a cor de .alerta.alto (vermelho).
+const ICONE_ALERTA = '<svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path fill="currentColor" d="M8 1.5 15 14H1L8 1.5Zm0 4.2a.85.85 0 0 0-.85.85v3.4a.85.85 0 0 0 1.7 0v-3.4A.85.85 0 0 0 8 5.7Zm0 6.3a.95.95 0 1 0 0 1.9.95.95 0 0 0 0-1.9Z"/></svg>';
+
 function escaparHTML(texto) {
   if (texto === null || texto === undefined) return '';
   const div = document.createElement('div');
@@ -142,7 +148,7 @@ function montarAlerta(suspeitos) {
 
   const itens = suspeitos.map((s) => `
     <div class="alerta alto">
-      <span class="icone" aria-hidden="true">▲</span>
+      <span class="icone" aria-hidden="true">${ICONE_ALERTA}</span>
       <span>
         <strong>${escaparHTML(s.email)}</strong> acumulou ${s.falhas} tentativas
         que falharam. Última em ${formatarDataHora(s.ultima)}.
