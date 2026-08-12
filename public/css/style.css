@@ -1188,6 +1188,18 @@ textarea { resize: vertical; }
   color: #fff;
   font-weight: 600;
   box-shadow: 0 3px 10px rgba(27, 63, 160, 0.28);
+  /* Um "pop" rápido a cada escolha — sem isso a resposta só troca de cor,
+     e a mesma pergunta respondida 4 vezes por formulário merece um toque
+     que pareça físico, não só uma mudança de estado. Toca de novo a cada
+     escolha nova, porque a label perde e ganha :checked entre uma opção e
+     outra. */
+  animation: selecao-pop 0.32s var(--assenta);
+}
+
+@keyframes selecao-pop {
+  0% { transform: scale(1); }
+  45% { transform: scale(1.08); }
+  100% { transform: scale(1); }
 }
 
 .escala input[type="radio"]:focus-visible + label {
@@ -1389,6 +1401,9 @@ textarea { resize: vertical; }
   background: var(--marca);
   color: #fff;
   font-weight: 600;
+  /* Mesmo "pop" da escala do formulário (ver selecao-pop) — o botão
+     de filtro é a ação mais repetida do painel, e merece o mesmo toque. */
+  animation: selecao-pop 0.28s var(--assenta);
 }
 
 .filtro-periodo button:focus-visible { outline: 2px solid var(--marca); outline-offset: 1px; }
@@ -1669,6 +1684,81 @@ textarea { resize: vertical; }
   text-align: center;
   padding: var(--e-8) var(--e-6);
   font-size: var(--t-pequeno);
+}
+
+/* --------------------------------------------------------------------------
+   Confirmação — tela de "resposta registrada"
+
+   É o momento mais importante da experiência de quem responde: acabou de
+   compartilhar algo real — estresse, sono ruim, um dia difícil — e precisa
+   sentir que aquilo foi recebido, não cair numa tela genérica de "vazio, vá
+   fazer outra coisa" reaproveitada. Por isso tem tratamento próprio: a
+   família de cor do "tudo certo" (verde/baixo risco), um selo circular e um
+   traço de confirmação que se desenha na tela, seguindo a mesma curva de
+   assentamento do resto do sistema.
+   -------------------------------------------------------------------------- */
+
+.confirmacao {
+  text-align: center;
+  padding: var(--e-11) var(--e-7);
+  background: var(--superficie);
+  border: 1px solid var(--linha);
+  border-radius: var(--raio);
+  box-shadow: var(--plano);
+  animation: confirmacao-entra 0.5s var(--assenta) backwards;
+}
+
+.confirmacao-selo {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto var(--e-6);
+  border-radius: 50%;
+  background: var(--baixo-fraco);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.confirmacao-selo svg { width: 28px; height: 28px; overflow: visible; }
+
+.confirmacao-selo path {
+  fill: none;
+  stroke: var(--baixo);
+  stroke-width: 2.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* Comprimento aproximado do traço do check — dá para conferir no próprio
+     navegador com path.getTotalLength(), mas um valor generoso já cobre o
+     desenho inteiro sem cortar a ponta. */
+  stroke-dasharray: 30;
+  stroke-dashoffset: 30;
+  animation: confirmacao-traco 0.45s 0.3s var(--assenta) forwards;
+}
+
+.confirmacao-titulo {
+  font-family: var(--titulo);
+  font-size: var(--t-titulo-p);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: var(--baixo);
+  margin-bottom: var(--e-3);
+}
+
+.confirmacao p {
+  color: var(--tinta-media);
+  max-width: 44ch;
+  margin: 0 auto var(--e-6);
+  font-size: var(--t-interface);
+  line-height: 1.6;
+}
+
+@keyframes confirmacao-entra {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes confirmacao-traco {
+  to { stroke-dashoffset: 0; }
 }
 
 .carregando {
