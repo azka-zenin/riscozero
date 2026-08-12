@@ -7,6 +7,14 @@
   <!-- As fontes vêm do próprio projeto (public/fonts), não de CDN: se a rede
        da escola bloquear fontes externas, a identidade visual não muda. -->
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta name="theme-color" content="#1B3FA0">
+  <link rel="preload" href="fonts/public-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <!-- Manifest + ícone: o formulário é pensado pra ser respondido no
+       celular, então dá pra fixar na tela inicial como um atalho. Só
+       aqui — o painel de gestão (dashboard/usuários/acessos) não precisa
+       disso. -->
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
