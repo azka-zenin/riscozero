@@ -452,6 +452,56 @@
           }
         },
         {
+          "name": "Marcar ação pós-alerta",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Ação registrada', () => pm.response.to.have.status(201));",
+                  "",
+                  "const d = pm.response.json();",
+                  "",
+                  "pm.test('Devolve quem registrou', () => pm.expect(d.criadoPor).to.be.a('string'));",
+                  "pm.test('Devolve o setor', () => pm.expect(d.setor).to.eql('Producao'));"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"observacao\": \"Conversamos com a liderança do turno da noite.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/respostas/setores/Producao/acao",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "respostas",
+                "setores",
+                "Producao",
+                "acao"
+              ]
+            },
+            "description": "**Logado.** Marca que a gestão tomou alguma ação depois de um alerta daquele setor — fecha o primeiro elo da corrente \"alerta → ação\". A `observacao` é opcional (até 300 caracteres). Não mede se o índice melhorou depois; só registra que alguém viu e agiu."
+          }
+        },
+        {
           "name": "Resumo sem token (deve falhar)",
           "event": [
             {

@@ -32,6 +32,7 @@ const ESPERADO = {
   'Enviar com setor inválido (deve falhar)': 400,
   'Enviar com nota fora da escala (deve falhar)': 400,
   'Resumo': 200,
+  'Marcar ação pós-alerta': 201,
   'Resumo sem token (deve falhar)': 401,
   'Evolução': 200,
   'Risco por turno': 200,
