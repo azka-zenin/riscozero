@@ -676,8 +676,7 @@ function montarCartoes(geral, indiceRisco, classificacao, porSetor) {
       </div>
       <div class="cartao">
         <div class="rotulo">Setor que mais preocupa</div>
-        <div class="valor ${pior ? classeRisco(pior.classificacao.nivel) : ''}"
-             style="font-size:1.15rem;font-family:var(--titulo);letter-spacing:-0.01em">
+        <div class="valor valor-nome ${pior ? classeRisco(pior.classificacao.nivel) : ''}">
           ${pior ? escaparHTML(pior.setorNome || pior.setor) : '—'}
         </div>
         ${pior ? montarRegua(pior.indiceRisco, pior.classificacao.nivel, { miuda: true, comEscala: false }) : ''}

@@ -742,6 +742,16 @@ h1 {
   letter-spacing: -0.04em;
 }
 
+/* Modificadores para quando o .valor de um cartão não é um número curto —
+   o tamanho padrão (--t-titulo-g) foi desenhado para 1 a 3 dígitos, e um
+   nome de setor ou uma data por extenso não cabem nele sem quebrar feio. */
+.cartao .valor.valor-nome {
+  font-family: var(--titulo);
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+}
+.cartao .valor.valor-longo { font-size: 1.3rem; }
+
 .cartao .nota {
   color: var(--tinta-fraca);
   font-size: var(--t-mini);

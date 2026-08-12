@@ -126,7 +126,7 @@ function montar(resumo, registros) {
       </div>
       <div class="cartao">
         <div class="rotulo">Último registro</div>
-        <div class="valor" style="font-size:1.3rem">
+        <div class="valor valor-longo">
           ${geral.ultimo ? formatarDataHora(geral.ultimo) : '—'}
         </div>
       </div>
