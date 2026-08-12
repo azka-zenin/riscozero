@@ -73,6 +73,14 @@ app.use('/api', (req, res) => {
   res.status(404).json({ erro: 'Rota da API não encontrada.' });
 });
 
+// Qualquer outro endereço que não bateu com um arquivo estático nem com uma
+// rota de API cai aqui. Sem isto, um link ou digitação errada mostraria a
+// página padrão do Express ("Cannot GET ...") — sem nenhuma cara do sistema,
+// bem na frente da banca se acontecer durante a apresentação.
+app.use((req, res) => {
+  res.status(404).sendFile(path.join(__dirname, 'public', '404.html'));
+});
+
 // Captura qualquer erro não tratado nas rotas, para o servidor nunca cair
 // silenciosamente no meio de uma apresentação.
 app.use((erro, req, res, next) => {

@@ -45,6 +45,10 @@ app.use('/api/logs', logsRouter);
 app.use('/api/respostas', respostasRouter);
 app.use('/api', (req, res) => res.status(404).json({ erro: 'Rota da API não encontrada.' }));
 
+// Mesmo catch-all de server.js, para o modo de demonstração se comportar
+// igual ao servidor real caso alguém digite um endereço errado.
+app.use((req, res) => res.status(404).sendFile(path.join(__dirname, '..', 'public', '404.html')));
+
 // Perfis por setor, iguais aos do seed.js
 const PERFIS = {
   Producao: { estresse: 4.2, sono: 2.0, carga: 4.3, ambiente: 2.2 },
