@@ -791,7 +791,24 @@ const CORES = {
   medio: '#8F5A04',
   alto: '#B8342A',
   marca: '#1B3FA0',
+  face: '#101F2E',
 };
+
+// O Chart.js desenha em canvas e não herda a tipografia do CSS sozinho — sem
+// isto, os rótulos e o tooltip saem no sans-serif genérico do navegador,
+// destoando do resto da interface, que só usa Public Sans, Archivo e IBM
+// Plex Mono. displayColors sai porque todo gráfico daqui tem uma série só:
+// o quadrado de cor no tooltip repetiria uma informação que a própria barra
+// já mostra.
+Chart.defaults.font.family = "'Public Sans', system-ui, -apple-system, sans-serif";
+Chart.defaults.font.size = 12;
+Chart.defaults.color = CORES.textoFraco;
+Chart.defaults.plugins.tooltip.backgroundColor = CORES.face;
+Chart.defaults.plugins.tooltip.padding = 10;
+Chart.defaults.plugins.tooltip.cornerRadius = 8;
+Chart.defaults.plugins.tooltip.displayColors = false;
+Chart.defaults.plugins.tooltip.titleFont = { family: Chart.defaults.font.family, size: 12, weight: '600' };
+Chart.defaults.plugins.tooltip.bodyFont = { family: Chart.defaults.font.family, size: 12 };
 
 function corPorIndice(indice) {
   if (indice <= 2.2) return CORES.baixo;

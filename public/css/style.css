@@ -1848,36 +1848,45 @@ html.js-transicoes.saindo main { opacity: 0; transform: translateY(-4px); }
 @media (max-width: 600px) {
   body { font-size: 14.5px; }
 
+  /* O cabeçalho empilha logo / menu / conta em três linhas curtas, em vez de
+     duas linhas de menu quebrado mais três linhas de conta — o antigo layout
+     chegava a 6 linhas e empurrava todo o conteúdo da tela para fora da
+     primeira dobra. Compacto assim, volta a fazer sentido deixá-lo fixo no
+     topo (como no desktop): a régua de rolagem por baixo ganha mais do que a
+     altura fixa custa. */
   .topo {
     flex-direction: column;
     align-items: flex-start;
-    padding: var(--e-4) var(--e-5);
-    position: static;
+    padding: var(--e-3) var(--e-5);
   }
 
   /* O menu cresceu com as telas novas e não cabe numa linha só em telas
-     estreitas. Quebrar em linhas é melhor do que empurrar a página. */
-  .topo nav { flex-wrap: wrap; gap: 2px; width: 100%; }
-  .topo nav a { padding: var(--e-2) var(--e-3); font-size: var(--t-pequeno); }
+     estreitas. Em vez de quebrar em duas linhas (o que dobra a altura do
+     cabeçalho), o menu vira uma faixa que rola na horizontal — mesmo padrão
+     de aba usado em painel de celular. */
+  .topo nav {
+    flex-wrap: nowrap;
+    gap: 2px;
+    width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .topo nav::-webkit-scrollbar { display: none; }
+  .topo nav a { padding: var(--e-2) var(--e-3); font-size: var(--t-pequeno); white-space: nowrap; }
   /* Empilhado, o traço embaixo do item ativo encosta no item de baixo e lê
      como sublinhado de link. Aqui a pílula de fundo funciona melhor. */
   .topo nav a.ativo { background: var(--marca-fraca); border-radius: var(--raio-p); }
   .topo nav a.ativo::after { display: none; }
-  .marca { padding: var(--e-1) 0 var(--e-3); }
+  .marca { padding: var(--e-1) 0 var(--e-2); }
 
-  /* A conta vem numa segunda linha, abaixo do menu. Empilhado, a borda que
-     separava os itens no desktop fica estranha — cada item vira sua própria
-     linha, então a separação já é o espaço entre elas. */
+  /* A conta continua em linha (indicador · nome · sair), só que agora abaixo
+     do menu em vez de ao lado dele — empilhar cada item em sua própria linha
+     era o que mais pesava na altura do cabeçalho antigo. */
   .conta-usuario {
-    flex-direction: column;
-    align-items: flex-start;
     width: 100%;
-    gap: var(--e-2);
-    padding: var(--e-3) 0 var(--e-4);
-  }
-  .conta-usuario > :not(:first-child) {
-    padding-left: 0;
-    border-left: none;
+    flex-wrap: wrap;
+    row-gap: var(--e-1);
+    padding: var(--e-2) 0 0;
   }
 
   main { padding: var(--e-8) var(--e-5) var(--e-11); }
