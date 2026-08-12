@@ -71,7 +71,7 @@ async function iniciar() {
   try {
     await conectar();
 
-    app.listen(config.PORTA, () => {
+    const servidor = app.listen(config.PORTA, () => {
       // Publicado, o endereço é o do serviço de hospedagem, não localhost.
       const publicado = process.env.RENDER_EXTERNAL_URL || process.env.APP_URL;
       const base = publicado || `http://localhost:${config.PORTA}`;
@@ -83,6 +83,8 @@ async function iniciar() {
       if (!publicado) console.log('');
       else console.log(`  (rodando na porta ${config.PORTA})\n`);
     });
+
+    configurarEncerramentoGracioso(servidor);
   } catch (erro) {
     console.error('');
     console.error('  Não foi possível iniciar o RiscoZero.');
@@ -90,6 +92,44 @@ async function iniciar() {
     console.error('');
     process.exit(1);
   }
+}
+
+// Toda publicação (Render incluído, ver PUBLICAR.md) redeploya a cada push
+// pro branch principal, derrubando o processo anterior. Sem isto, um push de
+// última hora — inclusive minutos antes de apresentar — interrompia
+// requisições em andamento no meio da resposta. Com o handler, o servidor
+// para de aceitar conexão NOVA, deixa a que já estava em andamento terminar
+// (até um limite de tempo, para não travar o desligamento para sempre) e só
+// depois fecha a conexão com o banco e sai.
+function configurarEncerramentoGracioso(servidor) {
+  const TEMPO_LIMITE_MS = 10000;
+  let encerrando = false;
+
+  async function encerrar(sinal) {
+    if (encerrando) return; // Ctrl+C duas vezes seguidas não deve travar em loop
+    encerrando = true;
+
+    console.log(`\n  Sinal ${sinal} recebido — encerrando o RiscoZero...`);
+
+    const tempoLimite = setTimeout(() => {
+      console.warn('  Tempo esgotado esperando as requisições em andamento; forçando saída.');
+      process.exit(1);
+    }, TEMPO_LIMITE_MS);
+    tempoLimite.unref(); // não impede o processo de sair mais cedo, se tudo fechar antes
+
+    servidor.close(async () => {
+      try {
+        await mongoose.connection.close();
+      } catch {
+        // Já estamos saindo; uma falha ao fechar o banco não deve impedir isso.
+      }
+      console.log('  Encerrado.');
+      process.exit(0);
+    });
+  }
+
+  process.on('SIGTERM', () => encerrar('SIGTERM'));
+  process.on('SIGINT', () => encerrar('SIGINT'));
 }
 
 iniciar();
