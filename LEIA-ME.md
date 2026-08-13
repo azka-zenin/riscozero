@@ -271,11 +271,12 @@ riscozero/
 │
 ├── utils/
 │   ├── analise.js         ★ Cérebro: risco, tendência e recomendações
-│   └── insights.js        Transforma os números em texto lido por humanos
+│   ├── insights.js        Transforma os números em texto lido por humanos
+│   └── email.js           Aviso por e-mail quando um setor entra em risco alto (opcional)
 │
 ├── middleware/
 │   ├── auth.js            Verifica o token JWT e o papel do usuário
-│   ├── limites.js         Freio contra força bruta no login e envio em massa
+│   ├── limites.js         Freio contra força bruta e abuso: login, formulário e rotas de escrita autenticadas
 │   └── seguranca.js       Cabeçalhos de segurança (CSP, X-Frame-Options...)
 │
 ├── routes/
@@ -350,7 +351,7 @@ automaticamente.
 ## Testes
 
 ```bash
-npm test           # 223 testes, sem precisar de banco
+npm test           # 238 testes, sem precisar de banco
 npm run verificar  # testa o MongoDB de verdade (precisa do .env)
 ```
 
@@ -384,12 +385,14 @@ O projeto é escolar e tem simplificações conscientes:
   pessoas ou empresas reais.
 - **A auditoria registra entradas, não visualizações**: sabemos quem entrou e
   quando, mas não que telas a pessoa abriu depois.
-- **O painel atualiza a cada 20 segundos, não instantaneamente.** Se alguém
-  responder o formulário enquanto o painel está aberto, aparece no próximo
-  ciclo. Atualização de verdade em tempo real exigiria outra tecnologia
-  (WebSockets), que fica mapeada como evolução possível.
+- **O painel atualiza quase na hora via WebSockets**, com o ciclo de 20
+  segundos como reforço — se o socket cair (rede instável, hospedagem
+  gratuita reiniciando), o painel ainda se atualiza sozinho pelo polling.
 - **O gerador de insights escolhe entre frases prontas.** Cobre bem os casos
   do sistema, mas não escreve nada além do que foi previsto.
+- **O e-mail automático de risco alto é opcional.** Sem SMTP configurado no
+  `.env`, o aviso fica só no log do servidor — de propósito, para a
+  apresentação não depender de internet estável só para isso funcionar.
 
 Assumir essas limitações é melhor do que ser pego afirmando que o sistema é mais
 robusto do que é.
@@ -435,11 +438,15 @@ banca, a pergunta pode cair para qualquer integrante.
 - [x] Publicação online (ver `PUBLICAR.md`)
 - [x] Exportar relatório em PDF, além do CSV
 - [x] Registro de ações: anotar o que a gestão fez após cada alerta
+- [x] Envio de e-mail automático quando um setor entra em risco alto (opcional, ver `.env.example`)
+- [x] Medir automaticamente se o índice melhorou depois de uma ação registrada
+- [x] Modo quiosque: `index.html?quiosque=1` volta sozinho ao formulário após cada envio
+- [x] Atualização instantânea via WebSockets, com o ciclo de 20 segundos como reforço
 
 ## Ideias para adiante
 
-- [ ] Envio de e-mail automático quando um setor entra em risco alto
-- [ ] Medir automaticamente se o índice melhorou depois de uma ação
-      registrada — o registro em si já existe, falta a comparação antes/depois
-- [ ] Modo quiosque: um tablet no chão de fábrica com o formulário sempre aberto
-- [ ] Atualização instantânea via WebSockets, em vez do ciclo de 20 segundos
+- [ ] Medir automaticamente o efeito de uma ação por mais de um recorte de
+      tempo (hoje compara uma janela fixa de 7 dias antes contra o período
+      inteiro depois)
+- [ ] Painel de configuração dos destinatários do e-mail de alerta, em vez de
+      só por variável de ambiente

@@ -11,6 +11,8 @@ require('dotenv').config();
 const express = require('express');
 const compression = require('compression');
 const path = require('path');
+const http = require('http');
+const { Server } = require('socket.io');
 const config = require('./config');
 const { conectar, mongoose } = require('./database');
 const { seguranca } = require('./middleware/seguranca');
@@ -21,6 +23,16 @@ const usuariosRouter = require('./routes/usuarios');
 const logsRouter = require('./routes/logs');
 
 const app = express();
+
+// Servidor HTTP criado à parte (em vez de só app.listen) porque o
+// Socket.IO precisa se anexar a ele diretamente — WebSocket faz upgrade da
+// mesma conexão HTTP, não é um servidor separado.
+const servidorHttp = http.createServer(app);
+
+// Sem opções de CORS: front e API são servidos pelo mesmo processo, na mesma
+// origem, então não existe domínio externo para liberar.
+const io = new Server(servidorHttp);
+app.set('io', io);
 
 // Quando o sistema roda publicado, as requisições chegam através de um
 // intermediário da hospedagem. Sem esta linha, o Express veria o endereço do
@@ -93,7 +105,7 @@ async function iniciar() {
   try {
     await conectar();
 
-    const servidor = app.listen(config.PORTA, () => {
+    servidorHttp.listen(config.PORTA, () => {
       // Publicado, o endereço é o do serviço de hospedagem, não localhost.
       const publicado = process.env.RENDER_EXTERNAL_URL || process.env.APP_URL;
       const base = publicado || `http://localhost:${config.PORTA}`;
@@ -106,7 +118,7 @@ async function iniciar() {
       else console.log(`  (rodando na porta ${config.PORTA})\n`);
     });
 
-    configurarEncerramentoGracioso(servidor);
+    configurarEncerramentoGracioso(servidorHttp);
   } catch (erro) {
     console.error('');
     console.error('  Não foi possível iniciar o RiscoZero.');

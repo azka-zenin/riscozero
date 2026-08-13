@@ -21,7 +21,7 @@
   <header class="topo">
     <a href="index.html" class="marca">Risco<span>Zero</span></a>
     <nav>
-      <a href="login.html">Painel de gestão</a>
+      <a href="login.html" id="link-painel-gestao">Painel de gestão</a>
     </nav>
   </header>
 
@@ -146,6 +146,10 @@
           e ajuda a identificar o que precisa mudar.
         </p>
         <button type="button" class="botao" id="botao-nova">Enviar outra resposta</button>
+        <!-- Só aparece no modo quiosque (?quiosque=1) — ver js/formulario.js -->
+        <p class="aviso-quiosque" id="aviso-quiosque" style="display:none">
+          Voltando ao formulário em instantes para a próxima pessoa...
+        </p>
       </div>
     </div>
   </main>

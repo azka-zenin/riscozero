@@ -299,6 +299,18 @@ function ajustarCabecalho() {
     const botaoNova = document.getElementById('botao-nova-conta');
     if (botaoNova) botaoNova.style.display = 'none';
   }
+
+  // Mesma lógica de dashboard.js: "Acessos" exige admin no servidor, e
+  // "Usuários" não faz parte do fluxo normal de um gestor. Sem isto, um
+  // gestor que chegasse aqui por link direto (não pela nav do painel) veria
+  // as duas opções como links normais e só descobriria a restrição depois
+  // de clicar.
+  if (usuario.papel === 'admin') {
+    ['link-usuarios', 'link-acessos'].forEach((id) => {
+      const link = document.getElementById(id);
+      if (link) link.style.display = '';
+    });
+  }
 }
 
 document.getElementById('botao-nova-conta').addEventListener('click', abrirCriacao);

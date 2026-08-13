@@ -304,6 +304,33 @@ ok('um turno só não gera comparação', insights.insightTurnos([turnos[0]]) ==
 ok('lista vazia não quebra', insights.insightTurnos([]) === null);
 
 // ---------------------------------------------------------------------------
+secao('E-MAIL DE ALERTA (utils/email.js)');
+
+const email = require('../utils/email');
+
+ok('sem SMTP no ambiente, "configurado" é falso — não trava o sistema sem e-mail',
+  email.configurado === false);
+
+ok('primeira vez que um setor entra em risco alto, precisa avisar',
+  email.precisaAvisar('SetorTesteEmailA', 'alto') === true);
+ok('setor que continua em alto na chamada seguinte NÃO avisa de novo (evita spam)',
+  email.precisaAvisar('SetorTesteEmailA', 'alto') === false);
+
+email.precisaAvisar('SetorTesteEmailB', 'medio');
+ok('setor que cai pra médio e depois volta a alto avisa de novo',
+  email.precisaAvisar('SetorTesteEmailB', 'alto') === true);
+
+ok('setor em médio ou baixo nunca precisa avisar',
+  email.precisaAvisar('SetorTesteEmailC', 'medio') === false &&
+  email.precisaAvisar('SetorTesteEmailC', 'baixo') === false);
+
+// avisarRiscoAlto é assíncrona (envia e-mail de verdade quando configurada);
+// a cobertura de "sem SMTP, não quebra e só loga" já está em
+// testes/testar-api.js, no envio de uma resposta que leva um setor a risco
+// alto — este arquivo é só para lógica síncrona, sem precisar de um runner
+// com suporte a top-level await.
+
+// ---------------------------------------------------------------------------
 console.log('\n' + '='.repeat(52));
 console.log(`  ${passou} passaram, ${falhou} falharam`);
 if (falhas.length) {

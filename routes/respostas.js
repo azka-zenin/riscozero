@@ -20,8 +20,9 @@ const { AcaoAlerta } = require('../models/AcaoAlerta');
 const { exigirLogin } = require('../middleware/auth');
 const analise = require('../utils/analise');
 const insights = require('../utils/insights');
+const email = require('../utils/email');
 const config = require('../config');
-const { limiteFormulario } = require('../middleware/limites');
+const { limiteFormulario, limiteAcaoAlerta } = require('../middleware/limites');
 
 // ---------------------------------------------------------------------------
 // Filtro de período (?periodo=7, 30 ou tudo)
@@ -67,6 +68,103 @@ function comoSetor(documento) {
   return { setor: _id, ...resto };
 }
 
+// Quantos dias antes da ação entram na janela de "antes". A janela de
+// "depois" fica em aberto (da ação até agora) — não faz sentido cortá-la
+// cedo, já que é exatamente esse período que diz se a ação está funcionando.
+const JANELA_EFEITO_ACAO_DIAS = 7;
+
+/**
+ * Compara o índice de risco do setor antes e depois de uma ação registrada.
+ *
+ * NÃO mede se a ação "causou" a mudança — só compara as duas médias. Some
+ * dados no meio caminho é intencional: um setor pode ter caído em risco
+ * baixo por outros motivos, e cabe à gestão interpretar o número, não ao
+ * sistema apontar causa.
+ *
+ * Devolve null quando não há respostas suficientes de um dos dois lados
+ * para a comparação valer alguma coisa — mostrar uma média de 1 resposta
+ * como "resultado da ação" seria dar confiança a um número que não tem.
+ */
+async function calcularEfeitoAcao(setor, dataAcao) {
+  const inicioAntes = new Date(dataAcao);
+  inicioAntes.setDate(inicioAntes.getDate() - JANELA_EFEITO_ACAO_DIAS);
+
+  const [resultadoAntes, resultadoDepois] = await Promise.all([
+    Resposta.aggregate([
+      { $match: { setor, data_envio: { $gte: inicioAntes, $lt: dataAcao } } },
+      { $group: { _id: null, ...camposDeMedia() } },
+    ]),
+    Resposta.aggregate([
+      { $match: { setor, data_envio: { $gte: dataAcao } } },
+      { $group: { _id: null, ...camposDeMedia() } },
+    ]),
+  ]);
+
+  const antes = resultadoAntes[0];
+  const depois = resultadoDepois[0];
+  const minimo = config.MINIMO_RESPOSTAS_ALERTA;
+
+  if (!antes || !depois || antes.total < minimo || depois.total < minimo) {
+    return null;
+  }
+
+  const indiceAntes = analise.calcularIndiceRisco({
+    estresse: antes.media_estresse,
+    sono: antes.media_sono,
+    carga_trabalho: antes.media_carga_trabalho,
+    ambiente_fisico: antes.media_ambiente_fisico,
+  });
+  const indiceDepois = analise.calcularIndiceRisco({
+    estresse: depois.media_estresse,
+    sono: depois.media_sono,
+    carga_trabalho: depois.media_carga_trabalho,
+    ambiente_fisico: depois.media_ambiente_fisico,
+  });
+
+  const variacao = indiceDepois - indiceAntes;
+  // Mesmo limiar usado para decidir tendência (ver utils/analise.js) — abaixo
+  // dele é oscilação normal, não uma mudança real de patamar.
+  let direcao = 'estavel';
+  if (variacao <= -analise.VARIACAO_MINIMA) direcao = 'melhorou';
+  else if (variacao >= analise.VARIACAO_MINIMA) direcao = 'piorou';
+
+  return {
+    indiceAntes: Number(indiceAntes.toFixed(2)),
+    indiceDepois: Number(indiceDepois.toFixed(2)),
+    variacao: Number(variacao.toFixed(2)),
+    direcao,
+  };
+}
+
+// Só olha os últimos 30 dias do setor — o mesmo horizonte que o painel usa
+// por padrão — para decidir se ele está em risco alto agora, não desde
+// sempre. Roda em segundo plano, sem atrasar a resposta ao formulário: quem
+// respondeu não deveria esperar um envio de e-mail para ver a confirmação.
+async function verificarAlertaEmail(setor) {
+  const corte = new Date();
+  corte.setDate(corte.getDate() - 29);
+  corte.setHours(0, 0, 0, 0);
+
+  const [resultado] = await Resposta.aggregate([
+    { $match: { setor, data_envio: { $gte: corte } } },
+    { $group: { _id: null, ...camposDeMedia() } },
+  ]);
+
+  if (!resultado || resultado.total < config.MINIMO_RESPOSTAS_ALERTA) return;
+
+  const indice = analise.calcularIndiceRisco({
+    estresse: resultado.media_estresse,
+    sono: resultado.media_sono,
+    carga_trabalho: resultado.media_carga_trabalho,
+    ambiente_fisico: resultado.media_ambiente_fisico,
+  });
+  const { nivel } = analise.classificarRisco(indice);
+
+  if (email.precisaAvisar(setor, nivel)) {
+    await email.avisarRiscoAlto(analise.nomeSetor(setor), indice);
+  }
+}
+
 // ---------------------------------------------------------------------------
 // POST /api/respostas — pública
 // ---------------------------------------------------------------------------
@@ -93,6 +191,12 @@ router.post('/', limiteFormulario, async (req, res) => {
       id: resposta._id,
       mensagem: 'Resposta registrada com sucesso.',
     });
+
+    // Depois de responder — nada aqui deve atrasar nem quebrar a confirmação
+    // que a pessoa já recebeu.
+    verificarAlertaEmail(resposta.setor).catch((erro) =>
+      console.error('Erro ao verificar alerta de e-mail:', erro.message));
+    req.app.get('io')?.emit('painel:atualizado', { tipo: 'resposta' });
   } catch (erro) {
     if (erro.name === 'ValidationError') {
       // Devolve a primeira mensagem de erro, já escrita em português no model
@@ -323,7 +427,12 @@ router.get('/resumo', async (req, res) => {
       for (const setor of recomendacoesPorSetor) {
         const ultima = acoes.find((a) => a.setor === setor.setor);
         setor.ultimaAcao = ultima
-          ? { criadoPor: ultima.criadoPor, criadoEm: ultima.criadoEm, observacao: ultima.observacao }
+          ? {
+              criadoPor: ultima.criadoPor,
+              criadoEm: ultima.criadoEm,
+              observacao: ultima.observacao,
+              efeito: await calcularEfeitoAcao(setor.setor, ultima.criadoEm),
+            }
           : null;
       }
     }
@@ -368,9 +477,10 @@ router.get('/resumo', async (req, res) => {
 });
 
 // POST /api/respostas/setores/:setor/acao — marca que a gestão agiu sobre o
-// alerta daquele setor. Não mede se o índice melhorou depois (fica para uma
-// evolução futura) — só registra que alguém viu e fez algo a respeito.
-router.post('/setores/:setor/acao', async (req, res) => {
+// alerta daquele setor. O efeito da ação (índice antes/depois) é calculado à
+// parte, em calcularEfeitoAcao, e anexado quando o painel busca o resumo —
+// esta rota só registra que alguém viu e fez algo a respeito.
+router.post('/setores/:setor/acao', limiteAcaoAlerta, async (req, res) => {
   const { setor } = req.params;
 
   if (!Object.keys(SETORES).includes(setor)) {
@@ -394,6 +504,7 @@ router.post('/setores/:setor/acao', async (req, res) => {
       criadoEm: acao.criadoEm,
       observacao: acao.observacao,
     });
+    req.app.get('io')?.emit('painel:atualizado', { tipo: 'acao', setor });
   } catch (erro) {
     console.error('Erro ao registrar ação de alerta:', erro.message);
     res.status(500).json({ erro: 'Erro ao registrar a ação.' });

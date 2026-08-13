@@ -8,6 +8,27 @@ const areaSucesso = document.getElementById('area-sucesso');
 const botaoNova = document.getElementById('botao-nova');
 const botaoEnviar = form.querySelector('button[type="submit"]');
 
+// ---------------------------------------------------------------------------
+// Modo quiosque (?quiosque=1): pensado pra um tablet fixo no chão de
+// fábrica, sempre com o formulário aberto, sem ninguém precisando tocar em
+// "Enviar outra resposta" entre uma pessoa e a próxima.
+//
+// O QUE MUDA: depois de confirmar o envio, volta sozinho ao formulário em
+// vez de esperar um toque; e o link "Painel de gestão" some, pra ninguém
+// tocar nele por engano num aparelho de chão de fábrica.
+// ---------------------------------------------------------------------------
+const MODO_QUIOSQUE = new URLSearchParams(window.location.search).get('quiosque') === '1';
+const SEGUNDOS_ATE_VOLTAR = 8;
+let temporizadorVolta = null;
+
+if (MODO_QUIOSQUE) {
+  const linkPainel = document.getElementById('link-painel-gestao');
+  if (linkPainel) linkPainel.style.display = 'none';
+
+  const aviso = document.getElementById('aviso-quiosque');
+  if (aviso) aviso.style.display = 'block';
+}
+
 form.addEventListener('submit', async (evento) => {
   evento.preventDefault();
 
@@ -81,6 +102,11 @@ form.addEventListener('submit', async (evento) => {
     areaFormulario.style.display = 'none';
     areaSucesso.style.display = 'block';
     window.scrollTo({ top: 0, behavior: 'smooth' });
+
+    if (MODO_QUIOSQUE) {
+      clearTimeout(temporizadorVolta);
+      temporizadorVolta = setTimeout(() => botaoNova.click(), SEGUNDOS_ATE_VOLTAR * 1000);
+    }
   } catch (erro) {
     console.error(erro);
     mostrarMensagem('erro', 'Sem conexão com o servidor. Verifique se ele está rodando.');
@@ -91,6 +117,7 @@ form.addEventListener('submit', async (evento) => {
 });
 
 botaoNova.addEventListener('click', () => {
+  clearTimeout(temporizadorVolta);
   form.reset();
   limparMensagem();
   areaSucesso.style.display = 'none';

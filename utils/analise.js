@@ -472,6 +472,7 @@ module.exports = {
   NOMES_INDICADORES,
   NOMES_SETORES,
   NOMES_TURNOS,
+  VARIACAO_MINIMA,
   nomeSetor,
   nomeTurno,
   paraNotaDeRisco,

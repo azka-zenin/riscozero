@@ -1063,6 +1063,11 @@ h1 {
 
 .acao-alerta-registrada { color: var(--tinta-fraca); }
 
+.efeito-acao { font-weight: 600; }
+.efeito-acao.efeito-melhorou { color: var(--baixo); }
+.efeito-acao.efeito-piorou { color: var(--alto); }
+.efeito-acao.efeito-estavel { color: var(--tinta-media); }
+
 /* --------------------------------------------------------------------------
    Comentários
    -------------------------------------------------------------------------- */
@@ -1868,6 +1873,14 @@ textarea { resize: vertical; }
   margin: 0 auto var(--e-6);
   font-size: var(--t-interface);
   line-height: 1.6;
+}
+
+/* Só aparece no modo quiosque (?quiosque=1) — texto secundário, discreto,
+   avisando que a volta ao formulário é automática. */
+.confirmacao .aviso-quiosque {
+  margin: var(--e-5) auto 0;
+  font-size: var(--t-mini);
+  color: var(--tinta-fraca);
 }
 
 @keyframes confirmacao-entra {

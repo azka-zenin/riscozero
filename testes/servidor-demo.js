@@ -14,6 +14,8 @@ process.env.JWT_SECRET = process.env.JWT_SECRET || 'chave-de-demonstracao-123456
 
 const express = require('express');
 const path = require('path');
+const http = require('http');
+const { Server } = require('socket.io');
 const { instalar } = require('./mongo-falso');
 const { Resposta } = require('../models/Resposta');
 const { Usuario } = require('../models/Usuario');
@@ -32,6 +34,12 @@ const logsRouter = require('../routes/logs');
 const respostasRouter = require('../routes/respostas');
 
 const app = express();
+// Mesma ligação de server.js: o painel de demonstração deve se comportar
+// igual ao real, inclusive na atualização instantânea via WebSockets.
+const servidorHttp = http.createServer(app);
+const io = new Server(servidorHttp);
+app.set('io', io);
+
 app.use(express.json());
 app.use(seguranca);
 app.use(express.static(path.join(__dirname, '..', 'public'), { maxAge: '1h' }));
@@ -188,7 +196,7 @@ async function popular() {
 const PORTA = process.env.PORT || 3000;
 
 popular().then((total) => {
-  app.listen(PORTA, () => {
+  servidorHttp.listen(PORTA, () => {
     console.log('');
     console.log('  RiscoZero — modo demonstração (banco em memória)');
     console.log(`  ${total} respostas de exemplo carregadas`);

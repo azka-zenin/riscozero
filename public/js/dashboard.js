@@ -756,7 +756,7 @@ function montarRecomendacoes(recomendacoesPorSetor) {
           ${setor.ultimaAcao
             ? `<span class="acao-alerta-registrada">Ação registrada em
                 ${formatarDataHora(setor.ultimaAcao.criadoEm)} por
-                ${escaparHTML(setor.ultimaAcao.criadoPor)}</span>`
+                ${escaparHTML(setor.ultimaAcao.criadoPor)}${montarEfeitoAcao(setor.ultimaAcao.efeito)}</span>`
             : `<button type="button" class="botao-acao-alerta" data-acao-setor="${escaparHTML(setor.setor)}">
                 Marcar ação tomada
               </button>`}
@@ -764,6 +764,29 @@ function montarRecomendacoes(recomendacoesPorSetor) {
       </div>
     `;
   }).join('');
+}
+
+// Rótulos e classe de cor para o resultado da comparação antes/depois de uma
+// ação. Cor só entra aqui porque é, de fato, uma leitura de risco (melhorou =
+// risco caindo, piorou = risco subindo) — a mesma disciplina de cor usada no
+// resto do sistema, não uma exceção nova.
+const EFEITO_ACAO = {
+  melhorou: { rotulo: 'melhorou', classe: 'efeito-melhorou' },
+  piorou: { rotulo: 'piorou', classe: 'efeito-piorou' },
+  estavel: { rotulo: 'ficou estável', classe: 'efeito-estavel' },
+};
+
+/**
+ * Texto complementar comparando o índice do setor antes e depois da ação
+ * registrada. Não aparece enquanto não houver respostas suficientes dos dois
+ * lados — ver calcularEfeitoAcao em routes/respostas.js.
+ */
+function montarEfeitoAcao(efeito) {
+  if (!efeito) return '';
+  const info = EFEITO_ACAO[efeito.direcao];
+  const antes = String(efeito.indiceAntes).replace('.', ',');
+  const depois = String(efeito.indiceDepois).replace('.', ',');
+  return ` · <span class="efeito-acao ${info.classe}">índice ${info.rotulo} depois (${antes} → ${depois})</span>`;
 }
 
 /**
@@ -1236,6 +1259,16 @@ function ajustarCabecalho() {
       if (link) link.style.display = '';
     });
   }
+}
+
+// WebSockets: atualiza o painel assim que alguém responde o formulário ou
+// registra uma ação, sem esperar o próximo ciclo do polling. O polling
+// continua rodando de qualquer forma (iniciarAtualizacaoAutomatica, abaixo)
+// — se o socket cair (rede instável, hospedagem gratuita reiniciando), o
+// painel ainda se atualiza sozinho a cada INTERVALO_ATUALIZACAO.
+if (typeof io === 'function') {
+  const socket = io();
+  socket.on('painel:atualizado', () => carregarPainel(true));
 }
 
 // Início

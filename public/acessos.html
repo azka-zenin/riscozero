@@ -17,8 +17,9 @@
     <nav>
       <a href="index.html">Formulário</a>
       <a href="dashboard.html">Painel</a>
-      <a href="usuarios.html">Usuários</a>
-      <a href="acessos.html" class="ativo">Acessos</a>
+      <!-- Só aparecem para administradores; o JS decide ao carregar a página -->
+      <a href="usuarios.html" id="link-usuarios" style="display:none">Usuários</a>
+      <a href="acessos.html" id="link-acessos" class="ativo" style="display:none">Acessos</a>
     </nav>
     <div class="conta-usuario">
       <span class="usuario-logado" id="usuario-logado"></span>

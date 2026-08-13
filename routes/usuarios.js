@@ -13,6 +13,7 @@ const express = require('express');
 const router = express.Router();
 const { Usuario } = require('../models/Usuario');
 const { exigirLogin, exigirAdmin } = require('../middleware/auth');
+const { limiteEscritaUsuarios } = require('../middleware/limites');
 
 // Toda rota daqui exige estar logado
 router.use(exigirLogin);
@@ -43,7 +44,7 @@ function tratarErro(erro, res, acao) {
 // ---------------------------------------------------------------------------
 // CREATE — POST /api/usuarios
 // ---------------------------------------------------------------------------
-router.post('/', exigirAdmin, async (req, res) => {
+router.post('/', exigirAdmin, limiteEscritaUsuarios, async (req, res) => {
   try {
     const { nome, email, senha, papel } = req.body;
 
@@ -94,7 +95,7 @@ router.get('/:id', async (req, res) => {
 // ---------------------------------------------------------------------------
 // UPDATE — PUT /api/usuarios/:id
 // ---------------------------------------------------------------------------
-router.put('/:id', exigirAdmin, async (req, res) => {
+router.put('/:id', exigirAdmin, limiteEscritaUsuarios, async (req, res) => {
   try {
     const { nome, email, senha, papel, ativo } = req.body;
 
@@ -136,7 +137,7 @@ router.put('/:id', exigirAdmin, async (req, res) => {
 // ---------------------------------------------------------------------------
 // DELETE — DELETE /api/usuarios/:id
 // ---------------------------------------------------------------------------
-router.delete('/:id', exigirAdmin, async (req, res) => {
+router.delete('/:id', exigirAdmin, limiteEscritaUsuarios, async (req, res) => {
   try {
     const usuario = await Usuario.findById(req.params.id);
     if (!usuario) {

@@ -200,7 +200,7 @@ riscozero/
 
 ## 7. Qualidade e testes
 
-- **223 testes automatizados** (`npm test`), rodando contra um MongoDB
+- **238 testes automatizados** (`npm test`), rodando contra um MongoDB
   simulado em memória — funcionam em qualquer máquina, sem banco instalado e
   sem internet. Cobrem a lógica de risco e tendência (inclusive casos de
   borda, como série vazia ou um dia atípico que não deve virar tendência), as
@@ -305,6 +305,33 @@ Mesmo padrão de disciplina das rodadas anteriores: tudo aditivo, nenhuma
 mudança na lógica de cálculo de risco, suíte completa (220 testes + 24 do
 Postman) e verificação visual antes de integrar.
 
+### 8.4 — Segurança adicional e os quatro itens do roadmap
+
+Rodada motivada por uma varredura fresca de oportunidades — não repetindo o
+que já tinha sido auditado — cobrindo consistência entre telas, segurança,
+cobertura de teste e os itens do roadmap que ainda estavam em aberto.
+
+- **Rate limiting em rotas de escrita autenticadas.** Fora login e
+  formulário, nenhuma rota tinha teto de tentativas — um token vazado
+  conseguiria, por exemplo, despejar linhas em "ações de alerta" sem
+  limite. Passou a existir um limitador por usuário (não por IP, já que
+  quem chama está identificado) nessas rotas.
+- **Nav do painel restrita por papel** também em `usuarios.html` e
+  `acessos.html`, não só em `dashboard.html` — um gestor que chegasse por
+  link direto via a opção "Acessos" (que exige administrador) como um link
+  normal, e só descobria a restrição depois de clicar.
+- **Os três últimos itens do roadmap, implementados**: e-mail automático
+  quando um setor entra em risco alto (opcional — sem SMTP configurado, o
+  aviso fica só no log, para não depender de internet no dia da
+  apresentação); a comparação antes/depois de uma ação registrada, exibida
+  junto ao registro no painel; modo quiosque (`?quiosque=1`) para um
+  tablet fixo no chão de fábrica; e atualização quase instantânea via
+  WebSockets, com o polling de 20s mantido como reforço caso a conexão
+  caia.
+
+Suíte completa: **238 testes** (era 223) + 24 do Postman, e verificação
+visual antes de integrar.
+
 ---
 
 ## 9. Auditoria final
@@ -363,20 +390,22 @@ Simplificações conscientes, assumidas abertamente:
   acompanhar um caso individual.
 - **Auditoria registra entradas, não navegação** — sabe-se quem entrou e
   quando, não quais telas a pessoa abriu depois.
-- **Atualização a cada 20 segundos, não instantânea** — tempo real de
-  verdade exigiria WebSockets (mapeado como evolução futura).
 - **Gerador de insights escolhe entre frases prontas** — cobre bem os casos
   do sistema, mas não compõe texto além do que foi previsto.
+- **E-mail de alerta depende de SMTP configurado** — sem isso, o aviso fica
+  só no log do servidor, de propósito, para não depender de internet
+  estável no dia da apresentação.
+- **WebSockets depende do polling de 20s como reforço** se a conexão cair;
+  não há indicador visual de "conectado/desconectado" no painel.
 
 ---
 
 ## 11. Evolução futura mapeada
 
-- Envio de e-mail automático quando um setor entra em risco alto
-- Medir automaticamente se o índice melhorou depois de uma ação registrada
-  (o registro em si já existe — falta a comparação antes/depois)
-- Modo quiosque para tablet fixo no chão de fábrica
-- Atualização instantânea via WebSockets
+- Medir o efeito de uma ação por mais de um recorte de tempo (hoje é uma
+  janela fixa de 7 dias antes contra o período inteiro depois)
+- Painel de configuração dos destinatários do e-mail de alerta, em vez de
+  só por variável de ambiente
 
 ---
 

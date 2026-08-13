@@ -211,13 +211,14 @@ Mostre a estrutura de pastas e explique o caminho do dado:
 > padrão de acessibilidade WCAG AA.
 
 **"O painel atualiza em tempo real?"**
-> Ele busca dados novos a cada 20 segundos, sem precisar recarregar a página.
-> Não é tempo real instantâneo — isso exigiria WebSockets, que está mapeado
-> como evolução. E ele só redesenha quando algo realmente mudou, senão a tela
-> ficaria piscando a cada ciclo.
+> Sim — assim que alguém responde o formulário ou a gestão marca uma ação,
+> um WebSocket avisa o painel na hora, sem precisar recarregar a página. E
+> se essa conexão cair por qualquer motivo, ele continua se atualizando
+> sozinho a cada 20 segundos como reforço, só redesenhando quando algo
+> realmente mudou — senão a tela ficaria piscando a cada ciclo.
 
 **"Como vocês garantem que funciona?"**
-> Temos mais de 220 testes automatizados que rodam com um comando
+> Temos mais de 238 testes automatizados que rodam com um comando
 > (`npm test`), sem precisar de banco instalado. Eles verificam as rotas, o
 > login, as permissões, o CRUD, os cálculos e a geração dos textos —
 > incluindo casos de borda, como um dia atípico que não deve virar

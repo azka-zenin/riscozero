@@ -228,6 +228,17 @@ function ajustarCabecalho() {
     const primeiroNome = usuario.nome.split(' ')[0];
     rotulo.textContent = usuario.papel === 'admin' ? `${primeiroNome} (admin)` : primeiroNome;
   }
+
+  // Mesma lógica de dashboard.js: "Acessos" exige admin no servidor. Sem
+  // isto, um gestor que chegasse aqui por link direto (não pela nav do
+  // painel) veria as opções como links normais e só descobriria a restrição
+  // depois de clicar.
+  if (usuario.papel === 'admin') {
+    ['link-usuarios', 'link-acessos'].forEach((id) => {
+      const link = document.getElementById(id);
+      if (link) link.style.display = '';
+    });
+  }
 }
 
 document.getElementById('botao-sair').addEventListener('click', async () => {
