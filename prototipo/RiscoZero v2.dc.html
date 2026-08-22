@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+
+<helmet>
+  <meta name="design_doc_mode" content="prototype">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    @keyframes rz-entra { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+    @keyframes rz-fio { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+    @keyframes rz-desenha { from { stroke-dashoffset: 2400; } to { stroke-dashoffset: 0; } }
+    @keyframes rz-pulsa { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+    @keyframes rz-sobe { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+    @keyframes rz-revela { from { opacity: 0; transform: translateY(8px); filter: blur(3px); } to { opacity: 1; transform: none; filter: blur(0); } }
+    @keyframes rz-abre { from { opacity: 0; clip-path: inset(0 100% 0 0); } to { opacity: 1; clip-path: inset(0 0 0 0); } }
+    body { margin: 0; background: #14110E; color: #B8AFA2; font-family: 'Manrope', system-ui, sans-serif; font-size: 15px; line-height: 1.65; letter-spacing: 0.004em; -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility; font-optical-sizing: auto; }
+    p { text-wrap: pretty; }
+    h1, h2 { font-kerning: normal; }
+    * { box-sizing: border-box; }
+    ::selection { background: #E8DCC8; color: #14110E; }
+    a { color: #E8DCC8; text-decoration: none; }
+    a:hover { color: #FFFFFF; }
+    ::placeholder { color: #6A6255; }
+    [style*="JetBrains Mono"] { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; }
+    input, textarea, select, button { font-family: inherit; }
+    input:focus-visible, textarea:focus-visible, select:focus-visible, button:focus-visible { outline: 1px solid #E8DCC8; outline-offset: 2px; }
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-thumb { background: #302A24; }
+    ::-webkit-scrollbar-track { background: #14110E; }
+  </style>
+</helmet>
+
+<div style="min-height:100vh; background:#14110E;">
+
+<sc-if value="{{ isForm }}" hint-placeholder-val="{{ true }}">
+<div style="min-height:100vh; display:flex; flex-direction:column; animation:rz-entra .5s cubic-bezier(.16,1,.3,1) backwards;">
+  <header style="border-bottom:1px solid #302A24; padding:0 40px; display:flex; align-items:center; justify-content:space-between; gap:32px; position:sticky; top:0; background:#14110E; z-index:20;">
+    <div style="display:flex; align-items:baseline; gap:14px; padding:20px 0;">
+      <span style="font-family:'Instrument Serif',serif; font-size:22px; color:#F4EFE6; letter-spacing:-0.01em;">RiscoZero</span>
+      <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:#6A6255;">Monitor psicossocial</span>
+    </div>
+    <nav>
+      <a href="#" onClick="{{ irLogin }}" style="font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:0.18em; text-transform:uppercase; color:#857C70; padding:8px 0; border-bottom:1px solid transparent;" style-hover="color:#F4EFE6;border-bottom-color:#E8DCC8;">Painel de gestão</a>
+    </nav>
+  </header>
+
+  <div style="position:sticky; top:61px; z-index:19; background:#14110E;">
+    <div style="height:1px; background:#302A24;">
+      <div style="height:1px; background:#E8DCC8; transition:width .6s cubic-bezier(.16,1,.3,1); width:{{ progresso }}%;"></div>
+    </div>
+  </div>
+
+  <main style="flex:1; width:100%; max-width:1180px; margin:0 auto; padding:0 40px 120px; display:grid; grid-template-columns:minmax(240px,340px) 1fr; gap:80px; align-items:start;">
+    <div style="position:sticky; top:120px; padding-top:80px;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:#6A6255; margin-bottom:24px;">Autoavaliação diária</div>
+      <h1 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:56px; line-height:1.02; letter-spacing:-0.02em; color:#F4EFE6; margin:0 0 24px;">Como foi<br>o seu dia?</h1>
+      <p style="margin:0 0 32px; font-size:14.5px; line-height:1.75; color:#8F8677; max-width:34ch;">Quatro perguntas, menos de um minuto. As respostas são lidas em conjunto, por setor — ninguém é identificado individualmente.</p>
+      <div style="display:flex; align-items:center; gap:12px; font-family:'JetBrains Mono',monospace; font-size:11px; color:#6A6255; letter-spacing:0.1em;">
+        <span style="color:#E8DCC8;">{{ respondidasLabel }}</span>
+        <span style="flex:1; height:1px; background:#302A24;"></span>
+        <span>04</span>
+      </div>
+    </div>
+
+    <div style="padding-top:80px;">
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:1px; background:#302A24; border:1px solid #302A24; margin-bottom:64px;">
+        <div style="background:#14110E; padding:24px;">
+          <label style="display:block; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:#6A6255; margin-bottom:12px;">Setor</label>
+          <select value="{{ respostas.setor }}" onChange="{{ mudarSetor }}" style="width:100%; background:transparent; border:none; border-bottom:1px solid #453D34; color:#F4EFE6; font-size:16px; padding:6px 0; appearance:none; cursor:pointer;">
+            <option value="" disabled="">— selecione —</option>
+            <option value="Producao">Produção</option>
+            <option value="Manutencao">Manutenção</option>
+            <option value="Qualidade">Qualidade</option>
+            <option value="Logistica">Logística</option>
+            <option value="TI">TI / Automação</option>
+            <option value="Administrativo">Administrativo</option>
+          </select>
+        </div>
+        <div style="background:#14110E; padding:24px;">
+          <label style="display:block; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:#6A6255; margin-bottom:12px;">Turno</label>
+          <select value="{{ respostas.turno }}" onChange="{{ mudarTurno }}" style="width:100%; background:transparent; border:none; border-bottom:1px solid #453D34; color:#F4EFE6; font-size:16px; padding:6px 0; appearance:none; cursor:pointer;">
+            <option value="" disabled="">— selecione —</option>
+            <option value="Manha">Manhã</option>
+            <option value="Tarde">Tarde</option>
+            <option value="Noite">Noite</option>
+          </select>
+        </div>
+      </div>
+
+      <sc-for list="{{ perguntas }}" as="q" hint-placeholder-count="4">
+        <div style="border-top:1px solid #302A24; padding:40px 0;">
+          <div style="display:flex; align-items:baseline; gap:20px; margin-bottom:8px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#6A6255; letter-spacing:0.1em;">{{ q.numero }}</span>
+            <h2 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:30px; line-height:1.15; letter-spacing:-0.01em; color:#F4EFE6; margin:0;">{{ q.titulo }}</h2>
+          </div>
+          <p style="margin:0 0 28px 31px; font-size:14px; color:#857C70; max-width:52ch;">{{ q.ajuda }}</p>
+          <div style="margin-left:31px;">
+            <div style="display:flex; gap:1px; background:#302A24; border:1px solid #302A24;">
+              <sc-for list="{{ q.opcoes }}" as="opt" hint-placeholder-count="5">
+                <button type="button" onClick="{{ opt.selecionar }}" style="{{ opt.style }}" style-hover="background:#221D19;color:#F4EFE6;">{{ opt.value }}</button>
+              </sc-for>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-top:10px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:#6A6255;">
+              <span>{{ q.min }}</span><span>{{ q.max }}</span>
+            </div>
+          </div>
+        </div>
+      </sc-for>
+
+      <div style="border-top:1px solid #302A24; padding:40px 0;">
+        <div style="display:flex; align-items:baseline; gap:20px; margin-bottom:20px;">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#6A6255; letter-spacing:0.1em;">05</span>
+          <h2 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:30px; line-height:1.15; color:#F4EFE6; margin:0;">Quer contar mais alguma coisa? <span style="font-style:italic; color:#6A6255; font-size:22px;">opcional</span></h2>
+        </div>
+        <textarea value="{{ respostas.comentario }}" onChange="{{ mudarComentario }}" rows="3" maxlength="500" placeholder="Algo específico que atrapalhou ou ajudou seu dia…" style="width:100%; margin-left:31px; max-width:calc(100% - 31px); background:#1B1714; border:1px solid #302A24; color:#F4EFE6; padding:16px; font-size:15px; line-height:1.6; resize:vertical;"></textarea>
+      </div>
+
+      <div style="border-top:1px solid #302A24; padding-top:40px; display:flex; align-items:center; gap:24px; flex-wrap:wrap;">
+        <button type="button" onClick="{{ enviar }}" style="background:#E8DCC8; color:#14110E; border:1px solid #E8DCC8; padding:18px 40px; font-family:'JetBrains Mono',monospace; font-size:11px; font-weight:500; letter-spacing:0.2em; text-transform:uppercase; cursor:pointer; transition:background .18s, color .18s;" style-hover="background:#FFFFFF;border-color:#FFFFFF;">Enviar resposta</button>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:0.14em; text-transform:uppercase; color:#6A6255;">Anônimo · sem identificação individual</span>
+      </div>
+    </div>
+  </main>
+</div>
+</sc-if>
+
+<sc-if value="{{ isSucesso }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh; display:flex; flex-direction:column;">
+  <header style="border-bottom:1px solid #302A24; padding:20px 40px; display:flex; align-items:baseline; gap:14px;">
+    <span style="font-family:'Instrument Serif',serif; font-size:22px; color:#F4EFE6;">RiscoZero</span>
+    <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:#6A6255;">Monitor psicossocial</span>
+  </header>
+  <main style="flex:1; display:flex; align-items:center; justify-content:center; padding:80px 40px;">
+    <div style="max-width:560px; width:100%; animation:rz-entra .6s cubic-bezier(.16,1,.3,1) backwards;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:#6A6255; margin-bottom:28px;">Registro concluído</div>
+      <h1 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:60px; line-height:1.02; letter-spacing:-0.02em; color:#F4EFE6; margin:0 0 32px;">Resposta<br>registrada.</h1>
+      <div style="border-top:1px solid #302A24; padding-top:28px; margin-bottom:32px;">
+        <div style="display:flex; justify-content:space-between; align-items:baseline; margin-bottom:14px;">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:#6A6255;">Sua leitura de hoje</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:13px; color:{{ sucessoCor }};">{{ sucessoIndice }} / 5,0 · {{ sucessoRotulo }}</span>
+        </div>
+        <div style="position:relative; height:2px; background:#302A24;">
+          <div style="position:absolute; top:0; bottom:0; left:0; background:{{ sucessoCor }}; width:{{ sucessoLargura }}; transition:width 1.2s cubic-bezier(.16,1,.3,1);"></div>
+        </div>
+      </div>
+      <p style="margin:0 0 40px; font-size:15px; line-height:1.75; color:#8F8677;">Sua resposta entra na análise do seu setor e ajuda a identificar o que precisa mudar. Ela não é lida isoladamente nem ligada ao seu nome.</p>
+      <button type="button" onClick="{{ novaResposta }}" style="background:transparent; color:#E8DCC8; border:1px solid #453D34; padding:16px 32px; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.18em; text-transform:uppercase; cursor:pointer;" style-hover="border-color:#E8DCC8;color:#FFFFFF;">Enviar outra resposta</button>
+    </div>
+  </main>
+</div>
+</sc-if>
+
+<sc-if value="{{ isLogin }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh; display:grid; grid-template-columns:1fr 1fr;">
+  <div style="border-right:1px solid #302A24; padding:40px; display:flex; flex-direction:column; justify-content:space-between;">
+    <div style="display:flex; align-items:baseline; gap:14px;">
+      <span style="font-family:'Instrument Serif',serif; font-size:22px; color:#F4EFE6;">RiscoZero</span>
+      <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:#6A6255;">Monitor psicossocial</span>
+    </div>
+    <div style="max-width:40ch;">
+      <h1 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:52px; line-height:1.05; letter-spacing:-0.02em; color:#F4EFE6; margin:0 0 24px;">A indústria mede tudo, <span style="font-style:italic;">menos</span> quem opera tudo.</h1>
+      <p style="margin:0; font-size:14.5px; line-height:1.75; color:#8F8677;">Respostas sobre saúde mental são informação sensível. O painel é separado e protegido; o formulário do trabalhador continua aberto a todos.</p>
+    </div>
+    <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#4F483E;">Mostra Técnica 2026 · CEEP-PG · Equipe 1</div>
+  </div>
+  <div style="display:flex; align-items:center; justify-content:center; padding:40px;">
+    <div style="width:100%; max-width:360px; animation:rz-entra .5s cubic-bezier(.16,1,.3,1) backwards;">
+      <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:#6A6255; margin-bottom:20px;">Acesso restrito</div>
+      <h2 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:34px; line-height:1.1; color:#F4EFE6; margin:0 0 40px;">Painel de gestão</h2>
+      <div style="margin-bottom:28px;">
+        <label style="display:block; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:#6A6255; margin-bottom:10px;">E-mail</label>
+        <input type="email" value="{{ emailLogin }}" onChange="{{ mudarEmail }}" placeholder="ana.ferreira@empresa.com" style="width:100%; background:transparent; border:none; border-bottom:1px solid #453D34; color:#F4EFE6; font-size:16px; padding:8px 0;"></input>
+      </div>
+      <div style="margin-bottom:40px;">
+        <label style="display:block; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:#6A6255; margin-bottom:10px;">Senha</label>
+        <input type="password" value="{{ senhaLogin }}" onChange="{{ mudarSenha }}" placeholder="••••••••" style="width:100%; background:transparent; border:none; border-bottom:1px solid #453D34; color:#F4EFE6; font-size:16px; padding:8px 0;"></input>
+      </div>
+      <button type="button" onClick="{{ entrar }}" style="width:100%; background:#E8DCC8; color:#14110E; border:1px solid #E8DCC8; padding:16px; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.2em; text-transform:uppercase; cursor:pointer;" style-hover="background:#FFFFFF;border-color:#FFFFFF;">Entrar</button>
+      <div style="margin-top:24px; display:flex; justify-content:space-between; align-items:center;">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:#4F483E;">Senhas em hash bcrypt</span>
+        <a href="#" onClick="{{ irForm }}" style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:#857C70;" style-hover="color:#F4EFE6;">Voltar ao formulário</a>
+      </div>
+    </div>
+  </div>
+</div>
+</sc-if>
+
+<sc-if value="{{ isDashboard }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh; display:flex; flex-direction:column; animation:rz-entra .5s cubic-bezier(.16,1,.3,1) backwards;">
+  <header style="border-bottom:1px solid #302A24; padding:0 40px; display:flex; align-items:center; justify-content:space-between; gap:32px; position:sticky; top:0; background:#14110E; z-index:20; flex-wrap:wrap;">
+    <div style="display:flex; align-items:baseline; gap:14px; padding:18px 0;">
+      <span style="font-family:'Instrument Serif',serif; font-size:22px; color:#F4EFE6;">RiscoZero</span>
+      <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:#6A6255;">Monitor psicossocial</span>
+    </div>
+    <nav style="display:flex; gap:28px;">
+      <a href="#" onClick="{{ irForm }}" style="font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:0.16em; text-transform:uppercase; color:#857C70; padding:6px 0; border-bottom:1px solid transparent;" style-hover="color:#F4EFE6;">Formulário</a>
+      <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:0.16em; text-transform:uppercase; color:#F4EFE6; padding:6px 0; border-bottom:1px solid #E8DCC8;">Painel</span>
+      <sc-if value="{{ ehAdmin }}" hint-placeholder-val="{{ true }}">
+        <a href="#" onClick="{{ irUsuarios }}" style="font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:0.16em; text-transform:uppercase; color:#857C70; padding:6px 0;" style-hover="color:#F4EFE6;">Contas</a>
+        <a href="#" onClick="{{ irAcessos }}" style="font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:0.16em; text-transform:uppercase; color:#857C70; padding:6px 0;" style-hover="color:#F4EFE6;">Acessos</a>
+      </sc-if>
+    </nav>
+    <div style="display:flex; align-items:center; gap:20px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase;">
+      <span style="display:inline-flex; align-items:center; gap:8px; color:#6A6255;">
+        <span style="width:5px; height:5px; background:#8FC49B; animation:rz-pulsa 2.4s ease-in-out infinite;"></span>ao vivo
+      </span>
+      <span style="color:#857C70;">{{ nomeUsuario }}</span>
+      <button type="button" onClick="{{ sair }}" style="background:none; border:none; color:#6A6255; cursor:pointer; font-family:inherit; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; padding:0;" style-hover="color:#D9705E;">Sair</button>
+    </div>
+  </header>
+
+  <main style="flex:1; width:100%; max-width:1440px; margin:0 auto; padding:0 40px 120px;">
+
+    <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:32px; padding:56px 0 28px; flex-wrap:wrap;">
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:#6A6255; margin-bottom:14px;">Painel de bem-estar · {{ periodoLabel }}</div>
+        <h1 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:44px; line-height:1.05; letter-spacing:-0.02em; color:#F4EFE6; margin:0; animation:rz-revela .9s cubic-bezier(.16,1,.3,1) backwards;">{{ geralTitulo }}</h1>
+      </div>
+      <div style="display:flex; align-items:center; gap:20px; flex-wrap:wrap;">
+        <div style="display:flex; border:1px solid #302A24;">
+          <button type="button" onClick="{{ mudarPeriodo7 }}" style="{{ periodo7Style }}">7 dias</button>
+          <button type="button" onClick="{{ mudarPeriodo30 }}" style="{{ periodo30Style }}">30 dias</button>
+          <button type="button" onClick="{{ mudarPeriodoTudo }}" style="{{ periodoTudoStyle }}">Tudo</button>
+        </div>
+        <button type="button" onClick="{{ exportarCSV }}" style="background:transparent; border:1px solid #302A24; color:#857C70; padding:9px 18px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; cursor:pointer;" style-hover="border-color:#E8DCC8;color:#F4EFE6;">CSV</button>
+        <button type="button" onClick="{{ exportarPDF }}" style="background:transparent; border:1px solid #302A24; color:#857C70; padding:9px 18px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; cursor:pointer;" style-hover="border-color:#E8DCC8;color:#F4EFE6;">PDF</button>
+      </div>
+    </div>
+
+    <sc-if value="{{ alertas.length }}" hint-placeholder-count="0">
+      <div style="border-top:1px solid #302A24; border-bottom:1px solid #302A24; margin-bottom:56px;">
+        <sc-for list="{{ alertas }}" as="a" hint-placeholder-count="2">
+          <div style="{{ a.anim }} display:flex; align-items:baseline; gap:20px; padding:16px 0; border-bottom:1px solid #221D19; transition:background .25s;" style-hover="background:#1B1714;">
+            <span style="width:3px; align-self:stretch; background:{{ a.cor }}; flex-shrink:0;"></span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:{{ a.cor }}; width:96px; flex-shrink:0;">{{ a.rotulo }}</span>
+            <span style="font-size:14.5px; color:#C9C0B2;">{{ a.mensagem }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <div style="display:grid; grid-template-columns:minmax(320px,1fr) 1.2fr; gap:64px; align-items:start; padding-bottom:64px;">
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:#6A6255; margin-bottom:20px;">Índice de risco geral</div>
+        <div style="display:flex; align-items:baseline; gap:16px;">
+          <span style="font-family:'Instrument Serif',serif; font-size:132px; line-height:0.86; letter-spacing:-0.04em; color:{{ geralCor }}; font-variant-numeric:tabular-nums; transition:color .8s ease;">{{ geralIndice }}</span>
+          <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:#6A6255; letter-spacing:0.1em;">/ 5,00</span>
+        </div>
+        <div style="margin-top:32px; position:relative; height:2px; background:#302A24;">
+          <div style="position:absolute; top:0; bottom:0; left:0; background:{{ geralCor }}; width:{{ geralLargura }}; transition:width 1.3s cubic-bezier(.16,1,.3,1);"></div>
+          <span style="position:absolute; left:30%; top:-4px; bottom:-4px; width:1px; background:#453D34;"></span>
+          <span style="position:absolute; left:60%; top:-4px; bottom:-4px; width:1px; background:#453D34;"></span>
+        </div>
+        <div style="display:flex; justify-content:space-between; margin-top:12px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:#6A6255;">
+          <span>1 · baixo</span><span>3 · médio</span><span>5 · alto</span>
+        </div>
+        <div style="display:flex; gap:32px; margin-top:36px; padding-top:24px; border-top:1px solid #302A24; font-family:'JetBrains Mono',monospace; font-size:11px; letter-spacing:0.08em;">
+          <span style="color:#6A6255;">nível <span style="color:{{ geralCor }};">{{ geralRotulo }}</span></span>
+          <span style="color:#6A6255;">tendência <span style="color:#C9C0B2;">{{ tendenciaLabel }}</span></span>
+          <span style="color:#6A6255;">respostas <span style="color:#C9C0B2;">{{ totalRespostas }}</span></span>
+        </div>
+      </div>
+      <div style="padding-top:44px;">
+        <p style="margin:0; font-family:'Instrument Serif',serif; font-size:23px; line-height:1.5; color:#D8D0C2; animation:rz-revela 1s cubic-bezier(.16,1,.3,1) 260ms backwards;">{{ geralTexto }}</p>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:1px; background:#302A24; border-top:1px solid #302A24; border-bottom:1px solid #302A24; margin-bottom:80px;">
+      <sc-for list="{{ indicadores }}" as="c" hint-placeholder-count="4">
+        <div style="{{ c.anim }} background:#14110E; padding:28px 24px; transition:background .3s;" style-hover="background:#1B1714;">
+          <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:#6A6255; margin-bottom:18px;">{{ c.nome }}</div>
+          <div style="font-family:'Instrument Serif',serif; font-size:46px; line-height:1; color:{{ c.cor }}; font-variant-numeric:tabular-nums;">{{ c.valor }}</div>
+          <div style="margin-top:20px; height:1px; background:#302A24; position:relative;">
+            <div style="position:absolute; top:0; bottom:0; left:0; background:{{ c.cor }}; width:{{ c.largura }}; transition:width 1.1s cubic-bezier(.16,1,.3,1);"></div>
+          </div>
+          <div style="margin-top:10px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.1em; color:#5A5348;">{{ c.nota }}</div>
+        </div>
+      </sc-for>
+    </div>
+
+    <section style="margin-bottom:80px;">
+      <div style="display:flex; align-items:baseline; justify-content:space-between; border-bottom:1px solid #302A24; padding-bottom:14px; margin-bottom:32px;">
+        <h2 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:30px; color:#F4EFE6; margin:0;">Evolução do índice</h2>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6A6255;">Média diária · {{ periodoLabel }}</span>
+      </div>
+      <svg viewBox="0 0 1000 220" preserveAspectRatio="none" style="width:100%; height:260px; overflow:visible;">
+        <line x1="0" y1="0.5" x2="1000" y2="0.5" stroke="#302A24" stroke-width="1" stroke-dasharray="2 6"></line>
+        <line x1="0" y1="110" x2="1000" y2="110" stroke="#302A24" stroke-width="1" stroke-dasharray="2 6"></line>
+        <line x1="0" y1="219.5" x2="1000" y2="219.5" stroke="#302A24" stroke-width="1"></line>
+        <path d="{{ linhaArea }}" fill="#E8DCC8" opacity="0.05" stroke="none"></path>
+        <path d="{{ linha }}" fill="none" stroke="#E8DCC8" stroke-width="1.5" stroke-linejoin="round" stroke-dasharray="2400" style="animation:rz-desenha 1.8s cubic-bezier(.16,1,.3,1) forwards;"></path>
+      </svg>
+      <div style="display:flex; justify-content:space-between; margin-top:12px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:#5A5348;">
+        <span>início do período</span><span>hoje</span>
+      </div>
+    </section>
+
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:64px; margin-bottom:80px;">
+      <section>
+        <h2 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:30px; color:#F4EFE6; margin:0 0 24px; border-bottom:1px solid #302A24; padding-bottom:14px;">Risco por setor</h2>
+        <sc-for list="{{ barrasSetor }}" as="b" hint-placeholder-count="6">
+          <div style="padding:14px 0; border-bottom:1px solid #221D19;">
+            <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:10px;">
+              <span style="font-size:14.5px; color:#D8D0C2;">{{ b.nome }}</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:{{ b.cor }};">{{ b.valor }}</span>
+            </div>
+            <div style="height:2px; background:#221D19; position:relative;">
+              <div style="{{ b.barraAtraso }} position:absolute; top:0; bottom:0; left:0; background:{{ b.cor }}; width:{{ b.largura }};"></div>
+            </div>
+            <div style="margin-top:8px; display:flex; gap:16px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:#5A5348;">
+              <span style="color:{{ b.cor }};">{{ b.rotulo }}</span><span>{{ b.total }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </section>
+      <section>
+        <h2 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:30px; color:#F4EFE6; margin:0 0 24px; border-bottom:1px solid #302A24; padding-bottom:14px;">Risco por turno</h2>
+        <sc-for list="{{ barrasTurno }}" as="b" hint-placeholder-count="3">
+          <div style="padding:14px 0; border-bottom:1px solid #221D19;">
+            <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:10px;">
+              <span style="font-size:14.5px; color:#D8D0C2;">{{ b.nome }}</span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:12px; color:{{ b.cor }};">{{ b.valor }}</span>
+            </div>
+            <div style="height:2px; background:#221D19; position:relative;">
+              <div style="{{ b.barraAtraso }} position:absolute; top:0; bottom:0; left:0; background:{{ b.cor }}; width:{{ b.largura }};"></div>
+            </div>
+            <div style="margin-top:8px; display:flex; gap:16px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:#5A5348;">
+              <span style="color:{{ b.cor }};">{{ b.rotulo }}</span><span>{{ b.total }}</span>
+            </div>
+          </div>
+        </sc-for>
+        <p style="margin:24px 0 0; font-size:14px; line-height:1.7; color:#8F8677;">O mesmo setor pode estar tranquilo de manhã e em crise à noite — separar por turno revela o que a média do dia esconde.</p>
+      </section>
+    </div>
+
+    <section style="margin-bottom:80px;">
+      <h2 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:30px; color:#F4EFE6; margin:0 0 8px; border-bottom:1px solid #302A24; padding-bottom:14px;">Leitura automática por setor</h2>
+      <p style="margin:16px 0 32px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#5A5348;">Gerada por regras explícitas — sem modelo de linguagem, critério auditável</p>
+      <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1px; background:#302A24; border:1px solid #302A24;">
+        <sc-for list="{{ insights }}" as="it" hint-placeholder-count="4">
+          <div style="{{ it.anim }} background:#14110E; padding:28px 24px; transition:background .3s;" style-hover="background:#1B1714;">
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:14px;">
+              <span style="width:6px; height:6px; background:{{ it.cor }};"></span>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:#C9C0B2;">{{ it.nome }}</span>
+            </div>
+            <p style="margin:0; font-size:14px; line-height:1.75; color:#8F8677;">{{ it.texto }}</p>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+
+    <section style="margin-bottom:80px;">
+      <h2 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:30px; color:#F4EFE6; margin:0 0 32px; border-bottom:1px solid #302A24; padding-bottom:14px;">Recomendações</h2>
+      <sc-for list="{{ recomendacoes }}" as="r" hint-placeholder-count="2">
+        <div style="{{ r.anim }} border-bottom:1px solid #302A24; padding:32px 0;">
+          <div style="display:flex; align-items:baseline; gap:20px; flex-wrap:wrap; margin-bottom:24px;">
+            <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:#14110E; background:{{ r.cor }}; padding:5px 12px;">{{ r.urgencia }}</span>
+            <span style="font-family:'Instrument Serif',serif; font-size:28px; color:#F4EFE6;">{{ r.nome }}</span>
+            <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#6A6255; margin-left:auto;">índice {{ r.indice }} · {{ r.descricao }}</span>
+          </div>
+          <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:32px;">
+            <sc-for list="{{ r.blocos }}" as="b" hint-placeholder-count="1">
+              <div>
+                <div style="font-size:15px; color:#D8D0C2; margin-bottom:6px;">{{ b.titulo }}</div>
+                <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:#5A5348; margin-bottom:14px;">{{ b.media }}</div>
+                <ul style="margin:0; padding-left:18px; font-size:14px; line-height:1.75; color:#8F8677;">
+                  <sc-for list="{{ b.acoes }}" as="acao" hint-placeholder-count="3">
+                    <li style="margin-bottom:8px;">{{ acao }}</li>
+                  </sc-for>
+                </ul>
+              </div>
+            </sc-for>
+          </div>
+          <div style="margin-top:24px;">
+            <sc-if value="{{ r.acaoTomada }}" hint-placeholder-val="{{ false }}">
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:#8FC49B;">{{ r.acaoTexto }}</span>
+            </sc-if>
+            <sc-if value="{{ !r.acaoTomada }}" hint-placeholder-val="{{ true }}">
+              <button type="button" onClick="{{ r.marcar }}" style="background:transparent; border:1px solid #453D34; color:#C9C0B2; padding:10px 20px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; cursor:pointer;" style-hover="border-color:#E8DCC8;color:#FFFFFF;">Marcar ação tomada</button>
+            </sc-if>
+          </div>
+        </div>
+      </sc-for>
+    </section>
+
+    <section>
+      <div style="display:flex; align-items:baseline; justify-content:space-between; border-bottom:1px solid #302A24; padding-bottom:14px; margin-bottom:8px;">
+        <h2 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:30px; color:#F4EFE6; margin:0;">Comentários</h2>
+        <sc-if value="{{ temOcultos }}" hint-placeholder-val="{{ false }}">
+          <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:#6A6255;">{{ ocultos }} ocultos · proteção de anonimato</span>
+        </sc-if>
+      </div>
+      <div style="max-height:520px; overflow-y:auto;">
+        <sc-for list="{{ comentarios }}" as="c" hint-placeholder-count="4">
+          <div style="{{ c.anim }} display:grid; grid-template-columns:180px 1fr; gap:24px; padding:20px 0; border-bottom:1px solid #221D19; transition:background .25s;" style-hover="background:#1B1714;">
+            <div>
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:4px;">
+                <span style="width:6px; height:6px; background:{{ c.cor }};"></span>
+                <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; color:#C9C0B2;">{{ c.setor }}</span>
+              </div>
+              <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:#5A5348; padding-left:16px;">Turno da {{ c.turno }}</span>
+            </div>
+            <p style="margin:0; font-family:'Instrument Serif',serif; font-size:19px; line-height:1.55; color:#D8D0C2;">{{ c.texto }}</p>
+          </div>
+        </sc-for>
+      </div>
+    </section>
+  </main>
+
+  <footer style="border-top:1px solid #302A24; padding:24px 40px; display:flex; justify-content:space-between; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#4F483E; flex-wrap:wrap; gap:16px;">
+    <span>RiscoZero · Mostra Técnica 2026</span><span>CEEP-PG · Equipe 1</span>
+  </footer>
+
+  <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+    <div style="position:fixed; bottom:32px; left:50%; transform:translateX(-50%); background:#E8DCC8; color:#14110E; padding:14px 28px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; animation:rz-entra .3s cubic-bezier(.16,1,.3,1);">{{ toast }}</div>
+  </sc-if>
+</div>
+</sc-if>
+<sc-if value="{{ isUsuarios }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh; display:flex; flex-direction:column; animation:rz-entra .4s cubic-bezier(.16,1,.3,1) backwards;">
+  <header style="border-bottom:1px solid #302A24; padding:0 40px; display:flex; align-items:center; justify-content:space-between; gap:32px; flex-wrap:wrap;">
+    <div style="display:flex; align-items:baseline; gap:14px; padding:18px 0;">
+      <span style="font-family:'Instrument Serif',serif; font-size:22px; color:#F4EFE6;">RiscoZero</span>
+      <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:#6A6255;">Monitor psicossocial</span>
+    </div>
+    <nav style="display:flex; gap:28px;">
+      <a href="#" onClick="{{ irForm }}" style="font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:0.16em; text-transform:uppercase; color:#857C70; padding:6px 0;" style-hover="color:#F4EFE6;">Formulário</a>
+      <a href="#" onClick="{{ irPainel }}" style="font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:0.16em; text-transform:uppercase; color:#857C70; padding:6px 0;" style-hover="color:#F4EFE6;">Painel</a>
+      <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:0.16em; text-transform:uppercase; color:#F4EFE6; padding:6px 0; border-bottom:1px solid #E8DCC8;">Contas</span>
+      <a href="#" onClick="{{ irAcessos }}" style="font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:0.16em; text-transform:uppercase; color:#857C70; padding:6px 0;" style-hover="color:#F4EFE6;">Acessos</a>
+    </nav>
+    <div style="display:flex; align-items:center; gap:20px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase;">
+      <span style="color:#857C70;">{{ nomeUsuario }}</span>
+      <button type="button" onClick="{{ sair }}" style="background:none; border:none; color:#6A6255; cursor:pointer; font-family:inherit; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; padding:0;" style-hover="color:#D9705E;">Sair</button>
+    </div>
+  </header>
+
+  <main style="flex:1; width:100%; max-width:1180px; margin:0 auto; padding:56px 40px 120px;">
+    <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:32px; flex-wrap:wrap; margin-bottom:48px;">
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:#6A6255; margin-bottom:14px;">Administração</div>
+        <h1 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:44px; line-height:1.05; color:#F4EFE6; margin:0 0 12px;">Contas de acesso</h1>
+        <p style="margin:0; font-size:14.5px; color:#8F8677; max-width:56ch;">Quem pode entrar no painel. O formulário do trabalhador continua aberto a todos — só a leitura dos dados é restrita.</p>
+      </div>
+      <div style="display:flex; gap:12px;">
+        <button type="button" onClick="{{ abrirTrocarSenha }}" style="background:transparent; border:1px solid #302A24; color:#857C70; padding:12px 20px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; cursor:pointer;" style-hover="border-color:#E8DCC8;color:#F4EFE6;">Trocar minha senha</button>
+        <sc-if value="{{ ehAdmin }}" hint-placeholder-val="{{ true }}">
+          <button type="button" onClick="{{ abrirNovaConta }}" style="background:#E8DCC8; border:1px solid #E8DCC8; color:#14110E; padding:12px 20px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; cursor:pointer;" style-hover="background:#FFFFFF;border-color:#FFFFFF;">Nova conta</button>
+        </sc-if>
+      </div>
+    </div>
+
+    <sc-if value="{{ painelSenha }}" hint-placeholder-val="{{ false }}">
+      <div style="border:1px solid #302A24; padding:32px; margin-bottom:32px; background:#1B1714;">
+        <h2 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:26px; color:#F4EFE6; margin:0 0 8px;">Trocar minha senha</h2>
+        <p style="margin:0 0 28px; font-size:14px; color:#8F8677;">Você precisa informar a senha atual para confirmar que é você.</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:24px; max-width:640px; margin-bottom:28px;">
+          <div>
+            <label style="display:block; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6A6255; margin-bottom:10px;">Senha atual</label>
+            <input type="password" placeholder="••••••••" style="width:100%; background:transparent; border:none; border-bottom:1px solid #453D34; color:#F4EFE6; font-size:15px; padding:8px 0;"></input>
+          </div>
+          <div>
+            <label style="display:block; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6A6255; margin-bottom:10px;">Nova senha</label>
+            <input type="password" placeholder="mínimo 6 caracteres" style="width:100%; background:transparent; border:none; border-bottom:1px solid #453D34; color:#F4EFE6; font-size:15px; padding:8px 0;"></input>
+          </div>
+        </div>
+        <div style="display:flex; gap:12px;">
+          <button type="button" onClick="{{ fecharTrocarSenha }}" style="background:#E8DCC8; border:1px solid #E8DCC8; color:#14110E; padding:12px 24px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; cursor:pointer;" style-hover="background:#FFFFFF;">Trocar senha</button>
+          <button type="button" onClick="{{ fecharTrocarSenha }}" style="background:transparent; border:1px solid #302A24; color:#857C70; padding:12px 24px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; cursor:pointer;" style-hover="border-color:#E8DCC8;color:#F4EFE6;">Cancelar</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ painelNovaConta }}" hint-placeholder-val="{{ false }}">
+      <div style="border:1px solid #302A24; padding:32px; margin-bottom:32px; background:#1B1714;">
+        <h2 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:26px; color:#F4EFE6; margin:0 0 8px;">Nova conta</h2>
+        <p style="margin:0 0 28px; font-size:14px; color:#8F8677;">A pessoa entra no painel com o e-mail e a senha definidos aqui. Gestor lê os dados; administrador também gerencia contas.</p>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:24px; margin-bottom:28px;">
+          <div>
+            <label style="display:block; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6A6255; margin-bottom:10px;">Nome</label>
+            <input type="text" placeholder="Nome completo" style="width:100%; background:transparent; border:none; border-bottom:1px solid #453D34; color:#F4EFE6; font-size:15px; padding:8px 0;"></input>
+          </div>
+          <div>
+            <label style="display:block; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6A6255; margin-bottom:10px;">E-mail</label>
+            <input type="email" placeholder="nome@empresa.com" style="width:100%; background:transparent; border:none; border-bottom:1px solid #453D34; color:#F4EFE6; font-size:15px; padding:8px 0;"></input>
+          </div>
+          <div>
+            <label style="display:block; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#6A6255; margin-bottom:10px;">Permissão</label>
+            <select style="width:100%; background:transparent; border:none; border-bottom:1px solid #453D34; color:#F4EFE6; font-size:15px; padding:8px 0; appearance:none; cursor:pointer;">
+              <option>Gestor</option><option>Administrador</option>
+            </select>
+          </div>
+        </div>
+        <div style="display:flex; gap:12px;">
+          <button type="button" onClick="{{ criarContaDemo }}" style="background:#E8DCC8; border:1px solid #E8DCC8; color:#14110E; padding:12px 24px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; cursor:pointer;" style-hover="background:#FFFFFF;">Criar conta</button>
+          <button type="button" onClick="{{ fecharNovaConta }}" style="background:transparent; border:1px solid #302A24; color:#857C70; padding:12px 24px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; cursor:pointer;" style-hover="border-color:#E8DCC8;color:#F4EFE6;">Cancelar</button>
+        </div>
+      </div>
+    </sc-if>
+
+    <div style="display:grid; grid-template-columns:1.4fr 1fr 0.8fr 0.8fr auto; gap:24px; padding:0 0 14px; border-bottom:1px solid #453D34; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#5A5348;">
+      <span>Pessoa</span><span>E-mail</span><span>Permissão</span><span>Situação</span><span></span>
+    </div>
+    <sc-for list="{{ usuarios }}" as="u" hint-placeholder-count="4">
+      <div style="{{ u.linhaStyle }}{{ u.anim }} display:grid; grid-template-columns:1.4fr 1fr 0.8fr 0.8fr auto; gap:24px; align-items:center; padding:20px 0; border-bottom:1px solid #221D19; transition:background .25s;" style-hover="background:#1B1714;">
+        <div>
+          <div style="font-size:15px; color:#F4EFE6;">{{ u.nome }}</div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.12em; text-transform:uppercase; color:#5A5348; margin-top:4px;">desde {{ u.desde }}</div>
+        </div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:11.5px; color:#857C70; overflow-wrap:anywhere;">{{ u.email }}</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:{{ u.seloCor }};">{{ u.selo }}</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:{{ u.situacaoCor }};">{{ u.situacao }}</div>
+        <div style="display:flex; gap:8px; justify-content:flex-end;">
+          <button type="button" onClick="{{ u.alternar }}" style="background:transparent; border:1px solid #302A24; color:#857C70; padding:8px 14px; font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:0.14em; text-transform:uppercase; cursor:pointer;" style-hover="border-color:#E8DCC8;color:#F4EFE6;">{{ u.botaoLabel }}</button>
+          <sc-if value="{{ u.podeRemover }}" hint-placeholder-val="{{ false }}">
+            <button type="button" onClick="{{ u.excluir }}" style="background:transparent; border:1px solid #302A24; color:#857C70; padding:8px 14px; font-family:'JetBrains Mono',monospace; font-size:9.5px; letter-spacing:0.14em; text-transform:uppercase; cursor:pointer;" style-hover="border-color:#D9705E;color:#D9705E;">Remover</button>
+          </sc-if>
+        </div>
+      </div>
+    </sc-for>
+    <p style="margin:24px 0 0; font-size:13.5px; line-height:1.7; color:#6A6255; max-width:64ch;">O sistema impede que alguém remova a própria conta e protege o último administrador — sem isso ninguém mais conseguiria criar contas.</p>
+  </main>
+</div>
+</sc-if>
+
+<sc-if value="{{ isAcessos }}" hint-placeholder-val="{{ false }}">
+<div style="min-height:100vh; display:flex; flex-direction:column; animation:rz-entra .4s cubic-bezier(.16,1,.3,1) backwards;">
+  <header style="border-bottom:1px solid #302A24; padding:0 40px; display:flex; align-items:center; justify-content:space-between; gap:32px; flex-wrap:wrap;">
+    <div style="display:flex; align-items:baseline; gap:14px; padding:18px 0;">
+      <span style="font-family:'Instrument Serif',serif; font-size:22px; color:#F4EFE6;">RiscoZero</span>
+      <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.18em; text-transform:uppercase; color:#6A6255;">Monitor psicossocial</span>
+    </div>
+    <nav style="display:flex; gap:28px;">
+      <a href="#" onClick="{{ irForm }}" style="font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:0.16em; text-transform:uppercase; color:#857C70; padding:6px 0;" style-hover="color:#F4EFE6;">Formulário</a>
+      <a href="#" onClick="{{ irPainel }}" style="font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:0.16em; text-transform:uppercase; color:#857C70; padding:6px 0;" style-hover="color:#F4EFE6;">Painel</a>
+      <a href="#" onClick="{{ irUsuarios }}" style="font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:0.16em; text-transform:uppercase; color:#857C70; padding:6px 0;" style-hover="color:#F4EFE6;">Contas</a>
+      <span style="font-family:'JetBrains Mono',monospace; font-size:10.5px; letter-spacing:0.16em; text-transform:uppercase; color:#F4EFE6; padding:6px 0; border-bottom:1px solid #E8DCC8;">Acessos</span>
+    </nav>
+    <div style="display:flex; align-items:center; gap:20px; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.14em; text-transform:uppercase;">
+      <span style="color:#857C70;">{{ nomeUsuario }}</span>
+      <button type="button" onClick="{{ sair }}" style="background:none; border:none; color:#6A6255; cursor:pointer; font-family:inherit; font-size:10px; letter-spacing:0.14em; text-transform:uppercase; padding:0;" style-hover="color:#D9705E;">Sair</button>
+    </div>
+  </header>
+
+  <main style="flex:1; width:100%; max-width:1180px; margin:0 auto; padding:56px 40px 120px;">
+    <div style="display:flex; align-items:flex-end; justify-content:space-between; gap:32px; flex-wrap:wrap; margin-bottom:48px;">
+      <div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.2em; text-transform:uppercase; color:#6A6255; margin-bottom:14px;">Auditoria</div>
+        <h1 style="font-family:'Instrument Serif',serif; font-weight:400; font-size:44px; line-height:1.05; color:#F4EFE6; margin:0 0 12px;">Histórico de acessos</h1>
+        <p style="margin:0; font-size:14.5px; color:#8F8677; max-width:56ch;">Quem entrou no painel e quais tentativas falharam — serve para perceber acesso indevido ou alguém tentando adivinhar uma senha.</p>
+      </div>
+      <div style="display:flex; border:1px solid #302A24;">
+        <button type="button" onClick="{{ filtroTodos }}" style="{{ acessoTodosStyle }}">Todos</button>
+        <button type="button" onClick="{{ filtroSucessos }}" style="{{ acessoSucessosStyle }}">Entradas</button>
+        <button type="button" onClick="{{ filtroFalhas }}" style="{{ acessoFalhasStyle }}">Falhas</button>
+      </div>
+    </div>
+
+    <div style="display:grid; grid-template-columns:90px 1.2fr 1.4fr 0.8fr auto; gap:24px; padding:0 0 14px; border-bottom:1px solid #453D34; font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:#5A5348;">
+      <span>Estado</span><span>Pessoa</span><span>Ocorrência</span><span>Origem</span><span>Quando</span>
+    </div>
+    <sc-for list="{{ acessos }}" as="a" hint-placeholder-count="8">
+      <div style="{{ a.anim }} display:grid; grid-template-columns:90px 1.2fr 1.4fr 0.8fr auto; gap:24px; align-items:center; padding:18px 0; border-bottom:1px solid #221D19; transition:background .25s;" style-hover="background:#1B1714;">
+        <span style="font-family:'JetBrains Mono',monospace; font-size:10px; letter-spacing:0.16em; text-transform:uppercase; color:{{ a.cor }};">{{ a.marca }}</span>
+        <div>
+          <div style="font-size:14.5px; color:#D8D0C2;">{{ a.nome }}</div>
+          <div style="font-family:'JetBrains Mono',monospace; font-size:10.5px; color:#5A5348; margin-top:3px; overflow-wrap:anywhere;">{{ a.email }}</div>
+        </div>
+        <span style="font-size:14px; color:#8F8677;">{{ a.detalhe }}</span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#6A6255;">{{ a.ip }}</span>
+        <span style="font-family:'JetBrains Mono',monospace; font-size:11px; color:#857C70; white-space:nowrap;">{{ a.quando }}</span>
+      </div>
+    </sc-for>
+  </main>
+</div>
+</sc-if>
+
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{
+  &quot;$preview&quot;: {&quot;width&quot;: 1280, &quot;height&quot;: 900},
+  &quot;papelUsuario&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;admin&quot;, &quot;options&quot;: [&quot;admin&quot;, &quot;gestor&quot;], &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Conta&quot;},
+  &quot;nomeUsuario&quot;: {&quot;editor&quot;: &quot;text&quot;, &quot;default&quot;: &quot;Ana Ferreira&quot;, &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Conta&quot;},
+  &quot;periodoInicial&quot;: {&quot;editor&quot;: &quot;enum&quot;, &quot;default&quot;: &quot;30&quot;, &quot;options&quot;: [&quot;7&quot;, &quot;30&quot;, &quot;tudo&quot;], &quot;tsType&quot;: &quot;string&quot;, &quot;section&quot;: &quot;Painel&quot;}
+}">
+class Component extends DCLogic {
+  state = {
+    screen: 'form',
+    respostas: { setor: '', turno: '', estresse: null, sono: null, carga_trabalho: null, ambiente_fisico: null, comentario: '' },
+    emailLogin: '', senhaLogin: '', sucesso: null,
+    dados: null, logic: null,
+    periodo: '30', acoesTomadas: {}, toast: null,
+    fracao: 1, alvoIndice: 0,
+    painelNovaConta: false, painelSenha: false,
+    usuarios: [
+      { id: 1, nome: 'Ana Ferreira', email: 'ana.ferreira@riscozero.local', papel: 'admin', ativo: true, voce: true, desde: 'mar 2026' },
+      { id: 2, nome: 'Bruno Castilho', email: 'bruno.castilho@riscozero.local', papel: 'gestor', ativo: true, voce: false, desde: 'abr 2026' },
+      { id: 3, nome: 'Carla Nogueira', email: 'carla.nogueira@riscozero.local', papel: 'gestor', ativo: true, voce: false, desde: 'mai 2026' },
+      { id: 4, nome: 'Diego Sales', email: 'diego.sales@riscozero.local', papel: 'gestor', ativo: false, voce: false, desde: 'fev 2026' },
+    ],
+    acessoTipo: 'todos',
+  };
+
+  ACESSOS_LOG = [
+    { nome: 'Ana Ferreira', email: 'ana.ferreira@riscozero.local', ok: true, quando: 'há 4 min', detalhe: 'Entrou no painel', ip: '10.0.4.21' },
+    { nome: 'Bruno Castilho', email: 'bruno.castilho@riscozero.local', ok: true, quando: 'há 52 min', detalhe: 'Entrou no painel', ip: '10.0.4.38' },
+    { nome: null, email: 'carla.nogueira@riscozero.local', ok: false, quando: 'há 1 h', detalhe: 'Senha incorreta', ip: '10.0.4.52' },
+    { nome: 'Carla Nogueira', email: 'carla.nogueira@riscozero.local', ok: true, quando: 'há 1 h', detalhe: 'Entrou no painel', ip: '10.0.4.52' },
+    { nome: null, email: 'admin@riscozero.local', ok: false, quando: 'há 3 h', detalhe: 'Senha incorreta', ip: '187.44.9.10' },
+    { nome: null, email: 'admin@riscozero.local', ok: false, quando: 'há 3 h', detalhe: 'Senha incorreta · limite por IP aplicado', ip: '187.44.9.10' },
+    { nome: 'Ana Ferreira', email: 'ana.ferreira@riscozero.local', ok: true, quando: 'ontem', detalhe: 'Entrou no painel', ip: '10.0.4.21' },
+    { nome: 'Diego Sales', email: 'diego.sales@riscozero.local', ok: true, quando: 'há 2 d', detalhe: 'Entrou no painel', ip: '10.0.4.60' },
+    { nome: null, email: 'desconhecido@teste.com', ok: false, quando: 'há 3 d', detalhe: 'E-mail não cadastrado', ip: '45.9.120.7' },
+    { nome: 'Bruno Castilho', email: 'bruno.castilho@riscozero.local', ok: true, quando: 'há 4 d', detalhe: 'Entrou no painel', ip: '10.0.4.38' },
+  ];
+
+  PERGUNTAS = [
+    { campo: 'estresse', numero: '01', titulo: 'Nível de estresse hoje', ajuda: 'Quanto de pressão e tensão você sentiu durante o turno.', min: 'Tranquilo', max: 'Muito estressado' },
+    { campo: 'sono', numero: '02', titulo: 'Qualidade do sono na última noite', ajuda: 'Quanto você conseguiu descansar de verdade.', min: 'Dormi muito mal', max: 'Dormi muito bem' },
+    { campo: 'carga_trabalho', numero: '03', titulo: 'Carga de trabalho hoje', ajuda: 'Se a quantidade de tarefas coube no seu turno.', min: 'Tranquila', max: 'Sobrecarregada' },
+    { campo: 'ambiente_fisico', numero: '04', titulo: 'Conforto do ambiente físico', ajuda: 'Ruído, temperatura, iluminação e ergonomia do seu posto.', min: 'Desconfortável', max: 'Confortável' },
+  ];
+
+  COR = { baixo: '#8FC49B', medio: '#D9A94C', alto: '#D9705E', indefinido: '#857C70' };
+
+  async componentDidMount() {
+    const mod = await import('./riscozero-logic.js');
+    this.setState({ logic: mod, dados: mod.gerarDados(42), periodo: this.props.periodoInicial || '30' });
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    const pronto = this.state.logic && this.state.dados;
+    if (!pronto) return;
+    const virouPronto = !(prevState.logic && prevState.dados);
+    const trocouPeriodo = prevState.periodo !== this.state.periodo;
+    const entrouPainel = prevState.screen !== 'dashboard' && this.state.screen === 'dashboard';
+    if (virouPronto || trocouPeriodo || entrouPainel) this.medir();
+  }
+
+  componentWillUnmount() {
+    cancelAnimationFrame(this._raf);
+    clearTimeout(this._medTimer);
+    clearTimeout(this._t);
+  }
+
+  /** A leitura se assenta: os números sobem e as réguas avançam a partir do zero. */
+  medir() {
+    const painel = this.state.logic.computarPainel(this.state.dados, this.state.periodo);
+    const alvo = painel.geral.indice || 0;
+    cancelAnimationFrame(this._raf);
+    clearTimeout(this._medTimer);
+    this.setState({ fracao: 0 });
+    const t0 = performance.now();
+    const dur = 1250;
+    const passo = (t) => {
+      const p = Math.min(1, (t - t0) / dur);
+      const e = 1 - Math.pow(1 - p, 4);
+      this.setState({ fracao: e, alvoIndice: alvo });
+      if (p < 1) this._raf = requestAnimationFrame(passo);
+    };
+    this._raf = requestAnimationFrame(passo);
+  }
+
+  atraso(i, base = 90, passo = 55, teto = 700) {
+    return `animation:rz-sobe .75s cubic-bezier(.16,1,.3,1) backwards; animation-delay:${Math.min(teto, base + i * passo)}ms;`;
+  }
+
+  irPara = (tela) => () => this.setState({ screen: tela });
+  sair = () => this.setState({ screen: 'login' });
+
+  mudarCampo = (campo) => (e) => this.setState((s) => ({ respostas: { ...s.respostas, [campo]: e.target.value } }));
+  mudarEmail = (e) => this.setState({ emailLogin: e.target.value });
+  mudarSenha = (e) => this.setState({ senhaLogin: e.target.value });
+  selecionar = (campo, valor) => () => this.setState((s) => ({ respostas: { ...s.respostas, [campo]: valor } }));
+
+  mudarPeriodo = (p) => () => this.setState({ periodo: p });
+  marcarAcao = (setor) => () => this.setState((s) => ({ acoesTomadas: { ...s.acoesTomadas, [setor]: new Date() } }));
+  exportar = (tipo) => () => {
+    this.setState({ toast: `${tipo} exportado — arquivo de demonstração` });
+    clearTimeout(this._t);
+    this._t = setTimeout(() => this.setState({ toast: null }), 2400);
+  };
+
+  abrirNovaConta = () => this.setState({ painelNovaConta: true, painelSenha: false });
+  fecharNovaConta = () => this.setState({ painelNovaConta: false });
+  abrirTrocarSenha = () => this.setState({ painelSenha: true, painelNovaConta: false });
+  fecharTrocarSenha = () => this.setState({ painelSenha: false });
+  criarContaDemo = () => this.setState((s) => ({
+    painelNovaConta: false,
+    usuarios: [...s.usuarios, { id: Date.now(), nome: 'Nova conta', email: 'nova.conta@riscozero.local', papel: 'gestor', ativo: true, voce: false, desde: 'ago 2026' }],
+  }));
+  alternarSituacao = (id) => () => this.setState((s) => ({ usuarios: s.usuarios.map((u) => (u.id === id ? { ...u, ativo: !u.ativo } : u)) }));
+  remover = (id) => () => this.setState((s) => ({ usuarios: s.usuarios.filter((u) => u.id !== id) }));
+  filtroAcesso = (t) => () => this.setState({ acessoTipo: t });
+
+  estiloFiltro(ativo) {
+    const base = 'border:none;background:transparent;padding:9px 18px;font-family:JetBrains Mono,monospace;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;cursor:pointer;transition:background .18s,color .18s;';
+    return ativo ? base + 'background:#E8DCC8;color:#14110E;' : base + 'color:#857C70;';
+  }
+  estiloOpcao(sel) {
+    const base = 'flex:1;border:none;padding:18px 0;font-family:JetBrains Mono,monospace;font-size:15px;cursor:pointer;transition:background .18s,color .18s;';
+    return sel ? base + 'background:#E8DCC8;color:#14110E;' : base + 'background:#14110E;color:#857C70;';
+  }
+
+  enviar = () => {
+    const r = this.state.respostas;
+    const medias = { estresse: r.estresse || 3, sono: r.sono || 3, carga_trabalho: r.carga_trabalho || 3, ambiente_fisico: r.ambiente_fisico || 3 };
+    let indice = 3, nivel = 'medio', rotulo = 'Médio';
+    if (this.state.logic) {
+      indice = this.state.logic.calcularIndiceRisco(medias);
+      const c = this.state.logic.classificarRisco(indice);
+      nivel = c.nivel; rotulo = c.rotulo;
+    }
+    this.setState({ screen: 'sucesso', sucesso: { indice, nivel, rotulo } });
+  };
+  novaResposta = () => this.setState({
+    screen: 'form',
+    respostas: { setor: '', turno: '', estresse: null, sono: null, carga_trabalho: null, ambiente_fisico: null, comentario: '' },
+  });
+  entrar = () => this.setState({ screen: 'dashboard' });
+
+  renderVals() {
+    const s = this.state;
+    const COR = this.COR;
+    const respondidas = ['estresse', 'sono', 'carga_trabalho', 'ambiente_fisico'].filter((c) => s.respostas[c]).length;
+
+    const perguntas = this.PERGUNTAS.map((p) => ({
+      ...p,
+      opcoes: [1, 2, 3, 4, 5].map((v) => ({
+        value: v, selecionar: this.selecionar(p.campo, v), style: this.estiloOpcao(s.respostas[p.campo] === v),
+      })),
+    }));
+
+    const suc = s.sucesso;
+    const painel = (s.logic && s.dados) ? s.logic.computarPainel(s.dados, s.periodo) : null;
+
+    let d = { alertas: [], indicadores: [], barrasSetor: [], barrasTurno: [], insights: [], recomendacoes: [], comentarios: [],
+      linha: '', linhaArea: '', geralIndice: '—', geralRotulo: '', geralLargura: '0%', geralCor: '#857C70',
+      geralTitulo: '', geralTexto: '', total: 0, ocultos: 0, tendenciaLabel: '' };
+
+    const fr = typeof s.fracao === 'number' ? s.fracao : 1;
+
+    if (painel) {
+      const g = painel.geral;
+      const nivelG = g.classificacao.nivel;
+      d.total = g.total;
+      d.geralIndice = g.indice != null ? (g.indice * (fr || 0)).toFixed(2).replace('.', ',') : '—';
+      d.geralRotulo = g.classificacao.rotulo;
+      d.geralCor = COR[nivelG];
+      d.geralLargura = g.indice != null ? `${((g.indice - 1) / 4) * 100 * fr}%` : '0%';
+      d.geralTitulo = painel.insightGeral.titulo;
+      d.geralTexto = painel.insightGeral.texto;
+      d.tendenciaLabel = g.tendencia && g.tendencia.confiavel
+        ? ({ piorando: 'piorando', melhorando: 'melhorando', estavel: 'estável' })[g.tendencia.direcao]
+        : 'sem leitura';
+
+      d.alertas = painel.alertas.map((a, i) => ({ key: i, mensagem: a.mensagem, cor: a.gravidade === 'alto' ? COR.alto : COR.medio, rotulo: a.gravidade === 'alto' ? 'Risco alto' : 'Atenção', anim: this.atraso(i, 60, 80) }));
+
+      const NOMES = { estresse: 'Estresse', sono: 'Sono', carga_trabalho: 'Carga', ambiente_fisico: 'Ambiente' };
+      if (g.medias) {
+        d.indicadores = Object.keys(NOMES).map((chave, i) => {
+          const bruta = g.medias[chave];
+          const risco = s.logic.paraNotaDeRisco(chave, bruta);
+          const cls = s.logic.classificarRisco(risco).nivel;
+          return {
+            chave, nome: NOMES[chave], valor: (bruta * (fr || 0)).toFixed(1).replace('.', ','), cor: COR[cls],
+            largura: `${((risco - 1) / 4) * 100 * fr}%`,
+            nota: `risco ${risco.toFixed(1).replace('.', ',')}`,
+            anim: this.atraso(i, 140, 70),
+          };
+        });
+      }
+
+      const W = 1000, H = 220;
+      const serie = painel.serieGeral;
+      if (serie.length > 1) {
+        const pts = serie.map((p, i) => ({ x: (i / (serie.length - 1)) * W, y: H - ((p.indiceRisco - 1) / 4) * H }));
+        d.linha = 'M ' + pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' L ');
+        d.linhaArea = d.linha + ` L ${W},${H} L 0,${H} Z`;
+      }
+
+      const maxW = 100;
+      d.barrasSetor = painel.porSetor.map((st, i) => ({
+        key: st.setor, nome: st.setorNome, valor: st.indiceRisco.toFixed(2).replace('.', ','),
+        largura: `${(st.indiceRisco / 5) * maxW * fr}%`, cor: COR[st.classificacao.nivel], total: `${st.total} resp.`,
+        rotulo: st.classificacao.rotulo, anim: this.atraso(i, 80, 70), barraAtraso: '',
+      }));
+      d.barrasTurno = painel.porTurno.map((t, i) => ({
+        key: t.turno, nome: t.turnoNome, valor: t.indiceRisco.toFixed(2).replace('.', ','),
+        largura: `${(t.indiceRisco / 5) * maxW * fr}%`, cor: COR[t.classificacao.nivel], total: `${t.total} resp.`,
+        rotulo: t.classificacao.rotulo, anim: this.atraso(i, 80, 70), barraAtraso: '',
+      }));
+
+      d.insights = painel.insightsSetor.map((it, i) => ({ key: i, nome: it.setorNome, texto: it.texto, cor: COR[it.nivel], anim: this.atraso(i, 60, 70) }));
+
+      d.recomendacoes = painel.recomendacoesPorSetor.map((rs, idx) => {
+        const acao = s.acoesTomadas[rs.setor];
+        return {
+          anim: this.atraso(idx, 60, 90),
+          key: rs.setor, nome: rs.setorNome, indice: rs.indiceRisco.toFixed(2).replace('.', ','),
+          urgencia: rs.urgencia.rotulo, descricao: rs.urgencia.descricao,
+          cor: rs.urgencia.peso <= 1 ? COR.alto : COR.medio,
+          blocos: rs.recomendacoes.map((b, i) => ({
+            key: i, titulo: b.titulo, acoes: b.acoes,
+            media: b.mediaBruta != null ? `média ${b.mediaBruta.toFixed(2).replace('.', ',')} / 5` : '',
+          })),
+          acaoTomada: !!acao,
+          acaoTexto: acao ? `Ação registrada ${acao.toLocaleDateString('pt-BR')} · ${this.props.nomeUsuario || 'Ana Ferreira'}` : '',
+          marcar: this.marcarAcao(rs.setor),
+        };
+      });
+
+      d.ocultos = painel.comentariosOcultos;
+      d.comentarios = painel.comentarios.slice(0, 24).map((c, i) => ({
+        key: i, setor: c.setorNome, turno: ({ Manha: 'Manhã', Tarde: 'Tarde', Noite: 'Noite' })[c.turno] || c.turno,
+        texto: c.comentario, cor: COR[c.nivel] || '#857C70', anim: this.atraso(i, 40, 45, 400),
+      }));
+    }
+
+    const ehAdmin = (this.props.papelUsuario || 'admin') === 'admin';
+    const nomeUsuario = this.props.nomeUsuario || 'Ana Ferreira';
+
+    const usuarios = s.usuarios.map((u) => ({
+      ...u,
+      selo: u.papel === 'admin' ? 'Admin' : 'Gestor',
+      seloCor: u.papel === 'admin' ? '#E8DCC8' : '#857C70',
+      situacao: u.ativo ? 'Ativa' : 'Desativada',
+      situacaoCor: u.ativo ? '#8FC49B' : '#6A6255',
+      linhaStyle: u.ativo ? 'opacity:1;' : 'opacity:0.5;',
+      botaoLabel: u.ativo ? 'Desativar' : 'Ativar',
+      podeRemover: ehAdmin && !u.voce && (u.papel !== 'admin' || s.usuarios.filter((x) => x.papel === 'admin').length > 1),
+      alternar: this.alternarSituacao(u.id), excluir: this.remover(u.id),
+    })).map((u, i) => ({ ...u, anim: this.atraso(i, 60, 60, 400) }));
+
+    const acessos = this.ACESSOS_LOG.filter((a) => {
+      if (s.acessoTipo === 'sucessos') return a.ok;
+      if (s.acessoTipo === 'falhas') return !a.ok;
+      return true;
+    }).map((a, i) => ({
+      key: i, nome: a.nome || 'Não identificado', email: a.email, quando: a.quando, detalhe: a.detalhe, ip: a.ip,
+      cor: a.ok ? '#8FC49B' : '#D9705E', marca: a.ok ? 'OK' : 'FALHA',
+      anim: this.atraso(i, 40, 45, 420),
+    }));
+
+    return {
+      isForm: s.screen === 'form', isSucesso: s.screen === 'sucesso', isLogin: s.screen === 'login',
+      isDashboard: s.screen === 'dashboard', isUsuarios: s.screen === 'usuarios', isAcessos: s.screen === 'acessos',
+      irLogin: this.irPara('login'), irForm: this.irPara('form'),
+      irPainel: this.irPara('dashboard'), irUsuarios: this.irPara('usuarios'), irAcessos: this.irPara('acessos'),
+      sair: this.sair, ehAdmin, nomeUsuario,
+
+      progresso: respondidas * 25, respondidasLabel: `0${respondidas}`,
+      respostas: s.respostas, perguntas,
+      mudarSetor: this.mudarCampo('setor'), mudarTurno: this.mudarCampo('turno'), mudarComentario: this.mudarCampo('comentario'),
+      enviar: this.enviar, novaResposta: this.novaResposta,
+
+      sucessoIndice: suc ? suc.indice.toFixed(2).replace('.', ',') : '—',
+      sucessoRotulo: suc ? suc.rotulo : '', sucessoCor: suc ? COR[suc.nivel] : '#857C70',
+      sucessoLargura: suc ? `${((suc.indice - 1) / 4) * 100}%` : '0%',
+
+      emailLogin: s.emailLogin, senhaLogin: s.senhaLogin, mudarEmail: this.mudarEmail, mudarSenha: this.mudarSenha, entrar: this.entrar,
+
+      carregando: !painel,
+      periodoLabel: s.periodo === 'tudo' ? 'todo o período' : `últimos ${s.periodo} dias`,
+      mudarPeriodo7: this.mudarPeriodo('7'), mudarPeriodo30: this.mudarPeriodo('30'), mudarPeriodoTudo: this.mudarPeriodo('tudo'),
+      periodo7Style: this.estiloFiltro(s.periodo === '7'), periodo30Style: this.estiloFiltro(s.periodo === '30'), periodoTudoStyle: this.estiloFiltro(s.periodo === 'tudo'),
+      exportarCSV: this.exportar('CSV'), exportarPDF: this.exportar('PDF'), toast: s.toast,
+
+      totalRespostas: d.total, geralIndice: d.geralIndice, geralRotulo: d.geralRotulo, geralCor: d.geralCor,
+      geralLargura: d.geralLargura, geralTitulo: d.geralTitulo, geralTexto: d.geralTexto, tendenciaLabel: d.tendenciaLabel,
+      alertas: d.alertas, indicadores: d.indicadores, linha: d.linha, linhaArea: d.linhaArea,
+      barrasSetor: d.barrasSetor, barrasTurno: d.barrasTurno, insights: d.insights, recomendacoes: d.recomendacoes,
+      comentarios: d.comentarios, ocultos: d.ocultos, temOcultos: d.ocultos > 0,
+
+      usuarios, painelNovaConta: s.painelNovaConta, painelSenha: s.painelSenha,
+      abrirNovaConta: this.abrirNovaConta, fecharNovaConta: this.fecharNovaConta,
+      abrirTrocarSenha: this.abrirTrocarSenha, fecharTrocarSenha: this.fecharTrocarSenha, criarContaDemo: this.criarContaDemo,
+
+      acessos, filtroTodos: this.filtroAcesso('todos'), filtroSucessos: this.filtroAcesso('sucessos'), filtroFalhas: this.filtroAcesso('falhas'),
+      acessoTodosStyle: this.estiloFiltro(s.acessoTipo === 'todos'), acessoSucessosStyle: this.estiloFiltro(s.acessoTipo === 'sucessos'), acessoFalhasStyle: this.estiloFiltro(s.acessoTipo === 'falhas'),
+    };
+  }
+}
+</script>
+</body>
+</html>

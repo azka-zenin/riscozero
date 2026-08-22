@@ -1,0 +1,27 @@
+RiscoZero — protótipo redesenhado (Mostra Técnica 2026 · CEEP-PG · Equipe 1)
+
+ARQUIVOS
+  RiscoZero v2.dc.html   protótipo atual (escuro, serifado, animado) — o principal
+  RiscoZero.dc.html      primeira versão (clara), preservada para comparação
+  riscozero-logic.js     dados de demonstração + análise (porta de utils/analise.js e utils/insights.js)
+  support.js             runtime necessário para abrir os .dc.html no navegador
+
+COMO ABRIR
+  Os arquivos precisam ficar na MESMA pasta.
+  Sirva a pasta por HTTP (o import do riscozero-logic.js não funciona em file://):
+      npx serve .        ou      python -m http.server
+  Depois abra "RiscoZero v2.dc.html" pelo endereço local.
+
+O QUE É
+  Protótipo de interface, sem servidor nem banco: o formulário não grava nada e o
+  painel usa dados fictícios gerados com semente fixa (sempre os mesmos números),
+  calculados com as mesmas regras do sistema real — escalas invertidas (6 - nota)
+  para sono e ambiente físico, limites de faixa em 2,2 e 3,4, mínimo de 3 respostas
+  por setor para disparar alerta e para exibir comentário.
+
+TELAS
+  Formulário -> tela de sucesso -> Login -> Painel -> Contas -> Acessos
+  (tudo em um fluxo clicável, dentro do mesmo arquivo)
+
+SUGESTÃO DE ONDE COMMITAR
+  prototipo/  na raiz do repositório, fora de public/, para não misturar com o app
