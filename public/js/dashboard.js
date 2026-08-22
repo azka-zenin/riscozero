@@ -161,6 +161,28 @@ const ICONES_TENDENCIA = {
   estavel: '<svg viewBox="0 0 16 16" width="10" height="10" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M3 6h10M3 10h10"/></svg>',
 };
 
+/**
+ * Ícones dos cartões de resumo e dos títulos de painel.
+ *
+ * Mesma razão dos ícones acima (traço consistente entre aparelhos), com uma
+ * regra a mais: aqui o ícone é sempre neutro (herda a tinta fraca do rótulo
+ * que acompanha), nunca colorido — é etiqueta de categoria, não valor de
+ * risco. Quem carrega a cor do semáforo continua sendo só o número e a
+ * régua ao lado.
+ */
+const ICONES_CARTAO = {
+  respostas: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.2" d="M4 1.8h6l2.5 2.5v9.9a.6.6 0 0 1-.6.6H4a.6.6 0 0 1-.6-.6V2.4a.6.6 0 0 1 .6-.6Z"/><path fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" d="M5.4 7h5.2M5.4 9.4h5.2M5.4 11.8h3.2"/></svg>',
+  alvo: '<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="8" r="3.2" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="8" cy="8" r="1" fill="currentColor"/></svg>',
+  alerta: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M8 1.5 15 14H1L8 1.5Zm0 4.2a.85.85 0 0 0-.85.85v3.4a.85.85 0 0 0 1.7 0v-3.4A.85.85 0 0 0 8 5.7Zm0 6.3a.95.95 0 1 0 0 1.9.95.95 0 0 0 0-1.9Z"/></svg>',
+};
+
+const ICONES_SECAO = {
+  grafico: '<svg viewBox="0 0 16 16" aria-hidden="true"><path stroke="currentColor" stroke-width="1.3" stroke-linecap="round" d="M2 13.5V2M2 13.5h12"/><rect x="4" y="9" width="2.2" height="4.3" rx="0.4" fill="currentColor"/><rect x="7.6" y="6" width="2.2" height="7.3" rx="0.4" fill="currentColor"/><rect x="11.2" y="3.3" width="2.2" height="10" rx="0.4" fill="currentColor"/></svg>',
+  setor: '<svg viewBox="0 0 16 16" aria-hidden="true"><rect x="2" y="2" width="5" height="5" rx="1" fill="currentColor"/><rect x="9" y="2" width="5" height="5" rx="1" fill="currentColor" opacity=".55"/><rect x="2" y="9" width="5" height="5" rx="1" fill="currentColor" opacity=".55"/><rect x="9" y="9" width="5" height="5" rx="1" fill="currentColor"/></svg>',
+  lista: '<svg viewBox="0 0 16 16" aria-hidden="true"><path stroke="currentColor" stroke-width="1.4" stroke-linecap="round" d="M2 4h1.6M2 8h1.6M2 12h1.6M6 4h8M6 8h8M6 12h8"/></svg>',
+  comentario: '<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="none" stroke="currentColor" stroke-width="1.3" d="M2.5 3.5h11a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H6.8L3.5 14v-2.5H2.5a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1Z"/></svg>',
+};
+
 /** Se o token expirou ou não existe, manda de volta ao login */
 function exigirSessao() {
   if (!Sessao.obterToken()) {
@@ -372,13 +394,15 @@ function montarPainel(resumo, evolucao, comentarios) {
   const rolagemComentarios = listaComentariosAntiga ? listaComentariosAntiga.scrollTop : 0;
 
   conteudo.innerHTML = `
-    ${montarAlertas(alertas)}
-    ${montarDestaque(geral, indiceRisco, classificacao, resumo.insights, resumo.periodo)}
-    ${montarCartoes(geral, indiceRisco, classificacao, porSetor)}
-    ${montarInsights(resumo.insights)}
+    <div id="secao-resumo">
+      ${montarAlertas(alertas)}
+      ${montarDestaque(geral, indiceRisco, classificacao, resumo.insights, resumo.periodo)}
+      ${montarCartoes(geral, indiceRisco, classificacao, porSetor)}
+      ${montarInsights(resumo.insights)}
+    </div>
 
-    <div class="painel">
-      <h2>Evolução do risco ao longo do tempo</h2>
+    <div class="painel painel-grafico" id="secao-graficos">
+      <h2><span class="icone-titulo">${ICONES_SECAO.grafico}</span>Evolução do risco ao longo do tempo</h2>
       <p class="descricao-painel">
         Índice diário de 1 a 5. A linha subindo indica piora — é o sinal para agir
         antes que o quadro se agrave.
@@ -386,40 +410,42 @@ function montarPainel(resumo, evolucao, comentarios) {
       <div class="area-grafico alto"><canvas id="grafico-evolucao" role="img" aria-label="Gráfico de linha: evolução do índice de risco ao longo do tempo, escala de 1 a 5."></canvas></div>
     </div>
 
-    <div class="duas-colunas">
-      <div class="painel">
-        <h2>Médias por indicador</h2>
-        <p class="descricao-painel">
-          Escala 1 a 5 conforme respondido no formulário.
-        </p>
-        <div class="area-grafico"><canvas id="grafico-indicadores" role="img" aria-label="Gráfico de barras: médias de estresse, sono, carga de trabalho e ambiente físico, escala de 1 a 5."></canvas></div>
+    <div id="secao-setores">
+      <div class="duas-colunas">
+        <div class="painel painel-grafico">
+          <h2><span class="icone-titulo">${ICONES_SECAO.grafico}</span>Médias por indicador</h2>
+          <p class="descricao-painel">
+            Escala 1 a 5 conforme respondido no formulário.
+          </p>
+          <div class="area-grafico"><canvas id="grafico-indicadores" role="img" aria-label="Gráfico de barras: médias de estresse, sono, carga de trabalho e ambiente físico, escala de 1 a 5."></canvas></div>
+        </div>
+
+        <div class="painel painel-grafico">
+          <h2><span class="icone-titulo">${ICONES_SECAO.setor}</span>Risco por setor</h2>
+          <p class="descricao-painel">
+            Índice combinado — maior significa mais risco.
+          </p>
+          <div class="area-grafico"><canvas id="grafico-setores" role="img" aria-label="Gráfico de barras horizontais: índice de risco combinado por setor, do maior para o menor."></canvas></div>
+        </div>
       </div>
 
-      <div class="painel">
-        <h2>Risco por setor</h2>
+      <div class="painel${porTurno && porTurno.length > 0 ? ' painel-grafico' : ''}">
+        <h2><span class="icone-titulo">${ICONES_SECAO.setor}</span>Risco por turno</h2>
         <p class="descricao-painel">
-          Índice combinado — maior significa mais risco.
+          O mesmo setor pode estar tranquilo de manhã e sobrecarregado à noite.
+          Separar por turno revela diferenças que a média do dia esconde.
         </p>
-        <div class="area-grafico"><canvas id="grafico-setores" role="img" aria-label="Gráfico de barras horizontais: índice de risco combinado por setor, do maior para o menor."></canvas></div>
+        ${porTurno && porTurno.length > 0
+          ? `<div class="area-grafico"><canvas id="grafico-turnos" role="img" aria-label="Gráfico de barras: índice de risco por turno de trabalho — manhã, tarde e noite."></canvas></div>`
+          : `<p class="vazio-simples">
+               Nenhuma resposta neste período informou o turno. Respostas
+               gravadas antes desse campo existir não entram nesta comparação.
+             </p>`}
       </div>
     </div>
 
-    <div class="painel">
-      <h2>Risco por turno</h2>
-      <p class="descricao-painel">
-        O mesmo setor pode estar tranquilo de manhã e sobrecarregado à noite.
-        Separar por turno revela diferenças que a média do dia esconde.
-      </p>
-      ${porTurno && porTurno.length > 0
-        ? `<div class="area-grafico"><canvas id="grafico-turnos" role="img" aria-label="Gráfico de barras: índice de risco por turno de trabalho — manhã, tarde e noite."></canvas></div>`
-        : `<p class="vazio-simples">
-             Nenhuma resposta neste período informou o turno. Respostas
-             gravadas antes desse campo existir não entram nesta comparação.
-           </p>`}
-    </div>
-
-    <div class="painel">
-      <h2>O que fazer agora</h2>
+    <div class="painel" id="secao-recomendacoes">
+      <h2><span class="icone-titulo">${ICONES_SECAO.lista}</span>O que fazer agora</h2>
       <p class="descricao-painel">
         Recomendações geradas a partir dos indicadores que passaram do limite
         de atenção, organizadas por setor.
@@ -427,8 +453,8 @@ function montarPainel(resumo, evolucao, comentarios) {
       ${montarRecomendacoes(recomendacoesPorSetor)}
     </div>
 
-    <div class="painel">
-      <h2>O que a equipe está dizendo</h2>
+    <div class="painel" id="secao-comentarios">
+      <h2><span class="icone-titulo">${ICONES_SECAO.comentario}</span>O que a equipe está dizendo</h2>
       <p class="descricao-painel">
         Comentários deixados no formulário. A barra colorida indica o nível de
         risco da resposta em que o comentário foi escrito.
@@ -439,6 +465,17 @@ function montarPainel(resumo, evolucao, comentarios) {
 
   const novaListaComentarios = conteudo.querySelector('.lista-comentarios');
   if (novaListaComentarios) novaListaComentarios.scrollTop = rolagemComentarios;
+
+  // O escalonamento de entrada (ver "MOVIMENTO" no CSS) é feito por
+  // :nth-of-type no style.css, que conta irmãos dentro do MESMO pai. Como
+  // os painéis de setor e turno agora moram dentro de #secao-setores (para
+  // a navegação rápida por âncora ter algo pra apontar), a contagem por
+  // seletor CSS ficaria errada. Aplicar o atraso aqui, na ordem real em que
+  // os painéis aparecem na tela, é mais simples do que reescrever o CSS
+  // para um seletor que soubesse atravessar wrappers.
+  conteudo.querySelectorAll('.painel').forEach((el, i) => {
+    if (i < 6) el.style.animationDelay = `${0.34 + i * 0.06}s`;
+  });
 
   // As animações só podem começar depois que o HTML está na tela, e só na
   // primeira montagem (ver primeiraMontagem).
@@ -490,7 +527,7 @@ function montarInsights(insights) {
 
   return `
     <div class="painel">
-      <h2>Leitura por setor e turno</h2>
+      <h2><span class="icone-titulo">${ICONES_SECAO.setor}</span>Leitura por setor e turno</h2>
       <p class="descricao-painel">
         Detalhamento gerado automaticamente a partir dos números do painel.
       </p>
@@ -691,12 +728,12 @@ function montarCartoes(geral, indiceRisco, classificacao, porSetor) {
   return `
     <div class="grade-cartoes">
       <div class="cartao">
-        <div class="rotulo">Respostas no período</div>
+        <div class="rotulo"><span class="icone-cartao">${ICONES_CARTAO.respostas}</span>Respostas no período</div>
         <div class="valor"><span data-animar="${geral.total}" data-casas="0" data-chave="total">0</span></div>
         <div class="nota">última ${tempoDesde(geral.ultima_resposta)}</div>
       </div>
       <div class="cartao">
-        <div class="rotulo">Setor que mais preocupa</div>
+        <div class="rotulo"><span class="icone-cartao">${ICONES_CARTAO.alvo}</span>Setor que mais preocupa</div>
         <div class="valor valor-nome ${pior ? classeRisco(pior.classificacao.nivel) : ''}">
           ${pior ? escaparHTML(pior.setorNome || pior.setor) : '—'}
         </div>
@@ -704,7 +741,7 @@ function montarCartoes(geral, indiceRisco, classificacao, porSetor) {
         <div class="nota">${pior ? `índice ${String(pior.indiceRisco).replace('.', ',')}` : 'sem dados'}</div>
       </div>
       <div class="cartao">
-        <div class="rotulo">Setores em risco alto</div>
+        <div class="rotulo"><span class="icone-cartao">${ICONES_CARTAO.alerta}</span>Setores em risco alto</div>
         <div class="valor ${emAlerta > 0 ? 'risco-alto' : 'risco-baixo'}"><span data-animar="${emAlerta}" data-casas="0" data-chave="emAlerta">0</span></div>
         <div class="nota">de ${porSetor.length} monitorado${porSetor.length !== 1 ? 's' : ''}</div>
       </div>
@@ -1203,6 +1240,67 @@ botaoExportar.addEventListener('click', async () => {
 botaoExportarPDF.addEventListener('click', () => {
   window.print();
 });
+
+// ---------------------------------------------------------------------------
+// Modo apresentação
+//
+// Um tablet ou notebook ligado a um telão na feira não precisa de cabeçalho,
+// filtros nem rodapé — só a leitura. Soma o layout enxuto (CSS) a um pedido
+// de tela cheia do navegador; se o navegador negar (comum fora de um gesto
+// direto do usuário, o que este clique já é), o layout enxuto sozinho ainda
+// entrega a maior parte do ganho.
+// ---------------------------------------------------------------------------
+
+const botaoApresentacao = document.getElementById('botao-apresentacao');
+
+function redimensionarGraficos() {
+  // Mudar a altura do container (.area-grafico) não redimensiona sozinho um
+  // <canvas> que o Chart.js já desenhou — sem isto os gráficos ficam com a
+  // altura antiga até a próxima atualização automática.
+  Object.values(graficos).forEach((g) => g.resize());
+}
+
+if (botaoApresentacao) {
+  botaoApresentacao.addEventListener('click', async () => {
+    const ativo = document.body.classList.toggle('modo-apresentacao');
+    botaoApresentacao.textContent = ativo ? 'Sair da apresentação' : 'Modo apresentação';
+    redimensionarGraficos();
+
+    try {
+      if (ativo && document.documentElement.requestFullscreen) {
+        await document.documentElement.requestFullscreen();
+      } else if (!ativo && document.fullscreenElement) {
+        await document.exitFullscreen();
+      }
+    } catch (erro) {
+      // Alguns navegadores negam tela cheia (iframe, política do site); o
+      // layout enxuto continua funcionando normalmente sem ela.
+    }
+  });
+
+  // Se a pessoa sair da tela cheia pelo Esc do próprio navegador (em vez do
+  // botão), o layout enxuto sozinho ficaria "preso" ligado sem ninguém ter
+  // pedido — este listener mantém os dois estados em sincronia.
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && document.body.classList.contains('modo-apresentacao')) {
+      document.body.classList.remove('modo-apresentacao');
+      botaoApresentacao.textContent = 'Modo apresentação';
+      redimensionarGraficos();
+    }
+  });
+
+  // Saída garantida mesmo quando o navegador nega o pedido de tela cheia
+  // (comum fora de certos contextos) — sem isto, o Esc não faria nada e só
+  // sobraria o botão flutuante no canto para voltar ao layout normal.
+  document.addEventListener('keydown', (evento) => {
+    if (evento.key === 'Escape' && document.body.classList.contains('modo-apresentacao')) {
+      document.body.classList.remove('modo-apresentacao');
+      botaoApresentacao.textContent = 'Modo apresentação';
+      redimensionarGraficos();
+      if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    }
+  });
+}
 
 botaoSair.addEventListener('click', async () => {
   try {

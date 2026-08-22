@@ -54,6 +54,23 @@
       </div>
     </div>
 
+    <!-- Fica FORA de .controles de propósito: esse bloco inteiro some no
+         modo apresentação (ver CSS), e o botão que desliga o modo precisa
+         continuar alcançável — um elemento não volta a aparecer só porque
+         ganha display próprio se um ancestral estiver com display:none. -->
+    <button type="button" class="botao secundario" id="botao-apresentacao">
+      Modo apresentação
+    </button>
+
+    <!-- Atalhos para as seções do painel, montadas dinamicamente lá embaixo -->
+    <nav class="nav-secoes" aria-label="Ir para seção do painel">
+      <a href="#secao-resumo">Resumo</a>
+      <a href="#secao-graficos">Gráficos</a>
+      <a href="#secao-setores">Setores e turnos</a>
+      <a href="#secao-recomendacoes">Recomendações</a>
+      <a href="#secao-comentarios">Comentários</a>
+    </nav>
+
     <!-- Todo o conteúdo dinâmico entra aqui -->
     <div id="conteudo">
       <div class="esqueleto-painel" aria-hidden="true">

@@ -769,6 +769,13 @@ h1 {
 .cartao:has(.valor.risco-medio)::before { background: var(--medio); }
 .cartao:has(.valor.risco-alto)::before  { background: var(--alto); }
 
+/* Lavagem de cor no topo do cartão — a mesma leitura do fio acima, só que
+   com mais área para o olho pegar de relance, sem virar um bloco inteiro
+   pintado (o texto continua sobre --superficie, sem perda de contraste). */
+.cartao:has(.valor.risco-baixo) { background: linear-gradient(180deg, var(--baixo-fraco), var(--superficie) 92px); }
+.cartao:has(.valor.risco-medio) { background: linear-gradient(180deg, var(--medio-fraco), var(--superficie) 92px); }
+.cartao:has(.valor.risco-alto)  { background: linear-gradient(180deg, var(--alto-fraco), var(--superficie) 92px); }
+
 /* Só os cartões de indicador elevam no hover — são os únicos blocos do
    sistema que resumem um número em destaque, então o gesto confirma "isto é
    uma leitura, preste atenção nela". Painéis e outros blocos maiores ficam
@@ -781,6 +788,9 @@ h1 {
 }
 
 .cartao .rotulo {
+  display: flex;
+  align-items: center;
+  gap: var(--e-2);
   font-family: var(--dado);
   color: var(--tinta-fraca);
   font-size: var(--t-micro);
@@ -788,6 +798,15 @@ h1 {
   letter-spacing: 0.1em;
   margin-bottom: var(--e-4);
 }
+
+/* Ícone do cartão: mesma tinta fraca do rótulo, nunca cor de marca ou de
+   risco — é uma etiqueta de categoria, não um valor medido. */
+.cartao .rotulo .icone-cartao {
+  display: inline-flex;
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+.cartao .rotulo .icone-cartao svg { display: block; width: 13px; height: 13px; }
 
 .cartao .valor {
   font-size: var(--t-titulo-g);
@@ -831,12 +850,37 @@ h1 {
 }
 
 .painel h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--e-3);
   font-family: var(--titulo);
   font-size: var(--t-titulo-p);
   font-weight: 600;
   letter-spacing: -0.02em;
   margin: 0 0 var(--e-2);
 }
+
+/* Ícone de categoria do painel — a mesma etiqueta visual dos cartões,
+   maior, marcando de relance que tipo de conteúdo vem a seguir (gráfico,
+   texto de recomendação, comentário) antes mesmo de ler o título. */
+.painel h2 .icone-titulo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: var(--raio-p);
+  background: var(--superficie-2);
+  color: var(--tinta-media);
+}
+.painel h2 .icone-titulo svg { display: block; width: 15px; height: 15px; }
+
+/* Painéis que contêm um gráfico ganham mais elevação que os demais — a
+   mesma disciplina de sombra-como-hierarquia do resto do sistema, não uma
+   borda ou cor nova: são o conteúdo mais "pesado" da tela depois do
+   mostrador, e precisam destacar por peso, não por enfeite. */
+.painel-grafico { box-shadow: var(--erguido); }
 
 .painel .descricao-painel {
   color: var(--tinta-media);
@@ -1169,6 +1213,48 @@ fieldset.campo {
    volta depois do Turno, marcando onde as perguntas de verdade começam. */
 #form-risco > .campo:first-child { margin-bottom: var(--e-4); }
 
+/* --------------------------------------------------------------------------
+   Progresso do formulário
+
+   Mostra quantas das 4 perguntas de escala já foram respondidas. É a mesma
+   ideia da régua (uma medição avançando), aplicada ao próprio ato de
+   preencher — dá pra alguém no celular saber, sem rolar até o fim, quanto
+   falta antes do botão "Enviar resposta" fazer sentido.
+   -------------------------------------------------------------------------- */
+
+.progresso-formulario {
+  display: flex;
+  align-items: center;
+  gap: var(--e-4);
+  margin: 0 0 var(--e-8);
+}
+
+.progresso-trilho {
+  flex: 1;
+  height: 6px;
+  background: var(--superficie-2);
+  border: 1px solid var(--linha);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.progresso-preenchido {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--marca);
+  border-radius: 999px;
+  transition: width 0.5s var(--assenta);
+}
+
+.progresso-texto {
+  font-family: var(--dado);
+  font-size: var(--t-mini);
+  color: var(--tinta-fraca);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
 .opcional { font-weight: 400; color: var(--tinta-fraca); }
 
 .campo > label,
@@ -1497,6 +1583,91 @@ textarea { resize: vertical; }
 }
 
 .filtro-periodo button:focus-visible { outline: 2px solid var(--marca); outline-offset: 1px; }
+
+/* --------------------------------------------------------------------------
+   Navegação rápida entre seções do painel
+
+   O painel é uma página longa por natureza (resumo, gráficos, setores,
+   recomendações, comentários) — em vez de escondê-la atrás de abas, o que
+   arriscaria quebrar a atualização automática e a leitura em sequência que
+   o painel já foi desenhado para fazer, esta faixa deixa a estrutura da
+   página visível de saída e dá um atalho direto para cada trecho.
+   -------------------------------------------------------------------------- */
+
+.nav-secoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e-2);
+  margin: 0 0 var(--e-7);
+}
+
+.nav-secoes a {
+  color: var(--tinta-media);
+  text-decoration: none;
+  font-size: var(--t-pequeno);
+  font-weight: 500;
+  padding: var(--e-2) var(--e-4);
+  border-radius: 999px;
+  border: 1px solid var(--linha);
+  background: var(--superficie);
+  transition: background var(--transicao), border-color var(--transicao), color var(--transicao);
+}
+
+.nav-secoes a:hover {
+  color: var(--tinta);
+  border-color: var(--linha-forte);
+  background: var(--superficie-2);
+}
+
+.nav-secoes a:focus-visible { outline: 2px solid var(--marca); outline-offset: 1px; }
+
+/* --------------------------------------------------------------------------
+   Modo apresentação
+
+   Um tablet ou notebook conectado num telão durante a feira não precisa de
+   cabeçalho, filtros nem rodapé — só a leitura. O botão soma isto a um
+   pedido de tela cheia do navegador; se o navegador negar (às vezes exige
+   gesto direto do usuário, o que este botão já é), o layout enxuto sozinho
+   já resolve a maior parte do ganho.
+   -------------------------------------------------------------------------- */
+
+body.modo-apresentacao .topo,
+body.modo-apresentacao .controles,
+body.modo-apresentacao .nav-secoes,
+body.modo-apresentacao .rodape {
+  display: none;
+}
+
+/* Fora do modo apresentação, o botão fica discreto acima do atalho de
+   seções — mesma altura visual de um controle secundário qualquer, só que
+   sozinho na linha (ver por que ele mora fora de .controles no HTML). */
+#botao-apresentacao { margin-bottom: var(--e-4); }
+
+/* No modo apresentação, vira um controle flutuante no canto — precisa
+   continuar alcançável para desligar. Se o navegador negar o pedido de
+   tela cheia de verdade (comum fora de certos contextos), este é o único
+   jeito visível de voltar ao layout normal, além do Esc. */
+body.modo-apresentacao #botao-apresentacao {
+  position: fixed;
+  top: var(--e-4);
+  right: var(--e-4);
+  z-index: 30;
+  margin-bottom: 0;
+  opacity: 0.55;
+  transition: opacity var(--transicao);
+}
+body.modo-apresentacao #botao-apresentacao:hover,
+body.modo-apresentacao #botao-apresentacao:focus-visible {
+  opacity: 1;
+}
+
+body.modo-apresentacao main.largo {
+  max-width: none;
+  padding-top: var(--e-6);
+}
+
+body.modo-apresentacao .area-grafico { height: 380px; }
+body.modo-apresentacao .area-grafico.alto { height: 440px; }
 
 /* --------------------------------------------------------------------------
    Indicador de conexão
@@ -2165,7 +2336,7 @@ html.js-transicoes.saindo main { opacity: 0; transform: translateY(-4px); }
      tomada" some pelo mesmo motivo; o texto "ação registrada" (quando já
      existe) continua, porque é informação de leitura, não um controle. */
   .controles, .botao, .link-sair, .acoes-usuario, .filtro-periodo,
-  .indicador-conexao, .botao-acao-alerta { display: none; }
+  .indicador-conexao, .botao-acao-alerta, .nav-secoes { display: none; }
 
   /* Sombra é hierarquia de elevação na tela; em papel vira só um borrão
      cinza ao redor do bloco. */

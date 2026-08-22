@@ -7,6 +7,25 @@ const areaFormulario = document.getElementById('area-formulario');
 const areaSucesso = document.getElementById('area-sucesso');
 const botaoNova = document.getElementById('botao-nova');
 const botaoEnviar = form.querySelector('button[type="submit"]');
+const progressoPreenchido = document.getElementById('progresso-preenchido');
+const progressoTexto = document.getElementById('progresso-texto');
+
+// As 4 escalas são "as perguntas" de verdade da autoavaliação — Setor e
+// Turno são contexto rápido, não entram na contagem (mesma distinção já
+// feita no espaçamento do formulário, ver style.css).
+const CAMPOS_ESCALA = ['estresse', 'sono', 'carga_trabalho', 'ambiente_fisico'];
+
+/** Atualiza a barra "X de 4 perguntas respondidas" conforme a pessoa preenche. */
+function atualizarProgresso() {
+  if (!progressoPreenchido || !progressoTexto) return;
+
+  const respondidas = CAMPOS_ESCALA.filter(
+    (campo) => form.querySelector(`input[name="${campo}"]:checked`)
+  ).length;
+
+  progressoPreenchido.style.width = `${(respondidas / CAMPOS_ESCALA.length) * 100}%`;
+  progressoTexto.textContent = `${respondidas} de ${CAMPOS_ESCALA.length} perguntas respondidas`;
+}
 
 form.addEventListener('submit', async (evento) => {
   evento.preventDefault();
@@ -93,6 +112,7 @@ form.addEventListener('submit', async (evento) => {
 botaoNova.addEventListener('click', () => {
   form.reset();
   limparMensagem();
+  atualizarProgresso();
   areaSucesso.style.display = 'none';
   areaFormulario.style.display = 'block';
 });
@@ -102,6 +122,7 @@ botaoNova.addEventListener('click', () => {
 // problema continua — e ela reaparece no envio seguinte se ainda faltar algo.
 form.addEventListener('change', limparMensagem);
 form.addEventListener('input', limparMensagem);
+form.addEventListener('change', atualizarProgresso);
 
 function mostrarMensagem(tipo, texto) {
   mensagem.textContent = texto;
