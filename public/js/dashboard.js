@@ -35,6 +35,22 @@ let ultimaAtualizacao = null;
 // mudar de 197 para 198 — distração pura, e ruim numa apresentação.
 let primeiraMontagem = true;
 
+// Parece o mesmo que primeiraMontagem, mas responde a outra pergunta.
+//
+// primeiraMontagem é "os NÚMEROS devem se animar?" — e a troca de período a
+// reativa de propósito, para deixar claro que os valores mudaram (ver o
+// tratador dos botões de período).
+//
+// Esta aqui é "o painel está CHEGANDO na tela?", e só é verdade uma vez por
+// carregamento da página. É ela que decide se a cascata de entrada do CSS —
+// os blocos surgindo um depois do outro, mais de um segundo até o último —
+// deve acontecer. Trocar o filtro não é chegar: o painel já está na tela.
+//
+// Enquanto as duas viviam na mesma variável, trocar o período apagava o
+// painel inteiro e o trazia de volta em cascata, com quase um segundo e meio
+// de tela vazia no meio.
+let cascataJaAconteceu = false;
+
 // Último valor mostrado de cada número animado (chave em data-chave), para a
 // contagem partir dali na atualização seguinte em vez de sempre recomeçar do
 // zero — ver animarNumero e animarEntrada logo abaixo.
@@ -304,6 +320,16 @@ async function carregarPainel(silencioso = false) {
   // ainda está na tela; sem repor o esqueleto, ficaria uma leitura antiga
   // parada até o novo período responder, o que parece trava, não carregamento.
   if (!silencioso && conteudo.dataset.montado === 'true') {
+    // Segura a altura durante a troca. O esqueleto é bem mais baixo que o
+    // painel cheio (medido: a página caía de ~5500px para ~1250px), então o
+    // navegador grampeava a rolagem no novo fim. Quem estava lendo os
+    // comentários lá embaixo via a página saltar para cima e voltar sozinha
+    // quando o conteúdo chegava — o valor final é restaurado, mas o solavanco
+    // no meio dura o tempo todo do carregamento e é bem visível com o banco
+    // na nuvem. Com o banco em memória dos testes isso não aparece: a
+    // resposta é rápida demais para o esqueleto chegar a existir na tela.
+    // A altura volta a ser livre assim que o conteúdo novo entra.
+    conteudo.style.minHeight = `${conteudo.offsetHeight}px`;
     conteudo.innerHTML = ESQUELETO_PAINEL;
   }
   conteudo.dataset.montado = 'true';
@@ -356,6 +382,7 @@ async function carregarPainel(silencioso = false) {
     // uma mensagem de erro. O indicador de conexão já avisa o que houve.
     if (silencioso) return;
 
+    conteudo.style.minHeight = ''; // ver a trava de altura em carregarPainel
     conteudo.innerHTML = `
       <div class="vazio">
         <div class="titulo-vazio">Não foi possível carregar</div>
@@ -367,6 +394,7 @@ async function carregarPainel(silencioso = false) {
 }
 
 function mostrarVazio() {
+  conteudo.style.minHeight = ''; // ver a trava de altura em carregarPainel
   conteudo.innerHTML = `
     <div class="vazio">
       <div class="titulo-vazio">Nenhuma resposta neste período</div>
@@ -392,6 +420,14 @@ function montarPainel(resumo, evolucao, comentarios) {
   // inclusive no meio de uma apresentação.
   const listaComentariosAntiga = conteudo.querySelector('.lista-comentarios');
   const rolagemComentarios = listaComentariosAntiga ? listaComentariosAntiga.scrollTop : 0;
+
+  // A cascata de entrada é um gesto de CHEGADA: os blocos surgem um depois do
+  // outro quando o painel abre. Ela vive no CSS e dispara sozinha sempre que
+  // estes elementos nascem — e eles nascem de novo a cada innerHTML aqui.
+  //
+  // Os números continuam se reanimando na troca de período (primeiraMontagem
+  // cuida disso, de propósito). O que não se repete é a chegada.
+  conteudo.classList.toggle('sem-cascata', cascataJaAconteceu);
 
   conteudo.innerHTML = `
     <div id="secao-resumo">
@@ -479,9 +515,27 @@ function montarPainel(resumo, evolucao, comentarios) {
 
   // As animações só podem começar depois que o HTML está na tela, e só na
   // primeira montagem (ver primeiraMontagem).
+  // A classe .sem-cascata (ligada lá em cima) troca a animação de entrada por
+  // uma curta, mas NÃO consegue zerar o atraso: os atrasos da cascata são
+  // declarados com :nth-of-type e, mesmo com um seletor mais específico e com
+  // a forma abreviada de animation, o navegador seguiu aplicando o atraso
+  // antigo — os blocos do topo trocavam na hora e os painéis de baixo ainda
+  // esperavam meio segundo. Estilo direto no elemento não entra nessa
+  // disputa: é o último a valer, sempre.
+  // Conteúdo definitivo na tela: a altura volta a ser livre (ver a trava em
+  // carregarPainel).
+  conteudo.style.minHeight = '';
+
+  if (cascataJaAconteceu) {
+    conteudo
+      .querySelectorAll('.lista-alertas, .grade-cartoes, .destaque, .painel')
+      .forEach((bloco) => { bloco.style.animationDelay = '0s'; });
+  }
+
   const devoAnimar = primeiraMontagem;
   animarEntrada({ animar: devoAnimar });
   primeiraMontagem = false;
+  cascataJaAconteceu = true; // a chegada acontece uma vez só, por carregamento
 
   desenharGraficoEvolucao(evolucao, devoAnimar);
   desenharGraficoIndicadores(geral, devoAnimar);

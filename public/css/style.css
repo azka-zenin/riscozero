@@ -1157,11 +1157,32 @@ h1 {
   font-weight: 600;
   cursor: pointer;
 }
+.botao-acao-alerta {
+  transition: color var(--transicao);
+}
 .botao-acao-alerta:hover { color: var(--tinta); }
+/* Mesmo afundar de 1px do .botao. Este aqui é um link sublinhado, não um
+   bloco, mas quem clica não faz essa distinção: sem o gesto, é o único
+   controle do painel que não responde ao toque. */
+.botao-acao-alerta:active { transform: translateY(1px); }
 .botao-acao-alerta:disabled { opacity: 0.6; cursor: default; }
 .botao-acao-alerta:focus-visible { outline: 2px solid var(--marca); outline-offset: 2px; }
 
-.acao-alerta-registrada { color: var(--tinta-fraca); }
+/* A confirmação toma o lugar do botão depois que o painel recarrega. Sem
+   nada, ela simplesmente aparece — e some a única pista de que aquilo foi
+   RESPOSTA ao clique de quem estava ali. O gesto é o mesmo de todo o resto
+   do sistema (subir e assentar), só que curto: é uma confirmação, não uma
+   chegada. */
+.acao-alerta-registrada {
+  color: var(--tinta-fraca);
+  display: inline-block;
+  animation: confirmar-acao 0.45s var(--assenta) backwards;
+}
+
+@keyframes confirmar-acao {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
 
 /* --------------------------------------------------------------------------
    Comentários
@@ -2243,20 +2264,51 @@ body.modo-apresentacao .area-grafico.alto { height: 440px; }
   animation: assentar-face 0.7s var(--assenta) backwards;
 }
 
-.lista-alertas  { animation-delay: 0.04s; }
-.destaque       { animation-delay: 0.12s; }
-.grade-cartoes  { animation-delay: 0.26s; }
-
 /* Os painéis entram em cascata, na ordem em que aparecem. Só os seis
    primeiros recebem atraso — abaixo disso o bloco já está fora da tela na
    carga, e um atraso longo faria o conteúdo aparecer depois que a pessoa
    rolou até ele. */
+.lista-alertas  { animation-delay: 0.04s; }
+.destaque       { animation-delay: 0.12s; }
+.grade-cartoes  { animation-delay: 0.26s; }
+
 .painel:nth-of-type(1) { animation-delay: 0.34s; }
 .painel:nth-of-type(2) { animation-delay: 0.40s; }
 .painel:nth-of-type(3) { animation-delay: 0.46s; }
 .painel:nth-of-type(4) { animation-delay: 0.52s; }
 .painel:nth-of-type(5) { animation-delay: 0.56s; }
 .painel:nth-of-type(6) { animation-delay: 0.60s; }
+
+/* TROCA DE PERÍODO NÃO É CHEGADA.
+
+   Tudo acima descreve o painel ABRINDO: os blocos entram um depois do outro,
+   e o último assenta pouco depois de um segundo. Isso vale uma vez.
+
+   Ao trocar o filtro de período o conteúdo é remontado, e as animações de
+   entrada disparavam de novo do começo — o painel inteiro sumia e voltava em
+   cascata, com quase um segundo e meio de tela vazia. Parecia queda, não
+   carregamento, e era o oposto do que esta seção diz logo acima: depois que
+   assenta, fica quieto.
+
+   Aqui a entrada continua existindo, mas curta e junta: sem atraso, todo
+   mundo ao mesmo tempo, rápido o suficiente para ler como "o valor mudou" em
+   vez de "a tela caiu". Os NÚMEROS continuam contando na troca de período —
+   isso é intencional, é o que mostra que os valores mudaram; o que não se
+   repete é a chegada dos blocos.
+
+   Quem liga a classe é o dashboard.js (cascataJaAconteceu). O deslocamento
+   também encolhe: 10px de subida em 0,2s vira solavanco. */
+#conteudo.sem-cascata .lista-alertas,
+#conteudo.sem-cascata .grade-cartoes,
+#conteudo.sem-cascata .destaque,
+#conteudo.sem-cascata .painel {
+  animation: trocar-leitura 0.2s var(--assenta) backwards;
+}
+
+@keyframes trocar-leitura {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: none; }
+}
 
 /* Transição entre páginas (fade). O fade-in de cada elemento já existe acima
    via "surgir" — aqui é só o fade-out no instante de sair, para o corte de
