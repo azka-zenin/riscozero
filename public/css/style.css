@@ -3,46 +3,46 @@
    Mostra Técnica 2026 · CEEP-PG · Equipe 1
 
    ---------------------------------------------------------------------------
-   DIREÇÃO VISUAL: face de instrumento
+   DIREÇÃO VISUAL: o instrumento virou leitura
 
    O sistema mede uma coisa invisível — a carga mental de quem trabalha — e
    precisa parecer confiável para quem vai decidir com base nele. A referência
-   continua sendo instrumento de aferição, mas agora levada até o fim: um
-   instrumento de verdade tem uma FACE (o mostrador, escuro, onde a leitura
-   acontece) e um CORPO (o resto, claro, onde ficam controles e etiquetas).
+   segue sendo instrumento de aferição, mas o desenho deixou de imitar o
+   APARELHO e passou a imitar o que se faz com ele: ler.
 
    O QUE MUDOU NESTA VERSÃO E POR QUÊ:
 
-   1. HIERARQUIA DE PROFUNDIDADE. Antes, todo bloco era superfície branca com
-      a mesma borda, a mesma sombra e o mesmo raio — do índice geral até uma
-      linha de log. Sem diferença de elevação, nada podia ser mais importante
-      que nada, e a página lia como formulário administrativo. Agora existem
-      níveis declarados (recuado / plano / erguido / face) e cada bloco recebe
-      um deles pelo PAPEL que cumpre, não por estética.
+   1. A FACE TOMOU A TELA. Antes era papel claro com UM bloco escuro (o
+      mostrador do índice geral). Agora a tela inteira é a face. A razão da
+      regra antiga — sobreviver a projetor e luz forte de feira — continua
+      atendida: o contraste do texto sobre o fundo escuro é maior que o do
+      texto escuro sobre papel que havia antes (conferido, ver TINTA nas
+      fichas de cor).
 
-   2. A FACE ESCURA. O bloco de destaque — o índice geral — passou a ser
-      escuro. É a única quebra da regra "tudo claro", e é deliberada: a razão
-      original daquela regra era sobreviver a projetor e luz forte de feira, e
-      um único bloco escuro cercado de papel claro AUMENTA o contraste do
-      ponto focal em vez de reduzir. É também o que impede o número mais
-      importante do sistema de morar numa caixa idêntica à de uma lista.
+   2. FIO NO LUGAR DE MOLDURA. Cartão com borda, raio e sombra parava de
+      funcionar no escuro: o preenchimento do bloco e o fundo da página ficam
+      a poucos pontos de distância, e a moldura vira um retângulo desenhado à
+      toa. Quem separa agora é o fio fino mais o espaço em volta — e a página
+      passou a ler como publicação, uma seção depois da outra, em vez de
+      formulário administrativo.
 
-   3. SEMÁFORO EM DUAS VERSÕES. Como agora existe superfície escura, as três
-      cores de risco ganharam um par claro para uso sobre a face. Os tons de
-      fundo claro continuam idênticos aos anteriores — nenhuma leitura muda de
-      cor no papel.
+   3. SOMBRA QUASE SUMIU. Sombra separa escurecendo o que está atrás; num
+      fundo quase preto ela não tem para onde escurecer. Sobrou só onde algo
+      precisa flutuar de verdade sobre o resto.
 
    DISCIPLINA DE COR — inalterada, é o que sustenta o sistema:
-     1. Cobalto  → marca, navegação, ações
+     1. Creme    → marca, navegação, ações (era cobalto no tema claro)
      2. Semáforo → EXCLUSIVAMENTE valores de risco (verde/âmbar/vermelho)
    Nada mais recebe cor. Quando algo aparece colorido, sempre significa
    alguma coisa — nunca é enfeite.
 
    TIPOGRAFIA: três papéis, três famílias.
-     Archivo      → títulos: grotesca sólida, tracking fechado
-     Public Sans  → texto: desenhada para serviço público, feita para ser lida
-     IBM Plex Mono→ números: dígitos de mesma largura, cara de leitura de
-                    instrumento, e alinham em coluna sem esforço
+     Instrument Serif → títulos: serifa de display. É a virada de tom desta
+                        versão — um painel que se lê, não uma tela de sistema
+     Manrope          → texto: grotesca de leitura, segura os blocos longos
+     JetBrains Mono   → números e rótulos: dígitos de mesma largura, alinham
+                        em coluna sem esforço, e as maiúsculas espaçadas que
+                        etiquetam cada bloco
 
    ASSINATURA: a régua de 1 a 5 (.regua). Todas as perguntas do formulário são
    escalas de 1 a 5, então o sistema inteiro fala essa língua.
@@ -60,53 +60,53 @@
    -------------------------------------------------------------------------- */
 
 @font-face {
-  font-family: 'Archivo';
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url('../fonts/archivo-latin-600-normal.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Archivo';
-  font-style: normal;
-  font-weight: 700;
-  font-display: swap;
-  src: url('../fonts/archivo-latin-700-normal.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Public Sans';
+  font-family: 'Instrument Serif';
   font-style: normal;
   font-weight: 400;
   font-display: swap;
-  src: url('../fonts/public-sans-latin-400-normal.woff2') format('woff2');
+  src: url('../fonts/instrument-serif-latin-400-normal.woff2') format('woff2');
 }
 @font-face {
-  font-family: 'Public Sans';
+  font-family: 'Instrument Serif';
+  font-style: italic;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/instrument-serif-latin-400-italic.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/manrope-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Manrope';
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: url('../fonts/public-sans-latin-500-normal.woff2') format('woff2');
+  src: url('../fonts/manrope-latin-500-normal.woff2') format('woff2');
 }
 @font-face {
-  font-family: 'Public Sans';
+  font-family: 'Manrope';
   font-style: normal;
   font-weight: 600;
   font-display: swap;
-  src: url('../fonts/public-sans-latin-600-normal.woff2') format('woff2');
+  src: url('../fonts/manrope-latin-600-normal.woff2') format('woff2');
 }
 @font-face {
-  font-family: 'IBM Plex Mono';
+  font-family: 'JetBrains Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/jetbrains-mono-latin-400-normal.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'JetBrains Mono';
   font-style: normal;
   font-weight: 500;
   font-display: swap;
-  src: url('../fonts/ibm-plex-mono-latin-500-normal.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'IBM Plex Mono';
-  font-style: normal;
-  font-weight: 600;
-  font-display: swap;
-  src: url('../fonts/ibm-plex-mono-latin-600-normal.woff2') format('woff2');
+  src: url('../fonts/jetbrains-mono-latin-500-normal.woff2') format('woff2');
 }
 
 /* --------------------------------------------------------------------------
@@ -115,72 +115,100 @@
 
 :root {
   /* ------------------------------------------------------------------------
-     SUPERFÍCIES — níveis declarados
+     SUPERFÍCIES — a face tomou a tela inteira
 
-     --papel        fundo da página. É o nível RECUADO: nada mora aqui, tudo
-                    repousa em cima. Escurecido de #EDF1F4 para #E3E9EF: o tom
-                    anterior era claro demais para que uma superfície branca
-                    parecesse erguida sobre ele sem precisar de sombra pesada.
-     --superficie   nível PLANO: cartões, painéis, blocos de conteúdo.
-     --superficie-2 preenchimento dentro de um bloco já plano (um item de
-                    lista dentro de um painel). Nunca usada como bloco solto.
-     --face         nível FACE: o mostrador escuro. Um só por tela.
+     A versão anterior era papel claro com UM bloco escuro (o mostrador). Esta
+     inverte: o instrumento não tem mais um mostrador cercado de papel, ele é
+     todo mostrador. A leitura acontece no escuro do começo ao fim, e o que
+     separa um bloco do outro não é mais borda e sombra — é fio fino e espaço.
+
+     --papel        fundo da página. O tom mais escuro do sistema.
+     --superficie   bloco apoiado sobre o papel. A diferença é mínima de
+                    propósito: no escuro, dois tons próximos já bastam para
+                    separar: empilhar sombra sobre isso só sujaria a tela.
+     --superficie-2 preenchimento dentro de um bloco já apoiado.
+     --linha        o fio. É ele que faz o trabalho que a borda de cartão
+                    fazia antes — por isso aparece muito mais que no tema
+                    claro, e por isso precisa ser discreto.
      ------------------------------------------------------------------------ */
-  --papel: #E3E9EF;
-  --superficie: #FFFFFF;
-  --superficie-2: #F5F8FA;
-  --linha: #DCE3E9;
-  --linha-forte: #C3CED7;
+  --papel: #14110E;
+  --superficie: #1B1714;
+  --superficie-2: #221D19;
+  --linha: #302A24;
+  --linha-forte: #453D34;
 
-  /* A face escura e seus tons internos */
-  --face: #101F2E;
-  --face-alta: #1A2C3E;
-  --face-linha: #2C4055;
-  --face-tinta: #E8EEF4;
-  --face-tinta-media: #9FB2C4;
-  --face-tinta-fraca: #7C90A3;
+  /* A face deixou de ser exceção e virou a regra: os apelidos continuam
+     apontando para os mesmos tons da página, para que o CSS que falava em
+     "face" siga funcionando sem virar um caso à parte. */
+  --face: #1B1714;
+  --face-alta: #221D19;
+  --face-linha: #302A24;
+  --face-tinta: #F4EFE6;
+  --face-tinta-media: #B8AFA2;
+  --face-tinta-fraca: #8F8677;
 
-  /* Tinta */
-  --tinta: #0D1B2A;
-  --tinta-media: #47596B;
-  /* Escurecido de #7B8A98 para atingir 4.5:1 sobre fundo branco — o tom
-     anterior ficava em 3,5:1 e reprovava no contraste mínimo de
-     acessibilidade. NÃO clarear. */
-  --tinta-fraca: #5E6E7D;
+  /* ------------------------------------------------------------------------
+     TINTA
 
-  /* Marca — navegação e ações. Nunca usada em dado. */
-  --marca: #1B3FA0;
-  --marca-clara: #2C57C9;
-  --marca-fraca: #E6ECFA;
-  /* Cobalto legível sobre a face escura */
-  --marca-na-face: #7FA0F0;
+     Os tons foram conferidos contra o fundo da página E contra a superfície
+     elevada, porque no escuro um cinza que passa sobre o fundo pode reprovar
+     sobre o bloco. --tinta-fraca é o tom mais apagado que ainda serve para
+     TEXTO (4,65:1 no pior caso). Abaixo dele existe --tinta-apagada, que
+     REPROVA no contraste mínimo e por isso só pode desenhar coisa que não
+     precisa ser lida: fio, marca d'água, placeholder decorativo.
+     NÃO usar --tinta-apagada em texto que alguém precise ler.
+     ------------------------------------------------------------------------ */
+  --tinta: #F4EFE6;
+  --tinta-media: #B8AFA2;
+  --tinta-fraca: #8F8677;
+  --tinta-apagada: #6A6255;
+
+  /* Marca — navegação e ações. Nunca usada em dado.
+     No tema claro era cobalto; no escuro, o creme é o que cumpre esse papel
+     sem competir com o semáforo, que é a única cor que carrega significado. */
+  --marca: #E8DCC8;
+  --marca-clara: #F4EFE6;
+  --marca-fraca: #302A24;
+  --marca-na-face: #E8DCC8;
 
   /* ------------------------------------------------------------------------
      SEMÁFORO — EXCLUSIVO de valores de risco
 
-     Os tons "-fraco" são fundos para superfície clara. Os "-face" são a mesma
-     leitura sobre o mostrador escuro: mesma semântica, luminosidade invertida
-     para manter contraste. Um valor NUNCA muda de significado entre os dois.
+     Mesma semântica de sempre, luminosidade adaptada ao fundo escuro: os três
+     passam de 5,7:1 sobre a página. Os tons "-fraco" agora são fundos
+     escuros (não mais pastéis), e "-borda" é a versão de fio.
      ------------------------------------------------------------------------ */
-  --baixo: #14804A;
-  --baixo-fraco: #E2F3EA;
-  --baixo-borda: #BEE3CE;
-  --baixo-face: #46C486;
+  --baixo: #8FC49B;
+  --baixo-fraco: #18251C;
+  --baixo-borda: #2E4735;
+  --baixo-face: #8FC49B;
 
-  --medio: #8F5A04;
-  --medio-fraco: #FBF0DC;
-  --medio-borda: #EFD9AE;
-  --medio-face: #E5A63C;
+  --medio: #D9A94C;
+  --medio-fraco: #2A2115;
+  --medio-borda: #4E3D1F;
+  --medio-face: #D9A94C;
 
-  --alto: #B8342A;
-  --alto-fraco: #FBE7E4;
-  --alto-borda: #F2C4BE;
-  --alto-face: #F4776A;
+  --alto: #D9705E;
+  --alto-fraco: #2B1A17;
+  --alto-borda: #52302A;
+  --alto-face: #D9705E;
 
-  /* Tipografia */
-  --titulo: 'Archivo', 'Arial Narrow', system-ui, sans-serif;
-  --corpo: 'Public Sans', system-ui, -apple-system, sans-serif;
-  --dado: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+  /* ------------------------------------------------------------------------
+     TIPOGRAFIA — três papéis, três famílias
+
+     Instrument Serif → títulos. A serifa é a mudança de tom desta versão: um
+                        instrumento de medição não precisa parecer software, e
+                        a serifa de display dá ao painel a cara de publicação
+                        (algo que se lê) em vez de tela de sistema.
+     Manrope          → texto. Grotesca de leitura, altura de x generosa,
+                        segura bem os blocos longos de insight.
+     JetBrains Mono   → números e rótulos. Dígitos de mesma largura para as
+                        colunas alinharem, e as MAIÚSCULAS espaçadas que
+                        etiquetam cada bloco.
+     ------------------------------------------------------------------------ */
+  --titulo: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --corpo: 'Manrope', system-ui, -apple-system, sans-serif;
+  --dado: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
 
   /* ------------------------------------------------------------------------
      ESCALA TIPOGRÁFICA — 10 degraus, e só eles
@@ -249,9 +277,15 @@
        --erguido  bloco que respondeu a um toque, ou que é a ação da tela
        --face     o mostrador — a única sombra realmente projetada do sistema
      ------------------------------------------------------------------------ */
-  --plano: 0 1px 2px rgba(13, 27, 42, 0.04);
-  --erguido: 0 2px 4px rgba(13, 27, 42, 0.05), 0 10px 28px rgba(13, 27, 42, 0.09);
-  --sombra-face: 0 2px 6px rgba(13, 27, 42, 0.14), 0 18px 44px rgba(13, 27, 42, 0.20);
+     NO ESCURO A SOMBRA QUASE SOME. Sombra separa por escurecer o que está
+     atrás — num fundo que já é quase preto, ela não tem para onde escurecer e
+     só vira sujeira cinzenta em volta do bloco. Quem passou a fazer a
+     separação é o fio (--linha) e o espaço. Sobrou uma sombra muito discreta
+     para o que precisa flutuar de verdade sobre o resto (menu aberto, aviso
+     sobreposto), e nada mais. */
+  --plano: none;
+  --erguido: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --sombra-face: 0 18px 44px rgba(0, 0, 0, 0.5);
 
   /* Nomes antigos preservados: havia CSS e comentários apontando para eles.
      Manter o apelido evita que um bloco esquecido perca a elevação. */
@@ -293,9 +327,9 @@ main { flex: 1; }
    -------------------------------------------------------------------------- */
 
 .topo {
-  background: rgba(255, 255, 255, 0.86);
+  background: rgba(20, 17, 14, 0.86);
   /* O topo é fixo e o conteúdo passa por baixo dele. Sem o desfoque, texto
-     rolando atrás de um branco semitransparente fica ilegível na borda. */
+     rolando atrás de um fundo semitransparente fica ilegível na borda. */
   backdrop-filter: saturate(1.6) blur(12px);
   -webkit-backdrop-filter: saturate(1.6) blur(12px);
   border-bottom: 1px solid var(--linha);
@@ -331,7 +365,7 @@ main { flex: 1; }
   height: 24px;
   border-radius: 6px;
   background-color: var(--tinta);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Crect x='5' y='13' width='3' height='4' rx='1' fill='%23FFFFFF'/%3E%3Crect x='10' y='9' width='3' height='8' rx='1' fill='%23FFFFFF'/%3E%3Crect x='15' y='5' width='3' height='12' rx='1' fill='%23FFFFFF'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Crect x='5' y='13' width='3' height='4' rx='1' fill='%2314110E'/%3E%3Crect x='10' y='9' width='3' height='8' rx='1' fill='%2314110E'/%3E%3Crect x='15' y='5' width='3' height='12' rx='1' fill='%2314110E'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: center;
   flex-shrink: 0;
@@ -494,7 +528,7 @@ h1 {
   transform: translate(45%, -50%);
   border-radius: 50%;
   background: inherit;
-  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 0 3px var(--papel);
 }
 
 .regua-preenchida.risco-baixo { background: var(--baixo); }
@@ -840,14 +874,32 @@ h1 {
    Painéis
    -------------------------------------------------------------------------- */
 
+/* O painel deixou de ser CARTÃO e virou SEÇÃO.
+
+   No tema claro, cada bloco era uma superfície branca cercada de borda e
+   apoiada no papel cinza: a moldura é o que dizia onde um assunto terminava e
+   o outro começava. No escuro isso para de funcionar — o preenchimento do
+   bloco e o fundo da página ficam a poucos pontos de distância, e o que sobra
+   da moldura é um retângulo de borda desenhado à toa, que reparte a tela em
+   caixas sem separar nada de fato.
+
+   Então quem separa passou a ser o fio de cima mais o espaço em volta. É mais
+   silencioso e lê como publicação — uma seção depois da outra — em vez de
+   formulário administrativo. Sem moldura, o respiro precisa ser maior: é ele
+   que agora carrega sozinho a separação. */
 .painel {
-  background: var(--superficie);
-  border: 1px solid var(--linha);
-  border-radius: var(--raio);
-  padding: var(--e-8) var(--e-8);
-  margin-bottom: var(--e-5);
-  box-shadow: var(--plano);
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--linha);
+  border-radius: 0;
+  padding: var(--e-10) 0 var(--e-9);
+  margin-bottom: 0;
+  box-shadow: none;
 }
+
+/* O primeiro painel da página não leva fio: ele não está separando nada de
+   cima, e um fio logo abaixo do cabeçalho lê como borda dupla. */
+.painel:first-of-type { border-top: none; }
 
 .painel h2 {
   display: flex;
@@ -933,9 +985,9 @@ h1 {
 
 .alerta .icone svg { display: block; }
 
-.alerta.alto { background: var(--alto-fraco); border-color: var(--alto-borda); color: #8E2820; }
-.alerta.medio { background: var(--medio-fraco); border-color: var(--medio-borda); color: #855205; }
-.alerta.tudo-certo { background: var(--baixo-fraco); border-color: var(--baixo-borda); color: #0F6339; }
+.alerta.alto { background: var(--alto-fraco); border-color: var(--alto-borda); color: var(--alto); }
+.alerta.medio { background: var(--medio-fraco); border-color: var(--medio-borda); color: var(--medio); }
+.alerta.tudo-certo { background: var(--baixo-fraco); border-color: var(--baixo-borda); color: var(--baixo); }
 
 /* --------------------------------------------------------------------------
    Gráficos
@@ -1081,8 +1133,8 @@ h1 {
 }
 
 .faixa-urgencia strong { font-weight: 600; }
-.faixa-urgencia.risco-alto { background: var(--alto-fraco); border-color: var(--alto-borda); color: #8E2820; }
-.faixa-urgencia.risco-medio { background: var(--medio-fraco); border-color: var(--medio-borda); color: #855205; }
+.faixa-urgencia.risco-alto { background: var(--alto-fraco); border-color: var(--alto-borda); color: var(--alto); }
+.faixa-urgencia.risco-medio { background: var(--medio-fraco); border-color: var(--medio-borda); color: var(--medio); }
 
 /* Ação pós-alerta: fecha o ciclo "alerta → o que a gestão fez a respeito".
    Segue o mesmo tratamento discreto do .selo.sistema/.selo.neutro — texto
@@ -1170,7 +1222,7 @@ h1 {
   display: flex;
   gap: var(--e-3);
   background: var(--marca-fraca);
-  border: 1px solid #C6D4F2;
+  border: 1px solid var(--linha);
   border-radius: var(--raio-p);
   padding: var(--e-5) var(--e-5);
   margin: 0 0 var(--e-4);
@@ -1358,9 +1410,9 @@ textarea { resize: vertical; }
 .escala input[type="radio"]:checked + label {
   border-color: var(--marca);
   background: var(--marca);
-  color: #fff;
+  color: var(--papel);
   font-weight: 600;
-  box-shadow: 0 3px 10px rgba(27, 63, 160, 0.28);
+  box-shadow: none;
 }
 
 .escala input[type="radio"]:focus-visible + label {
@@ -1419,7 +1471,7 @@ textarea { resize: vertical; }
   justify-content: center;
   gap: var(--e-2);
   background: var(--marca);
-  color: #fff;
+  color: var(--papel);
   border: 1px solid var(--marca);
   padding: var(--e-4) var(--e-7);
   border-radius: var(--raio-p);
@@ -1428,7 +1480,7 @@ textarea { resize: vertical; }
   font-size: var(--t-interface);
   cursor: pointer;
   text-decoration: none;
-  box-shadow: 0 1px 2px rgba(27, 63, 160, 0.2);
+  box-shadow: none;
   transition: background var(--transicao), transform 0.12s var(--resposta),
               box-shadow 0.25s var(--assenta);
 }
@@ -1437,7 +1489,7 @@ textarea { resize: vertical; }
   background: var(--marca-clara);
   border-color: var(--marca-clara);
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(27, 63, 160, 0.3);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
 }
 .botao:active { transform: translateY(1px); box-shadow: none; }
 .botao:focus-visible { outline: 2px solid var(--marca); outline-offset: 2px; }
@@ -1520,14 +1572,14 @@ textarea { resize: vertical; }
   display: block;
   background: var(--baixo-fraco);
   border-color: var(--baixo-borda);
-  color: #0F6339;
+  color: var(--baixo);
 }
 
 .mensagem.erro {
   display: block;
   background: var(--alto-fraco);
   border-color: var(--alto-borda);
-  color: #8E2820;
+  color: var(--alto);
 }
 
 /* --------------------------------------------------------------------------
@@ -1578,7 +1630,7 @@ textarea { resize: vertical; }
    reservada pra quando existe algo pra clicar de propósito (.botao). */
 .filtro-periodo button.ativo {
   background: var(--tinta);
-  color: #fff;
+  color: var(--papel);
   font-weight: 600;
 }
 
@@ -1908,8 +1960,8 @@ body.modo-apresentacao .area-grafico.alto { height: 440px; }
   height: 4px;
   background-image: repeating-linear-gradient(
     to right,
-    rgba(13, 27, 42, 0.14) 0,
-    rgba(13, 27, 42, 0.14) 1px,
+    rgba(232, 220, 200, 0.28) 0,
+    rgba(232, 220, 200, 0.28) 1px,
     transparent 1px,
     transparent 12px
   );
@@ -1937,8 +1989,8 @@ body.modo-apresentacao .area-grafico.alto { height: 440px; }
   height: 3px;
   background-image: repeating-linear-gradient(
     to right,
-    rgba(13, 27, 42, 0.18) 0,
-    rgba(13, 27, 42, 0.18) 1px,
+    rgba(232, 220, 200, 0.34) 0,
+    rgba(232, 220, 200, 0.34) 1px,
     transparent 1px,
     transparent 8px
   );
@@ -2098,7 +2150,7 @@ body.modo-apresentacao .area-grafico.alto { height: 440px; }
   background: linear-gradient(
     100deg,
     transparent 35%,
-    rgba(255, 255, 255, 0.6) 50%,
+    rgba(255, 255, 255, 0.07) 50%,
     transparent 65%
   );
   transform: translateX(-100%);

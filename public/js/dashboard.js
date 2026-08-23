@@ -871,28 +871,40 @@ function montarComentarios(dados) {
 // Gráficos
 // ---------------------------------------------------------------------------
 
-// Configurações visuais repetidas em todos os gráficos
-// Mesmas cores declaradas no CSS. O Chart.js desenha em canvas e não enxerga
-// as variáveis do CSS, então elas precisam ser repetidas aqui — se mudarem no
-// style.css, mudam aqui também.
+// Configurações visuais repetidas em todos os gráficos.
+//
+// O Chart.js desenha em canvas e não enxerga as variáveis do CSS. Antes as
+// cores ficavam copiadas aqui em hexadecimal, com um aviso de "se mudarem no
+// style.css, mudam aqui também" — e foi exatamente isso que se perdeu quando o
+// sistema trocou de tema: o painel ficou escuro e os gráficos continuaram
+// desenhando em cores de fundo claro. Agora as cores são LIDAS da folha de
+// estilo, então existe um lugar só onde a paleta mora.
+//
+// O valor de reserva cobre o caso de a folha não ter carregado ainda: o
+// gráfico sai com uma cor plausível em vez de sem cor nenhuma.
+function corDoTema(nome, reserva) {
+  const v = getComputedStyle(document.documentElement).getPropertyValue(nome);
+  return (v && v.trim()) || reserva;
+}
+
 const CORES = {
-  texto: '#0D1B2A',
-  textoFraco: '#5E6E7D',
-  grade: '#DCE3E9',
-  baixo: '#14804A',
-  medio: '#8F5A04',
-  alto: '#B8342A',
-  marca: '#1B3FA0',
-  face: '#101F2E',
+  texto: corDoTema('--tinta', '#F4EFE6'),
+  textoFraco: corDoTema('--tinta-fraca', '#8F8677'),
+  grade: corDoTema('--linha', '#302A24'),
+  baixo: corDoTema('--baixo', '#8FC49B'),
+  medio: corDoTema('--medio', '#D9A94C'),
+  alto: corDoTema('--alto', '#D9705E'),
+  marca: corDoTema('--marca', '#E8DCC8'),
+  face: corDoTema('--superficie-2', '#221D19'),
 };
 
 // O Chart.js desenha em canvas e não herda a tipografia do CSS sozinho — sem
 // isto, os rótulos e o tooltip saem no sans-serif genérico do navegador,
-// destoando do resto da interface, que só usa Public Sans, Archivo e IBM
-// Plex Mono. displayColors sai porque todo gráfico daqui tem uma série só:
-// o quadrado de cor no tooltip repetiria uma informação que a própria barra
-// já mostra.
-Chart.defaults.font.family = "'Public Sans', system-ui, -apple-system, sans-serif";
+// destoando do resto da interface, que só usa Manrope, Instrument Serif e
+// JetBrains Mono. displayColors sai porque todo gráfico daqui tem uma série
+// só: o quadrado de cor no tooltip repetiria uma informação que a própria
+// barra já mostra.
+Chart.defaults.font.family = "'Manrope', system-ui, -apple-system, sans-serif";
 Chart.defaults.font.size = 12;
 Chart.defaults.color = CORES.textoFraco;
 Chart.defaults.plugins.tooltip.backgroundColor = CORES.face;
@@ -973,7 +985,10 @@ function desenharGraficoEvolucao(serie, animar = false) {
         label: 'Índice de risco',
         data: serie.map((d) => d.indiceRisco),
         borderColor: CORES.marca,
-        backgroundColor: 'rgba(27, 63, 160, 0.07)',
+        // Preenchimento sob a linha: creme com opacidade muito baixa. No fundo
+        // escuro, qualquer coisa mais forte vira uma mancha que compete com os
+        // pontos coloridos, que são o que realmente carrega a leitura.
+        backgroundColor: 'rgba(232, 220, 200, 0.06)',
         fill: true,
         tension: 0.3,
         pointRadius: 3,
