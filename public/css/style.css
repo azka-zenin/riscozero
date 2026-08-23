@@ -772,16 +772,20 @@ h1 {
   margin-bottom: var(--e-5);
 }
 
+/* Mesma mudança do painel, um nível abaixo: o cartão virou COLUNA. Perdeu a
+   borda de quatro lados e o raio, que no escuro só desenhavam um retângulo
+   sem separar nada, e ficou com o fio de cima — que aqui já existia por outro
+   motivo (ver abaixo) e agora acumula o papel de divisor. */
 .cartao {
   position: relative;
-  background: var(--superficie);
-  border: 1px solid var(--linha);
-  border-radius: var(--raio);
-  padding: var(--e-6) var(--e-6);
-  box-shadow: var(--plano);
+  background: transparent;
+  border: none;
+  border-top: 1px solid var(--linha);
+  border-radius: 0;
+  padding: var(--e-6) var(--e-6) var(--e-6) 0;
+  box-shadow: none;
   overflow: hidden;
-  transition: transform 0.35s var(--assenta), box-shadow 0.35s var(--assenta),
-              border-color 0.35s var(--assenta);
+  transition: transform 0.35s var(--assenta);
 }
 
 /* Um fio da cor da leitura no topo do cartão. É a mesma informação que o
@@ -795,6 +799,7 @@ h1 {
   left: 0;
   right: 0;
   height: 2px;
+  top: -1px; /* cobre o fio neutro do topo, em vez de somar com ele */
   background: transparent;
   transition: background var(--transicao);
 }
@@ -806,9 +811,9 @@ h1 {
 /* Lavagem de cor no topo do cartão — a mesma leitura do fio acima, só que
    com mais área para o olho pegar de relance, sem virar um bloco inteiro
    pintado (o texto continua sobre --superficie, sem perda de contraste). */
-.cartao:has(.valor.risco-baixo) { background: linear-gradient(180deg, var(--baixo-fraco), var(--superficie) 92px); }
-.cartao:has(.valor.risco-medio) { background: linear-gradient(180deg, var(--medio-fraco), var(--superficie) 92px); }
-.cartao:has(.valor.risco-alto)  { background: linear-gradient(180deg, var(--alto-fraco), var(--superficie) 92px); }
+.cartao:has(.valor.risco-baixo) { background: linear-gradient(180deg, var(--baixo-fraco), transparent 92px); }
+.cartao:has(.valor.risco-medio) { background: linear-gradient(180deg, var(--medio-fraco), transparent 92px); }
+.cartao:has(.valor.risco-alto)  { background: linear-gradient(180deg, var(--alto-fraco), transparent 92px); }
 
 /* Só os cartões de indicador elevam no hover — são os únicos blocos do
    sistema que resumem um número em destaque, então o gesto confirma "isto é
@@ -817,7 +822,6 @@ h1 {
    tela no hover viraria ruído em vez de destaque. */
 .cartao:hover {
   transform: translateY(-3px);
-  box-shadow: var(--erguido);
   border-color: var(--linha-forte);
 }
 
