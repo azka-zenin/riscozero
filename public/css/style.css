@@ -2368,11 +2368,70 @@ html.js-transicoes.saindo main { opacity: 0; transform: translateY(-4px); }
    -------------------------------------------------------------------------- */
 
 @media print {
+  /* --------------------------------------------------------------------
+     NO PAPEL, O TEMA VOLTA A SER CLARO.
+
+     A tela é escura porque é uma face de instrumento que fica aberta a
+     tarde inteira. Papel não é isso: imprimir o painel como ele aparece
+     na tela cobriria a folha inteira de preto — um cartucho por relatório
+     — e o texto creme sobre preto é justamente o que sai pior quando a
+     impressora resolve clarear o fundo por conta própria.
+
+     Como a folha inteira é desenhada com as fichas de cor, redefinir as
+     fichas AQUI reverte a página impressa de uma vez só, sem precisar
+     repetir regra por regra. Os tons abaixo são os do tema claro que o
+     sistema usava antes, e continuam valendo pelo mesmo motivo de sempre:
+     leitura escura sobre papel branco, semáforo escuro o bastante para
+     sobreviver a uma impressora ruim.
+     -------------------------------------------------------------------- */
+  :root {
+    --papel: #FFFFFF;
+    --superficie: #FFFFFF;
+    --superficie-2: #F5F8FA;
+    --linha: #DCE3E9;
+    --linha-forte: #C3CED7;
+
+    --face: #FFFFFF;
+    --face-alta: #F5F8FA;
+    --face-linha: #DCE3E9;
+    --face-tinta: #0D1B2A;
+    --face-tinta-media: #47596B;
+    --face-tinta-fraca: #5E6E7D;
+
+    --tinta: #0D1B2A;
+    --tinta-media: #47596B;
+    --tinta-fraca: #5E6E7D;
+    --tinta-apagada: #7B8A98;
+
+    --marca: #0D1B2A;
+    --marca-clara: #0D1B2A;
+    --marca-fraca: #EEF2F6;
+    --marca-na-face: #1B3FA0;
+
+    --baixo: #14804A;
+    --baixo-fraco: #E2F3EA;
+    --baixo-borda: #BEE3CE;
+    --baixo-face: #14804A;
+
+    --medio: #8F5A04;
+    --medio-fraco: #FBF0DC;
+    --medio-borda: #EFD9AE;
+    --medio-face: #8F5A04;
+
+    --alto: #B8342A;
+    --alto-fraco: #FBE7E4;
+    --alto-borda: #F2C4BE;
+    --alto-face: #B8342A;
+  }
+
   /* Sem isto, muitos navegadores tiram cor de fundo ao imprimir "pra
      economizar tinta" — e cor de fundo aqui não é enfeite, é a distinção
-     entre risco baixo/médio/alto e o mostrador escuro do índice geral.
+     entre risco baixo/médio/alto. Com as fichas já revertidas acima, o que
+     se fixa é a versão clara, não a da tela.
      Herda pra tudo dentro do body, propriedade é herdável por natureza. */
   body {
+    background: #FFFFFF;
+    color: var(--tinta);
     print-color-adjust: exact;
     -webkit-print-color-adjust: exact;
   }

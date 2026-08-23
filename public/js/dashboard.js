@@ -1045,6 +1045,12 @@ function desenharGraficoIndicadores(geral, animar = false) {
       datasets: [{
         data: indicadores.map((i) => i.valor),
         backgroundColor: cores,
+        // A nota de risco de cada barra fica guardada junto do dado porque a
+        // cor NÃO sai do valor plotado aqui (ver o comentário acima: sono e
+        // ambiente apontam para o lado contrário). Quem repinta o gráfico
+        // depois — a troca de paleta da impressão — precisa desta lista para
+        // não pintar "dormiu bem" de vermelho.
+        notasDeRisco: indicadores.map((i) => (i.invertido ? 6 - i.valor : i.valor)),
         borderRadius: 4,
       }],
     },
@@ -1255,6 +1261,66 @@ botaoExportar.addEventListener('click', async () => {
 botaoExportarPDF.addEventListener('click', () => {
   window.print();
 });
+
+// ---------------------------------------------------------------------------
+// Os gráficos também precisam trocar de tema para o papel
+//
+// O @media print reverte a página para claro, mas gráfico é <canvas>: já foi
+// DESENHADO com as cores da tela e não muda sozinho quando a folha de
+// impressão entra. Sem isto, a linha da evolução (creme, feita para fundo
+// escuro) sai invisível no papel branco e as barras saem claras demais.
+//
+// Então trocamos a paleta, redesenhamos, e devolvemos tudo ao normal quando a
+// impressão termina. Os mesmos tons do @media print, pelo mesmo motivo:
+// escuros o bastante para sobreviver a uma impressora ruim.
+// ---------------------------------------------------------------------------
+
+const PALETA_TELA = { ...CORES };
+const PALETA_PAPEL = {
+  texto: '#0D1B2A',
+  textoFraco: '#5E6E7D',
+  grade: '#DCE3E9',
+  baixo: '#14804A',
+  medio: '#8F5A04',
+  alto: '#B8342A',
+  marca: '#1B3FA0',
+  face: '#FFFFFF',
+};
+
+function aplicarPaleta(paleta) {
+  Object.assign(CORES, paleta);
+  Chart.defaults.color = CORES.textoFraco;
+  Chart.defaults.plugins.tooltip.backgroundColor = CORES.face;
+
+  for (const grafico of Object.values(graficos)) {
+    for (const eixo of Object.values(grafico.options.scales || {})) {
+      if (eixo.ticks) eixo.ticks.color = eixo === grafico.options.scales.x ? CORES.texto : CORES.textoFraco;
+      if (eixo.grid && eixo.grid.color) eixo.grid.color = CORES.grade;
+      if (eixo.title && eixo.title.display) eixo.title.color = CORES.textoFraco;
+    }
+
+    // Na maioria dos gráficos a cor sai do próprio valor plotado, então
+    // recalcular com a paleta nova basta. A exceção é o gráfico de
+    // indicadores, onde a barra mostra a nota bruta e a cor vem da nota de
+    // RISCO — que é o contrário do valor em sono e ambiente físico. Lá o
+    // conjunto carrega notasDeRisco, e é ela que manda.
+    for (const conjunto of grafico.data.datasets) {
+      const base = conjunto.notasDeRisco || conjunto.data;
+      if (grafico.config.type === 'line') {
+        conjunto.borderColor = CORES.marca;
+        conjunto.pointBackgroundColor = base.map(corPorIndice);
+        conjunto.pointBorderColor = base.map(corPorIndice);
+      } else {
+        conjunto.backgroundColor = base.map(corPorIndice);
+      }
+    }
+
+    grafico.update('none'); // 'none' = sem animação: a impressão não espera
+  }
+}
+
+window.addEventListener('beforeprint', () => aplicarPaleta(PALETA_PAPEL));
+window.addEventListener('afterprint', () => aplicarPaleta(PALETA_TELA));
 
 // ---------------------------------------------------------------------------
 // Modo apresentação
