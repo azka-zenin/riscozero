@@ -277,7 +277,7 @@
        --erguido  bloco que respondeu a um toque, ou que é a ação da tela
        --face     o mostrador — a única sombra realmente projetada do sistema
      ------------------------------------------------------------------------ */
-     NO ESCURO A SOMBRA QUASE SOME. Sombra separa por escurecer o que está
+  /* NO ESCURO A SOMBRA QUASE SOME. Sombra separa por escurecer o que está
      atrás — num fundo que já é quase preto, ela não tem para onde escurecer e
      só vira sujeira cinzenta em volta do bloco. Quem passou a fazer a
      separação é o fio (--linha) e o espaço. Sobrou uma sombra muito discreta
@@ -363,7 +363,7 @@ main { flex: 1; }
   content: '';
   width: 24px;
   height: 24px;
-  border-radius: 6px;
+  border-radius: var(--raio-p);
   background-color: var(--tinta);
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 22 22'%3E%3Crect x='5' y='13' width='3' height='4' rx='1' fill='%2314110E'/%3E%3Crect x='10' y='9' width='3' height='8' rx='1' fill='%2314110E'/%3E%3Crect x='15' y='5' width='3' height='12' rx='1' fill='%2314110E'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
@@ -389,11 +389,13 @@ main { flex: 1; }
   font-weight: 500;
   padding: var(--e-3) var(--e-4);
   border-radius: var(--raio-p);
-  transition: background var(--transicao), color var(--transicao);
+  transition: background var(--transicao), color var(--transicao),
+              transform 0.12s var(--resposta);
 }
 
 .topo nav a:hover { background: var(--superficie-2); color: var(--tinta); }
 .topo nav a:focus-visible { outline: 2px solid var(--marca); outline-offset: 1px; }
+.topo nav a:active { transform: translateY(1px); }
 
 /* O item ativo é marcado por um traço embaixo, não por pílula de fundo. O
    traço encosta na borda do cabeçalho e lê como "você está nesta aba" —
@@ -858,10 +860,15 @@ h1 {
    nome de setor ou uma data por extenso não cabem nele sem quebrar feio. */
 .cartao .valor.valor-nome {
   font-family: var(--titulo);
-  font-size: 1.15rem;
-  letter-spacing: -0.01em;
+  font-size: var(--t-titulo-p);
+  letter-spacing: -0.02em; /* mesma convenção de todo título neste degrau */
 }
-.cartao .valor.valor-longo { font-size: 1.3rem; }
+.cartao .valor.valor-longo {
+  font-size: var(--t-titulo-p);
+  /* Sem isto herdaria -0.04em da regra base (.cartao .valor, acima), tracking
+     calibrado pra --t-titulo-g — quase o dobro deste tamanho. */
+  letter-spacing: -0.02em;
+}
 
 .cartao .nota {
   color: var(--tinta-fraca);
@@ -1652,6 +1659,7 @@ textarea { resize: vertical; }
   margin: 0 0 var(--e-3);
   font-family: var(--titulo);
   font-size: var(--t-titulo-p);
+  letter-spacing: -0.02em; /* mesma convenção de .painel h2 e outros títulos neste degrau */
 }
 
 .painel-confirmacao p {
@@ -1677,11 +1685,13 @@ textarea { resize: vertical; }
   font-size: var(--t-pequeno);
   padding: var(--e-3) var(--e-3);
   border-radius: var(--raio-p);
-  transition: color var(--transicao), background var(--transicao);
+  transition: color var(--transicao), background var(--transicao),
+              transform 0.12s var(--resposta);
 }
 
 .link-sair:hover { color: var(--alto); background: var(--alto-fraco); }
 .link-sair:focus-visible { outline: 2px solid var(--marca); outline-offset: 1px; }
+.link-sair:active { transform: translateY(1px); }
 
 /* --------------------------------------------------------------------------
    Mensagens
@@ -1751,15 +1761,19 @@ textarea { resize: vertical; }
   border: none;
   color: var(--tinta-media);
   padding: var(--e-2) var(--e-5);
-  border-radius: 5px;
+  /* Concêntrico com o raio do contêiner pai (var(--raio-p), 7px) recuado
+     pelo padding: 3px dele — em vez de um valor chutado por olho. */
+  border-radius: calc(var(--raio-p) - 3px);
   cursor: pointer;
   font-family: inherit;
   font-size: var(--t-pequeno);
   font-weight: 500;
-  transition: background var(--transicao), color var(--transicao);
+  transition: background var(--transicao), color var(--transicao),
+              transform 0.12s var(--resposta);
 }
 
 .filtro-periodo button:hover { background: var(--superficie-2); color: var(--tinta); }
+.filtro-periodo button:active { transform: translateY(1px); }
 
 /* Ativo é tinta escura, não cobalto — o filtro troca o período de leitura,
    não é uma ação. Mesmo raciocínio da aba do cabeçalho: cor de marca fica
@@ -1798,7 +1812,8 @@ textarea { resize: vertical; }
   border-radius: 999px;
   border: 1px solid var(--linha);
   background: var(--superficie);
-  transition: background var(--transicao), border-color var(--transicao), color var(--transicao);
+  transition: background var(--transicao), border-color var(--transicao), color var(--transicao),
+              transform 0.12s var(--resposta);
 }
 
 .nav-secoes a:hover {
@@ -1808,6 +1823,7 @@ textarea { resize: vertical; }
 }
 
 .nav-secoes a:focus-visible { outline: 2px solid var(--marca); outline-offset: 1px; }
+.nav-secoes a:active { transform: translateY(1px); }
 
 /* --------------------------------------------------------------------------
    Modo apresentação
@@ -1986,7 +2002,7 @@ body.modo-apresentacao .area-grafico.alto { height: 440px; }
   font-style: italic;
 }
 
-#form-usuario .botao, #form-minha-senha .botao { margin-right: 7px; }
+#form-usuario .botao, #form-minha-senha .botao { margin-right: var(--e-2); }
 
 /* --------------------------------------------------------------------------
    Histórico de acessos
@@ -2103,7 +2119,16 @@ body.modo-apresentacao .area-grafico.alto { height: 440px; }
   );
 }
 
-.caixa-login h1 { font-size: var(--t-titulo); }
+/* Só o font-size vinha sendo sobrescrito aqui — o resto (letter-spacing,
+   line-height) continuava herdado do h1 base, calibrado pra --t-titulo-g
+   (2,35rem, 47% maior que este). Valores interpolados entre a convenção do
+   degrau abaixo (--t-titulo-p, -0.02em) e a do degrau acima (--t-titulo-g,
+   -0.032em) — --t-titulo fica entre os dois. */
+.caixa-login h1 {
+  font-size: var(--t-titulo);
+  letter-spacing: -0.024em;
+  line-height: 1.15;
+}
 
 .aviso-login {
   position: relative;
@@ -2250,7 +2275,7 @@ body.modo-apresentacao .area-grafico.alto { height: 440px; }
   display: inline-block;
   width: 13px;
   height: 13px;
-  margin-left: 8px;
+  margin-left: var(--e-3);
   border: 2px solid var(--linha-forte);
   border-top-color: var(--marca);
   border-radius: 50%;
