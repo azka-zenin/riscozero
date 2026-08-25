@@ -131,6 +131,22 @@
     RiscoZero — Mostra Técnica 2026 · CEEP-PG · Equipe 1
   </footer>
 
+  <!-- Confirmação de remoção de conta. Substitui window.confirm() (a caixa
+       nativa do navegador) por um painel no visual do próprio sistema — ver
+       confirmarRemocao() em usuarios.js. Escondido até alguém clicar em
+       "Remover" numa conta. -->
+  <div class="fundo-confirmacao" id="fundo-confirmacao" style="display:none">
+    <div class="painel-confirmacao" role="alertdialog" aria-modal="true"
+         aria-labelledby="titulo-confirmacao" aria-describedby="texto-confirmacao">
+      <h2 id="titulo-confirmacao">Remover conta</h2>
+      <p id="texto-confirmacao"></p>
+      <div class="acoes-confirmacao">
+        <button type="button" class="botao secundario" id="botao-cancelar-remocao">Cancelar</button>
+        <button type="button" class="botao perigo" id="botao-confirmar-remocao">Remover</button>
+      </div>
+    </div>
+  </div>
+
   <script src="js/transicoes.js"></script>
   <script src="js/login.js"></script>
   <script src="js/usuarios.js"></script>

@@ -1379,6 +1379,40 @@ input:focus-visible {
 textarea { resize: vertical; }
 
 /* --------------------------------------------------------------------------
+   Mostrar/ocultar senha — botão de ícone dentro do campo
+   -------------------------------------------------------------------------- */
+
+.campo-com-icone { position: relative; }
+
+/* O input ganha espaço à direita para o texto nunca ficar embaixo do ícone,
+   mesmo com uma senha longa. */
+.campo-com-icone input { padding-right: calc(var(--e-9) + var(--e-2)); }
+
+.botao-icone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: var(--e-2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--e-9);
+  background: none;
+  border: none;
+  border-radius: var(--raio-p);
+  color: var(--tinta-fraca);
+  cursor: pointer;
+  transition: color var(--transicao);
+}
+.botao-icone:hover { color: var(--tinta); }
+.botao-icone:active { transform: translateY(1px); }
+.botao-icone:focus-visible {
+  outline: none;
+  color: var(--tinta);
+  box-shadow: 0 0 0 2px var(--marca-fraca);
+}
+
+/* --------------------------------------------------------------------------
    Escala 1-5 do formulário — a assinatura aplicada na entrada do dado
 
    POR QUE O TRILHO É COBALTO E NÃO SEMÁFORO — importante, não trocar:
@@ -1555,6 +1589,83 @@ textarea { resize: vertical; }
   color: var(--alto);
   border-color: var(--alto);
   background: var(--alto-fraco);
+}
+
+/* Variante sólida, para o ÚNICO clique que efetivamente destrói algo (dentro
+   do painel de confirmação abaixo). O botão secundário-que-fica-vermelho-no-
+   hover (acima) funciona pra sinalizar risco antes do clique; aqui, dentro
+   de um painel que já É a confirmação, a ação precisa parecer tão decidida
+   quanto o botão principal — só que na cor de risco alto, não na de marca.
+
+   Escopado a `.painel-confirmacao` de propósito: os botões "Remover" da
+   lista usam `.botao.secundario.perigo` (cinza, só fica vermelho no hover —
+   ver acima), e `.perigo` sozinho tem a MESMA especificidade de
+   `.secundario`. Sem o escopo, esta regra empatava na especificidade e
+   ganhava por vir depois no arquivo — os botões da lista ficavam vermelhos
+   sólidos o tempo todo, não só no hover, que não era a intenção original. */
+.painel-confirmacao .botao.perigo {
+  background: var(--alto);
+  border-color: var(--alto);
+  color: var(--papel);
+}
+.painel-confirmacao .botao.perigo:hover {
+  filter: brightness(1.12);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+}
+.painel-confirmacao .botao.perigo:focus-visible { outline: 2px solid var(--alto); outline-offset: 2px; }
+
+/* --------------------------------------------------------------------------
+   Confirmação de ação destrutiva
+
+   Substitui window.confirm() — a caixa nativa do sistema operacional, que
+   quebra o visual escuro do app por completo — por um painel no mesmo
+   idioma visual do resto do sistema. Único uso hoje é remover conta
+   (usuarios.js); se aparecer um segundo caso, os nomes aqui já são
+   genéricos o bastante pra servir sem mudança.
+   -------------------------------------------------------------------------- */
+
+.fundo-confirmacao {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--e-6);
+  z-index: 100;
+  animation: surgir 0.2s var(--resposta) backwards;
+}
+
+.painel-confirmacao {
+  background: var(--superficie);
+  border: 1px solid var(--linha-forte);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra-face);
+  padding: var(--e-7);
+  max-width: 420px;
+  width: 100%;
+  animation: assentar-face 0.28s var(--assenta) backwards;
+}
+
+.painel-confirmacao h2 {
+  margin: 0 0 var(--e-3);
+  font-family: var(--titulo);
+  font-size: var(--t-titulo-p);
+}
+
+.painel-confirmacao p {
+  margin: 0;
+  color: var(--tinta-media);
+  font-size: var(--t-pequeno);
+  line-height: 1.6;
+}
+
+.acoes-confirmacao {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--e-3);
+  margin-top: var(--e-7);
 }
 
 .link-sair {

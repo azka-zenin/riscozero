@@ -27,6 +27,48 @@ function atualizarProgresso() {
   progressoTexto.textContent = `${respondidas} de ${CAMPOS_ESCALA.length} perguntas respondidas`;
 }
 
+// Ordem visual dos campos obrigatórios — usada só pelo "Enter esperto"
+// abaixo, para saber pra onde levar o foco. As mensagens de erro do envio
+// (mais adiante) continuam com sua própria lógica, que já lista TODAS as
+// perguntas em branco de uma vez — mais útil ali do que "a primeira só".
+const ORDEM_CAMPOS = ['setor', 'turno', ...CAMPOS_ESCALA];
+
+function elementoDoCampo(campo) {
+  return campo === 'setor' || campo === 'turno'
+    ? document.getElementById(campo)
+    : form.querySelector(`input[name="${campo}"]`);
+}
+
+function primeiroCampoEmBranco() {
+  for (const campo of ORDEM_CAMPOS) {
+    const preenchido = campo === 'setor' || campo === 'turno'
+      ? !!form.querySelector(`#${campo}`).value
+      : !!form.querySelector(`input[name="${campo}"]:checked`);
+    if (!preenchido) return elementoDoCampo(campo);
+  }
+  return null; // tudo respondido
+}
+
+// Comportamento padrão do HTML: Enter em qualquer campo do formulário
+// (menos textarea) tenta submeter — inclusive no meio de um grupo de escala
+// ainda sem resposta. Isso já era barrado pela validação do envio (abaixo),
+// mas com uma mensagem de erro a cada tecla, quando o gesto natural seria só
+// avançar. Aqui o Enter fica esperto: leva pro primeiro campo em branco
+// (sem erro) se faltar algo, ou deixa o envio de verdade acontecer se está
+// tudo respondido — mesma ideia usada no login (ver public/js/login.js).
+form.addEventListener('keydown', (evento) => {
+  if (evento.key !== 'Enter') return;
+  if (evento.target === botaoEnviar || evento.target.tagName === 'TEXTAREA') return;
+
+  const proximo = primeiroCampoEmBranco();
+  if (!proximo) return; // tudo respondido: deixa o Enter enviar de verdade
+
+  evento.preventDefault();
+  proximo.focus();
+  const campo = proximo.closest('.campo');
+  if (campo) campo.scrollIntoView({ behavior: 'smooth', block: 'center' });
+});
+
 form.addEventListener('submit', async (evento) => {
   evento.preventDefault();
 

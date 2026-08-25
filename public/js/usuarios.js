@@ -139,7 +139,7 @@ function exibirUsuarios(usuarios) {
     b.addEventListener('click', () => abrirEdicao(usuarios.find((u) => u.id === b.dataset.editar)));
   });
   listaEl.querySelectorAll('[data-remover]').forEach((b) => {
-    b.addEventListener('click', () => remover(usuarios.find((u) => u.id === b.dataset.remover)));
+    b.addEventListener('click', () => remover(usuarios.find((u) => u.id === b.dataset.remover), b));
   });
 }
 
@@ -244,19 +244,85 @@ form.addEventListener('submit', async (evento) => {
 });
 
 // ---------------------------------------------------------------------------
+// Confirmação de remoção
+//
+// Substitui window.confirm() — a caixa nativa do sistema operacional, que
+// quebra o visual escuro do app por completo — por um painel no mesmo
+// idioma visual do resto do sistema (ver .fundo-confirmacao no CSS).
+// ---------------------------------------------------------------------------
+
+const fundoConfirmacao = document.getElementById('fundo-confirmacao');
+const textoConfirmacao = document.getElementById('texto-confirmacao');
+const botaoCancelarRemocao = document.getElementById('botao-cancelar-remocao');
+const botaoConfirmarRemocao = document.getElementById('botao-confirmar-remocao');
+
+let resolverConfirmacao = null;
+let elementoParaRefoco = null;
+
+/**
+ * Abre o painel de confirmação e devolve uma Promise<boolean>: true se a
+ * pessoa confirmou, false se cancelou (Esc, clique fora, ou o botão
+ * "Cancelar"). botaoQueAbriu recebe o foco de volta ao fechar, pra quem
+ * navega por teclado não perder o lugar na lista.
+ */
+function confirmarRemocao(usuario, botaoQueAbriu) {
+  textoConfirmacao.textContent =
+    `Remover a conta de ${usuario.nome} (${usuario.email})? Esta ação não pode ` +
+    'ser desfeita. Para apenas suspender o acesso, use Editar e mude a situação ' +
+    'para "Desativada".';
+  elementoParaRefoco = botaoQueAbriu || null;
+  fundoConfirmacao.style.display = 'flex';
+
+  // O foco vai pro botão SEGURO por padrão — evita remover por acidente
+  // quem aperta Enter no automático, sem ler o texto.
+  botaoCancelarRemocao.focus();
+
+  return new Promise((resolve) => { resolverConfirmacao = resolve; });
+}
+
+function fecharConfirmacao(resultado) {
+  fundoConfirmacao.style.display = 'none';
+  if (resolverConfirmacao) {
+    resolverConfirmacao(resultado);
+    resolverConfirmacao = null;
+  }
+  if (elementoParaRefoco) {
+    elementoParaRefoco.focus();
+    elementoParaRefoco = null;
+  }
+}
+
+botaoCancelarRemocao.addEventListener('click', () => fecharConfirmacao(false));
+botaoConfirmarRemocao.addEventListener('click', () => fecharConfirmacao(true));
+
+// Clicar no fundo escurecido, fora do painel, cancela — mesma convenção de
+// qualquer diálogo modal.
+fundoConfirmacao.addEventListener('click', (evento) => {
+  if (evento.target === fundoConfirmacao) fecharConfirmacao(false);
+});
+
+document.addEventListener('keydown', (evento) => {
+  if (evento.key !== 'Escape' || fundoConfirmacao.style.display === 'none') return;
+  fecharConfirmacao(false);
+  // É possível abrir "Nova conta" e, sem fechá-la, clicar em "Remover" numa
+  // conta da lista — os dois painéis não são mutuamente exclusivos como
+  // painelForm/painelMinhaSenha são entre si. Sem isto, um único Esc fecharia
+  // a confirmação E o painel de trás juntos: os dois ouvem o mesmo evento no
+  // document, então o keydown chegaria normalmente ao próximo listener
+  // também. Aqui ele para no listener que já tratou o Esc.
+  evento.stopImmediatePropagation();
+});
+
+// ---------------------------------------------------------------------------
 // Remover
 // ---------------------------------------------------------------------------
 
-async function remover(usuario) {
+async function remover(usuario, botaoQueAbriu) {
   if (!usuario) return;
 
   // Remoção é irreversível, então pedimos confirmação nomeando a pessoa —
   // evita apagar a conta errada por clique no botão vizinho.
-  const confirmado = window.confirm(
-    `Remover a conta de ${usuario.nome} (${usuario.email})?\n\n` +
-    'Esta ação não pode ser desfeita. Para apenas suspender o acesso, ' +
-    'use Editar e mude a situação para "Desativada".'
-  );
+  const confirmado = await confirmarRemocao(usuario, botaoQueAbriu);
   if (!confirmado) return;
 
   try {
@@ -336,9 +402,19 @@ document.getElementById('botao-minha-senha').addEventListener('click', () => {
   document.getElementById('senha-atual').focus();
 });
 
-document.getElementById('botao-cancelar-senha').addEventListener('click', () => {
+function fecharTrocarSenha() {
   painelMinhaSenha.style.display = 'none';
   formMinhaSenha.reset();
+}
+
+document.getElementById('botao-cancelar-senha').addEventListener('click', fecharTrocarSenha);
+
+// Esc fecha qualquer painel aberto — nova conta, editar, ou trocar senha.
+// Mesmo padrão já usado no modo apresentação do painel (dashboard.js).
+document.addEventListener('keydown', (evento) => {
+  if (evento.key !== 'Escape') return;
+  if (painelForm.style.display !== 'none') fecharFormulario();
+  if (painelMinhaSenha.style.display !== 'none') fecharTrocarSenha();
 });
 
 formMinhaSenha.addEventListener('input', () => {

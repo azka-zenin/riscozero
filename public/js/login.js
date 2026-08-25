@@ -73,6 +73,44 @@ if (formLogin) {
   const campoSenha = document.getElementById('senha');
   const botao = formLogin.querySelector('button[type="submit"]');
 
+  // Enter no e-mail não deveria ERRAR só porque a senha ainda não foi
+  // digitada — a pessoa nem chegou lá. Intercepta antes do submit nativo: se
+  // falta a senha, só leva o foco até ela; se já tem senha, deixa o Enter
+  // seguir o fluxo normal (o handler de submit abaixo cuida do resto).
+  campoEmail.addEventListener('keydown', (evento) => {
+    if (evento.key !== 'Enter') return;
+    if (!campoSenha.value) {
+      evento.preventDefault();
+      campoSenha.focus();
+    }
+  });
+
+  // Mostrar/ocultar senha. O ícone muda de olho para olho riscado — mostra
+  // qual ação vai acontecer no PRÓXIMO clique, não o estado atual (mesma
+  // convenção de qualquer botão de alternância: ícone é a ação, não o status).
+  const botaoMostrarSenha = document.getElementById('botao-mostrar-senha');
+  const ICONE_OLHO = botaoMostrarSenha ? botaoMostrarSenha.innerHTML : '';
+  const ICONE_OLHO_RISCADO = `
+    <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true">
+      <path fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"
+            d="M1 8S3.8 3 8 3s7 5 7 5-2.8 5-7 5-7-5-7-5Z"/>
+      <circle cx="8" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.4"/>
+      <path stroke="currentColor" stroke-width="1.4" stroke-linecap="round" d="M2 13 14 3"/>
+    </svg>`;
+
+  if (botaoMostrarSenha) {
+    botaoMostrarSenha.addEventListener('click', () => {
+      const visivel = campoSenha.type === 'text';
+      campoSenha.type = visivel ? 'password' : 'text';
+      botaoMostrarSenha.innerHTML = visivel ? ICONE_OLHO : ICONE_OLHO_RISCADO;
+      botaoMostrarSenha.setAttribute('aria-pressed', String(!visivel));
+      botaoMostrarSenha.setAttribute('aria-label', visivel ? 'Mostrar senha' : 'Ocultar senha');
+      // Volta o foco pra senha, não pro botão: quem clicou provavelmente vai
+      // continuar digitando ou apertar Enter em seguida.
+      campoSenha.focus();
+    });
+  }
+
   formLogin.addEventListener('submit', async (evento) => {
     evento.preventDefault();
 
