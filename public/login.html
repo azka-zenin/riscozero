@@ -6,12 +6,35 @@
   <title>RiscoZero — Acesso ao painel</title>
   <!-- As fontes vêm do próprio projeto (public/fonts), não de CDN: se a rede
        da escola bloquear fontes externas, a identidade visual não muda. -->
+  <!-- O robots.txt hoje bloqueia o site inteiro, mas ele existe para o
+       período de demonstração. Se um dia for aberto para divulgar o
+       formulário público, estas telas do painel continuam fora de qualquer
+       buscador por conta própria. -->
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Entrada restrita ao painel de gestão do RiscoZero.">
+
+  <!-- Cartão de link (WhatsApp, Telegram, redes). Sem isto, o endereço
+       compartilhado na Mostra aparece como URL crua, sem dizer o que é.
+       og:image fica relativo de propósito: o endereço público só existe
+       depois de publicar, e a maioria dos leitores resolve o caminho
+       relativo contra a própria página. -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="RiscoZero">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:title" content="RiscoZero — Acesso ao painel">
+  <meta property="og:description" content="Entrada restrita ao painel de gestão do RiscoZero.">
+  <meta property="og:image" content="icone-512.png">
+  <meta name="twitter:card" content="summary">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <meta name="theme-color" content="#1B3FA0">
+  <meta name="theme-color" content="#14110E">
   <link rel="preload" href="fonts/manrope-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <!-- Primeiro elemento focável da página: quem navega por teclado ou leitor
+       de tela pula o cabeçalho e a navegação (repetidos em toda tela) e cai
+       direto no conteúdo. Fica invisível até receber foco. -->
+  <a class="pular-conteudo" href="#conteudo-principal">Pular para o conteúdo</a>
   <header class="topo">
     <a href="index.html" class="marca">Risco<span>Zero</span></a>
     <nav>
@@ -19,7 +42,11 @@
     </nav>
   </header>
 
-  <main class="estreito">
+    <noscript>
+    <p class="aviso-sem-js">A entrada no painel precisa de JavaScript. Ative o JavaScript no navegador e recarregue a página.</p>
+  </noscript>
+
+<main id="conteudo-principal" class="estreito">
     <div class="caixa-login">
       <h1>Painel de gestão</h1>
       <p class="subtitulo">

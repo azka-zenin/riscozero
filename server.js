@@ -14,6 +14,7 @@ const path = require('path');
 const config = require('./config');
 const { conectar, mongoose } = require('./database');
 const { seguranca } = require('./middleware/seguranca');
+const { estaticos } = require('./middleware/estaticos');
 
 const respostasRouter = require('./routes/respostas');
 const authRouter = require('./routes/auth');
@@ -28,7 +29,12 @@ const app = express();
 // registraria sempre o mesmo IP para todo mundo.
 app.set('trust proxy', 1);
 
-app.use(express.json());
+// O limite fica explícito (o padrão do Express também é 100kb, mas escrito
+// aqui vira decisão, não sorte). A maior coisa que este sistema recebe é uma
+// resposta de formulário com um comentário de até 500 caracteres — 100kb é
+// muitas ordens de grandeza acima disso, e barra alguém tentando ocupar a
+// memória do processo mandando um corpo gigante numa rota pública.
+app.use(express.json({ limit: '100kb' }));
 
 // Comprime toda resposta antes de enviar — o arquivo do Chart.js sozinho tem
 // mais de 200KB, e numa wifi de escola isso é diferença real de tempo de
@@ -40,14 +46,10 @@ app.use(compression());
 // por isso vem antes do express.static.
 app.use(seguranca);
 
-// maxAge curto (1h), não um valor grande: os nomes de arquivo aqui não mudam
-// quando o conteúdo muda (não há um hash tipo style.abc123.css), então um
-// cache longo faria alguém continuar vendo a versão antiga por bastante
-// tempo depois de um push de última hora — justamente o tipo de ajuste que
-// este time faz nos dias antes de apresentar. Uma hora já evita rebuscar
-// fonte/CSS/JS a cada clique dentro da mesma sessão de demonstração, sem
-// esse risco.
-app.use(express.static(path.join(__dirname, 'public'), { maxAge: '1h' }));
+// Arquivos da pasta public. A configuração de cache mora em
+// middleware/estaticos.js porque o modo de demonstração usa exatamente a
+// mesma — ver o comentário de lá.
+app.use(estaticos);
 
 // Verificação de saúde. Serviços de hospedagem chamam um endereço assim de
 // tempos em tempos para saber se a aplicação continua de pé. Fica antes das
@@ -107,6 +109,7 @@ async function iniciar() {
     });
 
     configurarEncerramentoGracioso(servidor);
+    configurarRedeDeSeguranca();
   } catch (erro) {
     console.error('');
     console.error('  Não foi possível iniciar o RiscoZero.');
@@ -114,6 +117,38 @@ async function iniciar() {
     console.error('');
     process.exit(1);
   }
+}
+
+// ---------------------------------------------------------------------------
+// Rede de segurança para erro que escapou de todo o resto
+//
+// O tratador de erros do Express (acima) só alcança o que acontece DENTRO de
+// uma rota. Uma promise rejeitada fora desse caminho — um await esquecido, uma
+// falha de rede do driver do banco entre requisições — não passa por ele: no
+// Node 18+ ela derruba o processo inteiro, na hora, sem passar pelo
+// encerramento gracioso.
+//
+// Numa hospedagem que reinicia sozinha isso seria um susto de alguns segundos.
+// No meio de uma apresentação, é a tela morrendo na frente da banca. Aqui a
+// falha vira log e o servidor continua de pé: uma requisição pode ter falhado,
+// mas as outras seguem sendo atendidas.
+//
+// NÃO é lugar de esconder erro: o console.error registra tudo, e o objetivo é
+// só evitar que uma falha isolada leve o sistema junto.
+function configurarRedeDeSeguranca() {
+  process.on('unhandledRejection', (motivo) => {
+    console.error('Promise rejeitada sem tratamento:', motivo);
+  });
+
+  // Exceção síncrona não capturada deixa o processo num estado que não dá
+  // para garantir — o Node avisa isso na documentação. Então aqui a conduta é
+  // outra: registra e sai pelo caminho normal de encerramento, para o serviço
+  // de hospedagem subir um processo novo e limpo em vez de seguir com um
+  // possivelmente quebrado.
+  process.on('uncaughtException', (erro) => {
+    console.error('Exceção não capturada:', erro);
+    process.exit(1);
+  });
 }
 
 // Toda publicação (Render incluído, ver PUBLICAR.md) redeploya a cada push

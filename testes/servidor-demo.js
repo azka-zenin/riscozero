@@ -20,6 +20,7 @@ const { Usuario } = require('../models/Usuario');
 const { LogAcesso } = require('../models/LogAcesso');
 const { AcaoAlerta } = require('../models/AcaoAlerta');
 const { seguranca } = require('../middleware/seguranca');
+const { estaticos } = require('../middleware/estaticos');
 
 instalar(Resposta, { datas: ['data_envio'] });
 instalar(Usuario, { unicos: ['email'], datas: ['ultimoAcesso', 'createdAt', 'updatedAt'] });
@@ -34,7 +35,11 @@ const respostasRouter = require('../routes/respostas');
 const app = express();
 app.use(express.json());
 app.use(seguranca);
-app.use(express.static(path.join(__dirname, '..', 'public'), { maxAge: '1h' }));
+// Mesma entrega de arquivos do server.js — inclusive as regras de cache.
+// Compartilhado de propósito: enquanto estava escrito nos dois lugares, o
+// modo de demonstração ficou para trás e mostrava um comportamento que o
+// servidor real já não tinha.
+app.use(estaticos);
 // Mesma rota de saude do server.js, para os testes cobrirem o caminho que a
 // hospedagem usa para saber se a aplicacao esta de pe.
 app.get('/api/saude', (req, res) => {

@@ -323,6 +323,67 @@ main { flex: 1; }
 }
 
 /* --------------------------------------------------------------------------
+   Pular para o conteúdo
+
+   Some da tela mas NÃO do teclado: sai da área visível com um deslocamento,
+   em vez de display:none ou visibility:hidden — os dois tirariam o link
+   também da ordem de tabulação, que é exatamente o contrário do que ele
+   existe para fazer. Ao receber foco, volta para o canto superior esquerdo,
+   por cima do cabeçalho (que é sticky, daí o z-index maior que o dele).
+   -------------------------------------------------------------------------- */
+.pular-conteudo {
+  position: absolute;
+  top: var(--e-3);
+  left: var(--e-3);
+  z-index: 30;
+  transform: translateY(-200%);
+  background: var(--marca);
+  color: var(--papel);
+  font-size: var(--t-interface);
+  font-weight: 600;
+  padding: var(--e-3) var(--e-5);
+  border-radius: var(--raio-p);
+  text-decoration: none;
+  transition: transform 0.18s var(--assenta);
+}
+
+.pular-conteudo:focus-visible {
+  transform: none;
+  outline: 2px solid var(--tinta);
+  outline-offset: 2px;
+}
+
+/* Contador do comentário. Fica na cor de texto apagado enquanto é só uma
+   informação; vira âmbar (mesma cor de "atenção" do resto do sistema) quando
+   a pessoa realmente esbarrou no limite. Ver formulario.js. */
+.contador-comentario {
+  margin: var(--e-2) 0 0;
+  text-align: right;
+  font-family: var(--dado);
+  font-size: var(--t-mini);
+  color: var(--tinta-fraca);
+  min-height: 1.2em; /* reserva a linha: sem isto o botão de enviar pula quando o aviso aparece */
+}
+
+.contador-comentario.no-limite { color: var(--medio); }
+
+/* Aviso de JavaScript desligado. Sem isto a pessoa via uma tela pela metade
+   (ou vazia, no painel) sem nenhuma pista do motivo — e o formulário público
+   é justamente o que mais tem chance de ser aberto num navegador antigo ou
+   com script bloqueado por uma rede corporativa. */
+.aviso-sem-js {
+  max-width: 720px;
+  margin: var(--e-8) auto;
+  padding: var(--e-6) var(--e-7);
+  background: var(--medio-fraco);
+  border: 1px solid var(--medio-borda);
+  border-radius: var(--raio);
+  color: var(--medio);
+  font-size: var(--t-interface);
+  line-height: 1.6;
+}
+
+/* --------------------------------------------------------------------------
    Cabeçalho
    -------------------------------------------------------------------------- */
 

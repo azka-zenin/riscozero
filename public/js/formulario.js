@@ -27,6 +27,41 @@ function atualizarProgresso() {
   progressoTexto.textContent = `${respondidas} de ${CAMPOS_ESCALA.length} perguntas respondidas`;
 }
 
+// ---------------------------------------------------------------------------
+// Contador do comentário
+//
+// O campo tem maxlength=500, então o navegador simplesmente PARA de aceitar
+// texto ao chegar lá — sem dizer nada. Quem estava no meio de uma frase fica
+// achando que o teclado travou. O contador aparece quando falta pouco e avisa
+// antes de a pessoa esbarrar no limite.
+//
+// Só nos últimos 100 caracteres, de propósito: um contador sempre visível
+// vira ruído permanente num campo opcional que a maioria deixa em branco ou
+// preenche com uma frase curta.
+// ---------------------------------------------------------------------------
+
+const campoComentario = document.getElementById('comentario');
+const contadorComentario = document.getElementById('contador-comentario');
+const LIMITE_COMENTARIO = 500;
+const AVISAR_A_PARTIR_DE = 400;
+
+function atualizarContador() {
+  if (!campoComentario || !contadorComentario) return;
+
+  const usados = campoComentario.value.length;
+  if (usados < AVISAR_A_PARTIR_DE) {
+    contadorComentario.textContent = '';
+    contadorComentario.classList.remove('no-limite');
+    return;
+  }
+
+  const restantes = LIMITE_COMENTARIO - usados;
+  contadorComentario.textContent = restantes === 0
+    ? 'Você chegou ao limite de 500 caracteres.'
+    : `${restantes} ${restantes === 1 ? 'caractere restante' : 'caracteres restantes'}`;
+  contadorComentario.classList.toggle('no-limite', restantes === 0);
+}
+
 // Ordem visual dos campos obrigatórios — usada só pelo "Enter esperto"
 // abaixo, para saber pra onde levar o foco. As mensagens de erro do envio
 // (mais adiante) continuam com sua própria lógica, que já lista TODAS as
@@ -155,6 +190,7 @@ botaoNova.addEventListener('click', () => {
   form.reset();
   limparMensagem();
   atualizarProgresso();
+  atualizarContador(); // o form.reset() esvazia o campo; o aviso tem que sumir junto
   areaSucesso.style.display = 'none';
   areaFormulario.style.display = 'block';
 });
@@ -165,6 +201,8 @@ botaoNova.addEventListener('click', () => {
 form.addEventListener('change', limparMensagem);
 form.addEventListener('input', limparMensagem);
 form.addEventListener('change', atualizarProgresso);
+
+if (campoComentario) campoComentario.addEventListener('input', atualizarContador);
 
 function mostrarMensagem(tipo, texto) {
   mensagem.textContent = texto;

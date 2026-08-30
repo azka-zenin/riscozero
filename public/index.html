@@ -6,8 +6,22 @@
   <title>RiscoZero — Como foi o seu dia?</title>
   <!-- As fontes vêm do próprio projeto (public/fonts), não de CDN: se a rede
        da escola bloquear fontes externas, a identidade visual não muda. -->
+  <meta name="description" content="Formulário anônimo de bem-estar no trabalho. Quatro perguntas, menos de um minuto. As respostas são lidas em conjunto, por setor — ninguém é identificado.">
+
+  <!-- Cartão de link (WhatsApp, Telegram, redes). Sem isto, o endereço
+       compartilhado na Mostra aparece como URL crua, sem dizer o que é.
+       og:image fica relativo de propósito: o endereço público só existe
+       depois de publicar, e a maioria dos leitores resolve o caminho
+       relativo contra a própria página. -->
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="RiscoZero">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:title" content="RiscoZero — Como foi o seu dia?">
+  <meta property="og:description" content="Formulário anônimo de bem-estar no trabalho. Quatro perguntas, menos de um minuto. As respostas são lidas em conjunto, por setor — ninguém é identificado.">
+  <meta property="og:image" content="icone-512.png">
+  <meta name="twitter:card" content="summary">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <meta name="theme-color" content="#1B3FA0">
+  <meta name="theme-color" content="#14110E">
   <link rel="preload" href="fonts/manrope-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <!-- Manifest + ícone: o formulário é pensado pra ser respondido no
        celular, então dá pra fixar na tela inicial como um atalho. Só
@@ -18,6 +32,10 @@
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+  <!-- Primeiro elemento focável da página: quem navega por teclado ou leitor
+       de tela pula o cabeçalho e a navegação (repetidos em toda tela) e cai
+       direto no conteúdo. Fica invisível até receber foco. -->
+  <a class="pular-conteudo" href="#conteudo-principal">Pular para o conteúdo</a>
   <header class="topo">
     <a href="index.html" class="marca">Risco<span>Zero</span></a>
     <nav>
@@ -25,7 +43,11 @@
     </nav>
   </header>
 
-  <main>
+    <noscript>
+    <p class="aviso-sem-js">Este formulário precisa de JavaScript para enviar a sua resposta. Ative o JavaScript no navegador e recarregue a página.</p>
+  </noscript>
+
+<main id="conteudo-principal">
     <div id="area-formulario">
       <h1>Como foi o seu dia?</h1>
       <p class="subtitulo">
@@ -131,7 +153,12 @@
         <div class="campo">
           <label for="comentario">Quer contar mais alguma coisa? <span class="opcional">(opcional)</span></label>
           <textarea id="comentario" name="comentario" rows="3" maxlength="500"
-            placeholder="Algo específico que atrapalhou ou ajudou seu dia..."></textarea>
+            placeholder="Algo específico que atrapalhou ou ajudou seu dia..."
+            aria-describedby="contador-comentario"></textarea>
+          <!-- Só aparece quando a pessoa se aproxima do limite: um contador
+               sempre visível vira ruído num campo que a maioria deixa em
+               branco ou preenche com uma frase curta. Ver formulario.js. -->
+          <p class="contador-comentario" id="contador-comentario" role="status" aria-live="polite"></p>
         </div>
 
         <button type="submit" class="botao grande">Enviar resposta</button>
