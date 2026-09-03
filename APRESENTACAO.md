@@ -204,11 +204,12 @@ Mostre a estrutura de pastas e explique o caminho do dado:
 > sistema disse aquilo. Com IA o texto sairia mais variado, mas ninguém
 > conseguiria auditar o critério.
 
-**"Por que o painel é claro e não escuro?"**
-> Por causa da sala. Sob luz forte de ginásio e em projetor, fundo escuro perde
-> contraste e os gráficos somem. A versão anterior era escura e a gente trocou
-> justamente por isso. Também verificamos o contraste de todos os textos no
-> padrão de acessibilidade WCAG AA.
+**"Por que o painel é escuro?"**
+> É decisão de identidade visual, não acidente: o sistema se pensa como um
+> instrumento de medição — mostrador escuro, régua de 1 a 5, cor reservada
+> quase só para indicar risco (verde, âmbar, vermelho). Testamos o contraste
+> de todo texto no padrão de acessibilidade WCAG AA antes de fechar a
+> paleta, então o painel continua legível em projetor e sob luz de ginásio.
 
 **"O painel atualiza em tempo real?"**
 > Ele busca dados novos a cada 20 segundos, sem precisar recarregar a página.
@@ -217,7 +218,7 @@ Mostre a estrutura de pastas e explique o caminho do dado:
 > ficaria piscando a cada ciclo.
 
 **"Como vocês garantem que funciona?"**
-> Temos mais de 220 testes automatizados que rodam com um comando
+> Temos 223 testes automatizados que rodam com um comando
 > (`npm test`), sem precisar de banco instalado. Eles verificam as rotas, o
 > login, as permissões, o CRUD, os cálculos e a geração dos textos —
 > incluindo casos de borda, como um dia atípico que não deve virar

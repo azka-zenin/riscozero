@@ -437,7 +437,7 @@ riscozero/
 │
 └── testes/
     ├── testar-analise.js        Lógica de risco/tendência/insights (67 testes)
-    ├── testar-api.js             Rotas, login, permissões, CRUD (153 testes)
+    ├── testar-api.js             Rotas, login, permissões, CRUD (156 testes)
     ├── verificar-banco.js         Testa o MongoDB real
     ├── servidor-demo.js            Sobe offline com banco em memória
     ├── rodar-postman.js             Confere a coleção contra um servidor real
@@ -493,7 +493,7 @@ node testes/rodar-postman.js   # 24 requisições, contra um servidor real
 
 - `testes/testar-analise.js` (67) — escalas invertidas, índice, tendência,
   geração de insights, casos de borda (série vazia, dia atípico).
-- `testes/testar-api.js` (153) — rotas, login, permissões, CRUD,
+- `testes/testar-api.js` (156) — rotas, login, permissões, CRUD,
   agregações, CSV (incluindo o teste de formula injection), histórico,
   ação pós-alerta.
 - Ambos rodam contra um MongoDB simulado em memória
@@ -552,15 +552,19 @@ inteiro offline, com dados de exemplo em memória — as telas são idênticas
 ## 12. Fluxo de trabalho / estado do repositório
 
 - Repositório: `azka-zenin/riscozero`.
-- Branch de trabalho desta sessão: `claude/github-cloud-sync-0yhl7o`.
+- Branch de trabalho desta sessão: `claude/riscozero-frontend-status-sjmmpb`
+  (branches variam entre sessões — confira com `git branch --show-current`
+  em vez de tomar o nome acima como fixo).
 - Autorização explícita do usuário (dada em sessões anteriores) para
   commitar e dar push **diretamente no `main`**, sem abrir Pull Request —
   fluxo usado em todas as fases: push na branch de trabalho, verificação de
-  fast-forward, push no `main`.
-- Todas as fases de 1 a 9 já estão commitadas e enviadas ao `main`. Não há
+  fast-forward, push no `main`. Isso não dispensa checar, a cada nova
+  sessão, se o ambiente daquela vez pede um fluxo diferente (ex.: branch
+  designada sem push automático ao `main`).
+- Todas as fases de 1 a 10 já estão commitadas e enviadas ao `main`. Não há
   trabalho pendente sem commit neste momento.
 - Presença ativa de testes automatizados como rede de segurança: qualquer
-  mudança nova é verificada com `npm test` (220) + `node
+  mudança nova é verificada com `npm test` (223) + `node
   testes/rodar-postman.js` (24) antes de ser considerada concluída, além de
   verificação visual (Playwright) quando a mudança é de UI.
 
