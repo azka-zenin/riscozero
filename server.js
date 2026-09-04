@@ -20,6 +20,7 @@ const respostasRouter = require('./routes/respostas');
 const authRouter = require('./routes/auth');
 const usuariosRouter = require('./routes/usuarios');
 const logsRouter = require('./routes/logs');
+const biRouter = require('./routes/bi');
 
 const app = express();
 
@@ -67,6 +68,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/usuarios', usuariosRouter);
 app.use('/api/logs', logsRouter);
 app.use('/api/respostas', respostasRouter);
+app.use('/api/bi', biRouter);
 
 // Rota de API inexistente devolve JSON, não a página HTML padrão do Express.
 // Sem isso, um erro de digitação na URL quebraria o JSON.parse() no navegador

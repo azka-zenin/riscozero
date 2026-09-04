@@ -629,8 +629,12 @@ function montarAlertas(alertas) {
       // A previsão só existe quando o setor ainda não é crítico e vem piorando
       // em ritmo constante. Fica junto do alerta, e não num cartão à parte,
       // porque é a mesma informação: quanto tempo resta para agir.
+      // A mensagem vem em minúscula do servidor, para poder ser encaixada em
+      // outros textos. Aqui ela começa uma frase nova.
       const previsao = a.previsao
-        ? ` <strong class="alerta-previsao">${escaparHTML(a.previsao.mensagem)}.</strong>`
+        ? ` <strong class="alerta-previsao">${escaparHTML(
+          a.previsao.mensagem.charAt(0).toUpperCase() + a.previsao.mensagem.slice(1),
+        )}.</strong>`
         : '';
       linhas.push(`
         <div class="alerta medio">

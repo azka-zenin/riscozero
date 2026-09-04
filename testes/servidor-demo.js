@@ -19,6 +19,7 @@ const { Resposta } = require('../models/Resposta');
 const { Usuario } = require('../models/Usuario');
 const { LogAcesso } = require('../models/LogAcesso');
 const { AcaoAlerta } = require('../models/AcaoAlerta');
+const { TokenBI } = require('../models/TokenBI');
 const { seguranca } = require('../middleware/seguranca');
 const { estaticos } = require('../middleware/estaticos');
 
@@ -26,11 +27,13 @@ instalar(Resposta, { datas: ['data_envio'] });
 instalar(Usuario, { unicos: ['email'], datas: ['ultimoAcesso', 'createdAt', 'updatedAt'] });
 instalar(LogAcesso, { datas: ['data'] });
 instalar(AcaoAlerta, { datas: ['criadoEm'] });
+instalar(TokenBI, { unicos: ['hash'], datas: ['criadoEm', 'expiraEm', 'ultimoUso', 'revogadaEm'] });
 
 const authRouter = require('../routes/auth');
 const usuariosRouter = require('../routes/usuarios');
 const logsRouter = require('../routes/logs');
 const respostasRouter = require('../routes/respostas');
+const biRouter = require('../routes/bi');
 
 const app = express();
 app.use(express.json());
@@ -50,6 +53,7 @@ app.use('/api/auth', authRouter);
 app.use('/api/usuarios', usuariosRouter);
 app.use('/api/logs', logsRouter);
 app.use('/api/respostas', respostasRouter);
+app.use('/api/bi', biRouter);
 app.use('/api', (req, res) => res.status(404).json({ erro: 'Rota da API não encontrada.' }));
 
 // Mesmo catch-all de server.js, para o modo de demonstração se comportar

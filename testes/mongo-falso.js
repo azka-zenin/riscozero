@@ -41,7 +41,7 @@ function corrigirDatas(obj, camposDeData) {
  * (quando alguém dá await), igual ao comportamento real.
  */
 function consulta(obterDocs, filtro, opcoes = {}) {
-  const estado = { ordem: null, limite: null, lean: false, selecionar: null };
+  const estado = { ordem: null, limite: null, pular: 0, lean: false, selecionar: null };
 
   const executar = () => {
     let resultado = obterDocs().filter((d) => new Query(filtro).test(d.__plano));
@@ -56,6 +56,9 @@ function consulta(obterDocs, filtro, opcoes = {}) {
       });
     }
 
+    // A ordem importa: no MongoDB o skip vem antes do limit. Trocar os dois
+    // faria a página 2 devolver linhas que a página 1 já tinha mostrado.
+    if (estado.pular > 0) resultado = resultado.slice(estado.pular);
     if (estado.limite !== null) resultado = resultado.slice(0, estado.limite);
 
     return estado.lean
@@ -66,6 +69,7 @@ function consulta(obterDocs, filtro, opcoes = {}) {
   const api = {
     sort(ordem) { estado.ordem = ordem; return api; },
     limit(n) { estado.limite = n; return api; },
+    skip(n) { estado.pular = n; return api; },
     lean() { estado.lean = true; return api; },
     select(campos) { estado.selecionar = campos; return api; },
     then(resolver, rejeitar) {
@@ -178,6 +182,20 @@ function instalar(Model, opcoes = {}) {
     const doc = new Model(dados);
     await doc.save();
     return doc;
+  };
+
+  // Só o suficiente para gravações de rodapé, como "marcar quando foi usado
+  // pela última vez". Aceita campos soltos e $set; não implementa operadores
+  // de incremento nem de array, que nenhuma rota daqui usa.
+  Model.updateOne = async (filtro = {}, mudancas = {}) => {
+    const alvo = registros.find((r) => new Query(filtro).test(r.__plano));
+    if (!alvo) return { matchedCount: 0, modifiedCount: 0 };
+
+    const campos = { ...mudancas, ...(mudancas.$set || {}) };
+    delete campos.$set;
+    Object.assign(alvo.__plano, campos);
+    Object.assign(alvo.__doc, campos);
+    return { matchedCount: 1, modifiedCount: 1 };
   };
 
   Model.findByIdAndDelete = async (id) => {

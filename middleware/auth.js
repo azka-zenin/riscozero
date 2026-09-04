@@ -1,9 +1,11 @@
 // middleware/auth.js
 // Autenticação por JWT.
 //
-//   exigirLogin  → qualquer conta ativa pode passar, e define req.usuario
-//   exigirAdmin  → só quem tem papel "admin" passa (usar DEPOIS de exigirLogin,
-//                  já que depende de req.usuario)
+//   exigirLogin    → qualquer conta ativa pode passar, e define req.usuario
+//   exigirAdmin    → só quem tem papel "admin" passa (usar DEPOIS de exigirLogin,
+//                    já que depende de req.usuario)
+//   exigirAcessoBI → aceita também uma chave de leitura de ferramenta de
+//                    análise (ver models/TokenBI.js)
 //
 // POR QUE JWT E NÃO SESSÃO GUARDADA NO SERVIDOR: o token carrega a prova de
 // quem é o usuário dentro dele mesmo (assinado — não dá para forjar sem a
@@ -13,7 +15,9 @@
 // perderia junto, e todo mundo cairia sem aviso.
 
 const jwt = require('jsonwebtoken');
+const crypto = require('crypto');
 const { Usuario } = require('../models/Usuario');
+const { TokenBI } = require('../models/TokenBI');
 
 const SEGREDO = process.env.JWT_SECRET;
 
@@ -72,6 +76,71 @@ async function exigirLogin(req, res, next) {
   }
 }
 
+// Prefixo fixo no começo de toda chave de BI.
+//
+// POR QUE EXISTE: uma chave solta num arquivo de configuração ou colada num
+// chat é só um monte de letras. Com o prefixo, quem encontra sabe na hora o
+// que é e de onde veio — e varreduras de segredo vazado em repositórios
+// conseguem reconhecê-la por padrão.
+const PREFIXO_TOKEN_BI = 'rzbi_';
+
+/** Gera uma chave nova e devolve o valor cru junto do que vai para o banco. */
+function gerarTokenBI() {
+  const bruto = PREFIXO_TOKEN_BI + crypto.randomBytes(32).toString('hex');
+  return {
+    bruto,
+    hash: hashTokenBI(bruto),
+    // Só o suficiente para distinguir uma chave da outra numa lista.
+    prefixo: bruto.slice(0, PREFIXO_TOKEN_BI.length + 6),
+  };
+}
+
+function hashTokenBI(bruto) {
+  return crypto.createHash('sha256').update(bruto).digest('hex');
+}
+
+/**
+ * Libera as rotas de exportação para ferramentas de análise.
+ *
+ * Aceita os dois tipos de credencial de propósito: a chave de BI, usada pelo
+ * Power BI em atualização agendada, e o token de login normal — sem este
+ * segundo caminho, ninguém da equipe conseguiria conferir no navegador o que
+ * a exportação devolve sem antes criar uma chave.
+ */
+async function exigirAcessoBI(req, res, next) {
+  const cabecalho = req.headers.authorization || '';
+  const token = cabecalho.startsWith('Bearer ') ? cabecalho.slice(7) : null;
+
+  if (!token) {
+    return res.status(401).json({ erro: 'É preciso enviar uma chave de acesso.' });
+  }
+
+  if (!token.startsWith(PREFIXO_TOKEN_BI)) {
+    return exigirLogin(req, res, next);
+  }
+
+  try {
+    const registro = await TokenBI.findOne({ hash: hashTokenBI(token) });
+
+    // Chave desconhecida, revogada e vencida dão a mesma resposta: dizer qual
+    // dos três é ajudaria quem está testando chaves a saber que acertou uma
+    // que só está vencida.
+    if (!registro || registro.revogadaEm || registro.expiraEm <= new Date()) {
+      return res.status(401).json({ erro: 'Chave de acesso inválida ou expirada.' });
+    }
+
+    // Gravar o uso é o que permite achar chaves esquecidas depois. Falhar
+    // aqui não pode negar o acesso: a leitura em si já foi autorizada.
+    TokenBI.updateOne({ _id: registro._id }, { ultimoUso: new Date() }).catch(() => {});
+
+    req.tokenBI = registro;
+    next();
+  } catch (erro) {
+    console.error('Erro ao validar chave de BI:', erro.message);
+    res.status(500).json({ erro: 'Erro ao validar a chave de acesso.' });
+  }
+}
+
 function exigirAdmin(req, res, next) {
   if (!req.usuario || req.usuario.papel !== 'admin') {
     return res.status(403).json({ erro: 'Apenas administradores podem fazer isso.' });
@@ -79,4 +148,11 @@ function exigirAdmin(req, res, next) {
   next();
 }
 
-module.exports = { gerarToken, exigirLogin, exigirAdmin };
+module.exports = {
+  gerarToken,
+  exigirLogin,
+  exigirAdmin,
+  exigirAcessoBI,
+  gerarTokenBI,
+  hashTokenBI,
+};
