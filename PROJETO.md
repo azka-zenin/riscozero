@@ -104,6 +104,14 @@ sem legenda.
   vire ruído e ninguém preste atenção).
 - **Recomendações geradas por regras**, priorizadas por tendência: um setor em
   risco alto e piorando pede ação hoje; o mesmo risco em queda pode esperar.
+- **Previsão de prazo**: para um setor que ainda não é crítico mas vem
+  piorando em ritmo constante, o alerta diz em quantos dias ele chega ao risco
+  alto. Transforma "está piorando" em "restam cinco dias para agir".
+- **Aviso automático para sistemas de fora** (webhook assinado), disparado
+  quando um setor muda de gravidade — para que o RH não dependa de alguém
+  abrir o painel naquele dia.
+- **Exportação para ferramentas de análise** (Power BI, Looker, planilhas),
+  com chave de leitura própria, revogável, que nunca devolve os comentários.
 - **Comentários da equipe**, exibidos como texto puro (proteção contra XSS).
 - **Atualização automática a cada 20 segundos**, sem recarregar a página, com
   indicador de conexão — se a rede cair, o painel não apaga os dados: fica
@@ -200,11 +208,15 @@ riscozero/
 
 ## 7. Qualidade e testes
 
-- **223 testes automatizados** (`npm test`), rodando contra um MongoDB
+- **292 testes automatizados** (`npm test`), rodando contra um MongoDB
   simulado em memória — funcionam em qualquer máquina, sem banco instalado e
-  sem internet. Cobrem a lógica de risco e tendência (inclusive casos de
-  borda, como série vazia ou um dia atípico que não deve virar tendência), as
-  rotas da API, login, permissões, CRUD de contas e agregações.
+  sem internet. Cobrem a lógica de risco, tendência e previsão (inclusive
+  casos de borda, como série vazia ou um dia atípico que não deve virar
+  tendência), as rotas da API, login, permissões, CRUD de contas, agregações,
+  os avisos automáticos e a exportação para análise. Dois testes existem
+  especificamente para garantir o que **não** pode acontecer: um destino de
+  webhook fora do ar não pode impedir alguém de enviar o formulário, e o
+  comentário em texto livre não pode sair por nenhuma rota de exportação.
 - **24 testes de API via Postman** (`node testes/rodar-postman.js`),
   validando a coleção publicada em `postman/RiscoZero.postman_collection.json`
   contra um servidor real.
@@ -372,7 +384,8 @@ Simplificações conscientes, assumidas abertamente:
 
 ## 11. Evolução futura mapeada
 
-- Envio de e-mail automático quando um setor entra em risco alto
+- Envio de e-mail automático quando um setor entra em risco alto (o evento
+  já é disparado pelos webhooks; falta a ponta que monta e envia o e-mail)
 - Medir automaticamente se o índice melhorou depois de uma ação registrada
   (o registro em si já existe — falta a comparação antes/depois)
 - Modo quiosque para tablet fixo no chão de fábrica
@@ -395,4 +408,5 @@ inteiro offline, com dados de exemplo em memória — as telas são idênticas �
 de produção.
 
 Detalhes completos de instalação, comandos e resolução de problemas em
-`LEIA-ME.md`; roteiro de apresentação em `APRESENTACAO.md`.
+`LEIA-ME.md`; roteiro de apresentação em `APRESENTACAO.md`; conexão de
+ferramentas de análise em `docs/POWER-BI.md`.

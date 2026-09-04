@@ -384,6 +384,8 @@ e `DELETE`; `senhaHash` com `select: false` sem caminho de vazamento; e
 `npm audit` com zero vulnerabilidades.
 
 Resultado: **223 testes automatizados** (era 220) e 24 no Postman.
+(Hoje são 292, depois da previsão de prazo, dos webhooks e da exportação
+para ferramentas de análise — ver a seção 8.)
 
 ---
 
@@ -486,17 +488,24 @@ riscozero/
 ## 8. Testes — estado atual
 
 ```bash
-npm test           # 223 testes, sem precisar de banco (67 + 156)
+npm test           # 292 testes, sem precisar de banco (76 + 156 + 15 + 45)
 npm run verificar  # testa o MongoDB de verdade (precisa do .env)
 node testes/rodar-postman.js   # 24 requisições, contra um servidor real
 ```
 
-- `testes/testar-analise.js` (67) — escalas invertidas, índice, tendência,
-  geração de insights, casos de borda (série vazia, dia atípico).
-- `testes/testar-api.js` (153) — rotas, login, permissões, CRUD,
+- `testes/testar-analise.js` (76) — escalas invertidas, índice, tendência,
+  previsão de prazo, geração de insights, casos de borda (série vazia, dia
+  atípico).
+- `testes/testar-api.js` (156) — rotas, login, permissões, CRUD,
   agregações, CSV (incluindo o teste de formula injection), histórico,
   ação pós-alerta.
-- Ambos rodam contra um MongoDB simulado em memória
+- `testes/testar-webhooks.js` (15) — formato e assinatura dos avisos
+  automáticos, novas tentativas, e a garantia de que um destino fora do ar
+  não impede alguém de enviar o formulário.
+- `testes/testar-bi.js` (45) — quem pode ler a exportação, criação e
+  revogação de chaves, e a garantia de que o comentário em texto livre não
+  sai por nenhuma das rotas de exportação.
+- Todos rodam contra um MongoDB simulado em memória
   (`testes/mongo-falso.js`), sem precisar de banco instalado nem internet.
 
 ---
