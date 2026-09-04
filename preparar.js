@@ -80,6 +80,28 @@ function validarURI(valor) {
   return null;
 }
 
+/**
+ * Acrescenta o nome do banco à URI quando ele não veio.
+ *
+ * POR QUE PRECISA: a string que o Atlas entrega termina no endereço do
+ * cluster, sem dizer qual banco usar. O Mongoose aceita assim e grava tudo
+ * numa base chamada "test" — nada falha, nada avisa, e só se percebe quando o
+ * painel aparece vazio depois de um "seed" que disse ter dado certo.
+ */
+function completarBanco(uri) {
+  const [semQuery, query] = uri.split('?');
+  let base = semQuery.replace(/\/+$/, '');
+
+  const depoisDoHost = base.split('@')[1] || '';
+  const faltavaBanco = !depoisDoHost.includes('/');
+  if (faltavaBanco) base += '/riscozero';
+
+  return {
+    uri: base + '?' + (query || 'retryWrites=true&w=majority'),
+    faltavaBanco,
+  };
+}
+
 (async () => {
   console.log('\n  Preparando o RiscoZero neste computador.\n');
 
@@ -96,7 +118,12 @@ function validarURI(valor) {
   console.log('  O endereço do banco está no MongoDB Atlas, em:');
   console.log('  Database > Connect > Drivers > copie a string de conexão.\n');
 
-  const uri = await pedirAte('  Endereço do MongoDB: ', validarURI);
+  const { uri, faltavaBanco } = completarBanco(
+    await pedirAte('  Endereço do MongoDB: ', validarURI),
+  );
+  if (faltavaBanco) {
+    console.log('\n  (a string não dizia qual banco usar — acrescentei "/riscozero")');
+  }
 
   console.log('');
   const email = await pedirAte(
