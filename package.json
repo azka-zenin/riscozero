@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
+    "preparar": "node preparar.js",
     "seed": "node seed.js",
     "limpar": "node limpar.js",
     "test": "node testes/testar-analise.js && node testes/testar-api.js && node testes/testar-webhooks.js && node testes/testar-bi.js",

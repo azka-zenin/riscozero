@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RiscoZero — Chaves de análise</title>
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="description" content="Chaves de leitura usadas por Power BI e outras ferramentas de análise.">
+
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="RiscoZero">
+  <meta property="og:locale" content="pt_BR">
+  <meta property="og:title" content="RiscoZero — Chaves de análise">
+  <meta property="og:description" content="Chaves de leitura usadas por Power BI e outras ferramentas de análise.">
+  <meta property="og:image" content="icone-512.png">
+  <meta name="twitter:card" content="summary">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <meta name="theme-color" content="#14110E">
+  <link rel="preload" href="fonts/manrope-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a class="pular-conteudo" href="#conteudo-principal">Pular para o conteúdo</a>
+  <header class="topo">
+    <a href="index.html" class="marca">Risco<span>Zero</span></a>
+    <nav>
+      <a href="index.html">Formulário</a>
+      <a href="dashboard.html">Painel</a>
+      <a href="usuarios.html">Usuários</a>
+      <a href="chaves.html" class="ativo">Chaves</a>
+      <a href="acessos.html">Acessos</a>
+    </nav>
+    <div class="conta-usuario">
+      <span class="usuario-logado" id="usuario-logado"></span>
+      <button type="button" class="link-sair" id="botao-sair">Sair</button>
+    </div>
+  </header>
+
+  <noscript>
+    <p class="aviso-sem-js">A tela de chaves precisa de JavaScript. Ative o JavaScript no navegador e recarregue a página.</p>
+  </noscript>
+
+  <main id="conteudo-principal" class="largo">
+    <h1>Chaves de análise</h1>
+    <p class="subtitulo">
+      Chaves de leitura usadas pelo Power BI e por outras ferramentas para
+      buscar os dados sozinhas. Elas só leem — não criam contas, não trocam
+      senhas e nunca devolvem os comentários do formulário.
+    </p>
+
+    <div class="controles">
+      <a href="#" class="botao secundario" id="link-guia">Como conectar o Power BI</a>
+      <button type="button" class="botao" id="botao-nova-chave">Nova chave</button>
+    </div>
+
+    <div class="painel" id="painel-formulario" style="display:none">
+      <h2>Nova chave</h2>
+      <p class="descricao-painel">
+        O valor da chave aparece uma única vez, logo depois de criar. O sistema
+        guarda apenas um resumo criptográfico dela — se você perder o valor,
+        não há como recuperá-lo: revogue esta e crie outra.
+      </p>
+
+      <form id="form-chave" novalidate>
+        <div class="campo">
+          <label for="nome-chave">Para quem é esta chave</label>
+          <p class="ajuda">
+            Ex.: "Power BI do RH". Serve para saber qual revogar depois, quando
+            alguém sair da empresa ou um relatório for desativado.
+          </p>
+          <input type="text" id="nome-chave" name="nome" maxlength="80" autocomplete="off">
+        </div>
+
+        <div class="campo">
+          <label for="dias-chave">Validade</label>
+          <p class="ajuda">
+            Depois disso a chave para de funcionar sozinha, mesmo que ninguém
+            se lembre dela.
+          </p>
+          <select id="dias-chave" name="dias">
+            <option value="30">30 dias</option>
+            <option value="90" selected>90 dias</option>
+            <option value="180">180 dias</option>
+            <option value="365">1 ano</option>
+          </select>
+        </div>
+
+        <button type="submit" class="botao" id="botao-salvar">Criar chave</button>
+        <button type="button" class="botao secundario" id="botao-cancelar">Cancelar</button>
+        <div class="mensagem" id="mensagem-formulario" role="alert"></div>
+      </form>
+    </div>
+
+    <!-- Único momento em que o valor da chave existe na tela. Fica em destaque
+         e com aviso explícito porque não há segunda chance de copiá-lo. -->
+    <div class="painel destaque-chave" id="painel-chave-nova" style="display:none">
+      <h2>Guarde esta chave agora</h2>
+      <p class="descricao-painel">
+        Ela não será mostrada de novo. Cole no Power BI antes de fechar esta tela.
+      </p>
+      <div class="valor-chave">
+        <code id="valor-chave-nova"></code>
+        <button type="button" class="botao secundario" id="botao-copiar">Copiar</button>
+      </div>
+      <button type="button" class="botao" id="botao-guardei">Já guardei</button>
+    </div>
+
+    <div class="mensagem" id="mensagem-geral" role="alert"></div>
+
+    <div id="lista-chaves">
+      <p class="carregando">Carregando chaves</p>
+    </div>
+  </main>
+
+  <footer class="rodape">
+    RiscoZero — Mostra Técnica 2026 · CEEP-PG · Equipe 1
+  </footer>
+
+  <div class="fundo-confirmacao" id="fundo-confirmacao" style="display:none">
+    <div class="painel-confirmacao" role="alertdialog" aria-modal="true"
+         aria-labelledby="titulo-confirmacao" aria-describedby="texto-confirmacao">
+      <h2 id="titulo-confirmacao">Revogar chave</h2>
+      <p id="texto-confirmacao"></p>
+      <div class="acoes-confirmacao">
+        <button type="button" class="botao secundario" id="botao-cancelar-remocao">Cancelar</button>
+        <button type="button" class="botao perigo" id="botao-confirmar-remocao">Revogar</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/transicoes.js"></script>
+  <script src="js/login.js"></script>
+  <script src="js/chaves.js"></script>
+</body>
+</html>

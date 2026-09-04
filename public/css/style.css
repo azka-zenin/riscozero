@@ -1061,6 +1061,40 @@ h1 {
 .alerta.medio { background: var(--medio-fraco); border-color: var(--medio-borda); color: var(--medio); }
 .alerta.tudo-certo { background: var(--baixo-fraco); border-color: var(--baixo-borda); color: var(--baixo); }
 
+/* Painel que mostra o valor de uma chave recém-criada.
+   Chama atenção de propósito: é o único instante em que o valor existe na
+   tela, e quem fechar sem copiar precisa criar outra chave. Ganha moldura
+   própria porque .painel é transparente e sem borda por padrão. */
+.painel.destaque-chave {
+  border: 1px solid var(--medio-borda);
+  border-radius: 8px;
+  background: var(--medio-fraco);
+  padding: var(--e-8);
+}
+
+.valor-chave {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  flex-wrap: wrap;
+  margin: 1rem 0;
+}
+
+/* A chave tem 69 caracteres: em tela estreita ela precisa quebrar em vez de
+   esticar o painel e fazer a página inteira rolar de lado. */
+.valor-chave code {
+  flex: 1 1 22rem;
+  min-width: 0;
+  padding: 0.7rem 0.9rem;
+  border: 1px solid var(--medio-borda);
+  border-radius: 6px;
+  background: var(--papel);
+  font-family: var(--dado);
+  font-size: 0.85rem;
+  word-break: break-all;
+  user-select: all;
+}
+
 /* Previsão de quando o setor vira crítico. Herda a cor do alerta e ganha peso
    por sublinhado pontilhado — negrito sozinho some no meio do texto âmbar. */
 .alerta-previsao {
