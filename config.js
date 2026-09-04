@@ -66,4 +66,29 @@ module.exports = {
   // vale aumentar — dá para ajustar sem mexer no código, pela variável de
   // ambiente MINIMO_RESPOSTAS_COMENTARIO.
   MINIMO_RESPOSTAS_COMENTARIO: numeroDoAmbiente(process.env.MINIMO_RESPOSTAS_COMENTARIO, 5),
+
+  // Avisos automáticos para sistemas de fora (RH, help desk). Ver utils/webhooks.js.
+  //
+  // Tudo aqui é opcional: sem URL configurada, o evento simplesmente não é
+  // disparado e o sistema roda exatamente como antes. É de propósito — quem
+  // usa o RiscoZero sem integração nenhuma não deve precisar configurar nada.
+  WEBHOOKS: {
+    DESTINOS: {
+      resposta_criada: process.env.WEBHOOK_RH_RESPOSTA || null,
+      alerta_criado: process.env.WEBHOOK_RH_ALERTA || null,
+      acao_registrada: process.env.WEBHOOK_RH_ACAO || null,
+    },
+
+    // Segredo usado para assinar cada envio (HMAC-SHA256). Sem ele o envio
+    // sai sem assinatura, e quem recebe não tem como saber se veio daqui.
+    SEGREDO: process.env.WEBHOOK_SEGREDO || null,
+
+    // Tempo limite de cada tentativa. Curto de propósito: o webhook roda em
+    // segundo plano, mas um destino travado não pode segurar processo à toa.
+    TIMEOUT_MS: numeroDoAmbiente(process.env.WEBHOOK_TIMEOUT_MS, 5000),
+
+    // Quantas vezes tentar antes de desistir. Cobre a queda de rede de alguns
+    // segundos, que é a falha comum; não tenta ser fila de mensagens.
+    TENTATIVAS: numeroDoAmbiente(process.env.WEBHOOK_TENTATIVAS, 3),
+  },
 };

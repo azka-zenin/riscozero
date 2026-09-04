@@ -7,7 +7,7 @@
     "start": "node server.js",
     "seed": "node seed.js",
     "limpar": "node limpar.js",
-    "test": "node testes/testar-analise.js && node testes/testar-api.js",
+    "test": "node testes/testar-analise.js && node testes/testar-api.js && node testes/testar-webhooks.js",
     "verificar": "node testes/verificar-banco.js"
   },
   "dependencies": {

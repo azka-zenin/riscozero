@@ -22,6 +22,7 @@ const analise = require('../utils/analise');
 const insights = require('../utils/insights');
 const config = require('../config');
 const { limiteFormulario } = require('../middleware/limites');
+const webhooks = require('../utils/webhooks');
 
 // ---------------------------------------------------------------------------
 // Filtro de período (?periodo=7, 30 ou tudo)
@@ -68,6 +69,87 @@ function comoSetor(documento) {
 }
 
 // ---------------------------------------------------------------------------
+// Aviso automático de alerta para sistemas de fora
+// ---------------------------------------------------------------------------
+
+// Última gravidade já avisada de cada setor, para não repetir o mesmo aviso.
+//
+// POR QUE ISSO É NECESSÁRIO: sem memória, cada resposta enviada por um setor
+// em risco alto geraria um novo aviso idêntico. Num setor com trinta pessoas
+// respondendo por dia, o RH receberia trinta mensagens dizendo a mesma coisa
+// e passaria a ignorar todas.
+//
+// Fica em memória de propósito: se o servidor reiniciar, o primeiro aviso de
+// cada setor é reenviado. Repetir um alerta depois de uma reinicialização é
+// bem menos grave do que deixar de avisar, e evita mais uma coleção no banco.
+const ultimaGravidadeAvisada = new Map();
+
+/**
+ * Recalcula o alerta de um setor e avisa quem estiver escutando, mas só
+ * quando a gravidade mudou desde o último aviso.
+ *
+ * Roda depois de gravar uma resposta, e não dentro do GET /resumo, por dois
+ * motivos: o painel busca o resumo a cada 20 segundos por gestor aberto, o que
+ * transformaria o aviso em enxurrada; e o RH precisa ser avisado mesmo quando
+ * ninguém abriu o painel naquele dia — que é justamente o caso em que o aviso
+ * automático faz diferença.
+ */
+async function avisarSeAlertaMudou(setor) {
+  if (!webhooks.destinoDe('alerta_criado')) return;
+
+  const { match } = filtroPeriodo('30');
+  const filtroSetor = { ...match, setor };
+
+  const [medias, evolucao] = await Promise.all([
+    Resposta.aggregate([
+      { $match: filtroSetor },
+      { $group: { _id: '$setor', ...camposDeMedia() } },
+    ]),
+    Resposta.aggregate([
+      { $match: filtroSetor },
+      {
+        $group: {
+          _id: {
+            dia: {
+              $dateToString: {
+                format: '%Y-%m-%d',
+                date: '$data_envio',
+                timezone: config.FUSO_HORARIO,
+              },
+            },
+          },
+          ...camposDeMedia(),
+        },
+      },
+      { $sort: { '_id.dia': 1 } },
+    ]),
+  ]);
+
+  if (medias.length === 0) return;
+
+  const serie = evolucao.map((linha) => ({
+    dia: linha._id.dia,
+    indiceRisco: analise.calcularIndiceRisco({
+      estresse: linha.media_estresse,
+      sono: linha.media_sono,
+      carga_trabalho: linha.media_carga_trabalho,
+      ambiente_fisico: linha.media_ambiente_fisico,
+    }),
+  }));
+
+  const alertas = analise.gerarAlertas([comoSetor(medias[0])], { [setor]: serie });
+
+  // Sem alerta significa que o setor está bem. Limpar a memória aqui é o que
+  // permite avisar de novo se ele voltar a piorar mais para frente.
+  const gravidade = alertas.length > 0 ? alertas[0].gravidade : null;
+  if (ultimaGravidadeAvisada.get(setor) === gravidade) return;
+  ultimaGravidadeAvisada.set(setor, gravidade);
+
+  if (!gravidade) return;
+  webhooks.dispararEmSegundoPlano('alerta_criado', alertas[0]);
+}
+
+// ---------------------------------------------------------------------------
 // POST /api/respostas — pública
 // ---------------------------------------------------------------------------
 router.post('/', limiteFormulario, async (req, res) => {
@@ -92,6 +174,29 @@ router.post('/', limiteFormulario, async (req, res) => {
     res.status(201).json({
       id: resposta._id,
       mensagem: 'Resposta registrada com sucesso.',
+    });
+
+    // Daqui para baixo o trabalhador já recebeu a confirmação dele. Nada
+    // aqui pode alterar a resposta HTTP, e nada aqui pode derrubar o
+    // processo — quem envia o formulário não tem culpa se o RH está fora do ar.
+    //
+    // O comentário em texto livre fica de fora do aviso de propósito: é o
+    // campo que pode identificar quem respondeu, e a mesma trava que o painel
+    // aplica (MINIMO_RESPOSTAS_COMENTARIO) não teria como valer do outro lado
+    // da integração.
+    webhooks.dispararEmSegundoPlano('resposta_criada', {
+      setor: resposta.setor,
+      setorNome: analise.nomeSetor(resposta.setor),
+      turno: resposta.turno,
+      estresse: resposta.estresse,
+      sono: resposta.sono,
+      carga_trabalho: resposta.carga_trabalho,
+      ambiente_fisico: resposta.ambiente_fisico,
+      temComentario: Boolean(resposta.comentario),
+    });
+
+    avisarSeAlertaMudou(resposta.setor).catch((erro) => {
+      console.error('Erro ao verificar alerta para aviso automático:', erro.message);
     });
   } catch (erro) {
     if (erro.name === 'ValidationError') {
@@ -390,6 +495,14 @@ router.post('/setores/:setor/acao', async (req, res) => {
     });
     res.status(201).json({
       setor: acao.setor,
+      criadoPor: acao.criadoPor,
+      criadoEm: acao.criadoEm,
+      observacao: acao.observacao,
+    });
+
+    webhooks.dispararEmSegundoPlano('acao_registrada', {
+      setor: acao.setor,
+      setorNome: analise.nomeSetor(acao.setor),
       criadoPor: acao.criadoPor,
       criadoEm: acao.criadoEm,
       observacao: acao.observacao,
