@@ -1061,6 +1061,14 @@ h1 {
 .alerta.medio { background: var(--medio-fraco); border-color: var(--medio-borda); color: var(--medio); }
 .alerta.tudo-certo { background: var(--baixo-fraco); border-color: var(--baixo-borda); color: var(--baixo); }
 
+/* Previsão de quando o setor vira crítico. Herda a cor do alerta e ganha peso
+   por sublinhado pontilhado — negrito sozinho some no meio do texto âmbar. */
+.alerta-previsao {
+  font-weight: 600;
+  text-decoration: underline dotted currentColor;
+  text-underline-offset: 3px;
+}
+
 /* --------------------------------------------------------------------------
    Gráficos
 

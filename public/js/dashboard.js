@@ -626,10 +626,16 @@ function montarAlertas(alertas) {
     `);
   } else {
     medios.forEach((a) => {
+      // A previsão só existe quando o setor ainda não é crítico e vem piorando
+      // em ritmo constante. Fica junto do alerta, e não num cartão à parte,
+      // porque é a mesma informação: quanto tempo resta para agir.
+      const previsao = a.previsao
+        ? ` <strong class="alerta-previsao">${escaparHTML(a.previsao.mensagem)}.</strong>`
+        : '';
       linhas.push(`
         <div class="alerta medio">
           <span class="icone">${ICONES_ALERTA.medio}</span>
-          <span>${escaparHTML(a.mensagem)}</span>
+          <span>${escaparHTML(a.mensagem)}${previsao}</span>
         </div>
       `);
     });

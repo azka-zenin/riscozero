@@ -340,6 +340,56 @@ function calcularTendencia(serie) {
   };
 }
 
+// Até quantos dias à frente vale a pena extrapolar. Além disso, a projeção
+// deixa de ser informação e vira chute: nada garante que o ritmo das últimas
+// duas semanas continue igual por mais um mês.
+const HORIZONTE_MAXIMO_DIAS = 30;
+
+/**
+ * Estima em quantos dias um setor cruza o limite de risco alto, mantido o
+ * ritmo atual de piora.
+ *
+ * @param serie lista ordenada por data, cada item com { indiceRisco }
+ * @param indiceAtual índice de risco do setor hoje
+ * @returns { dias, limite, mensagem } ou null quando não dá para prever
+ *
+ * COMO FUNCIONA: reaproveita a variação já calculada por calcularTendencia(),
+ * que é a diferença entre a média da segunda metade e a da primeira. Como os
+ * centros dessas duas metades ficam a meio período de distância, dividir a
+ * variação por essa distância dá o ritmo diário de piora. O resto é regra de
+ * três até o limite.
+ *
+ * POR QUE SÓ EM CASO DE PIORA: projetar um setor estável ou melhorando daria
+ * um número sem significado — e um painel que anuncia crise onde não há
+ * ensina o gestor a ignorar o painel.
+ */
+function preverDiasAteCritico(serie, indiceAtual) {
+  if (typeof indiceAtual !== 'number' || Number.isNaN(indiceAtual)) return null;
+
+  const limite = config.LIMITES_RISCO.MEDIO_ATE;
+
+  // Já está em risco alto: não há o que prever, o problema é agora.
+  if (indiceAtual > limite) return null;
+
+  const tendencia = calcularTendencia(serie);
+  if (!tendencia.confiavel || tendencia.direcao !== 'piorando') return null;
+
+  const distanciaEntreMetades = tendencia.diasAnalisados / 2;
+  const ritmoPorDia = tendencia.variacao / distanciaEntreMetades;
+  if (ritmoPorDia <= 0) return null;
+
+  const dias = Math.ceil((limite - indiceAtual) / ritmoPorDia);
+  if (dias < 1 || dias > HORIZONTE_MAXIMO_DIAS) return null;
+
+  return {
+    dias,
+    limite: Number(limite.toFixed(2)),
+    mensagem: dias === 1
+      ? 'pode chegar a risco alto amanhã se o ritmo continuar'
+      : `pode chegar a risco alto em ${dias} dias se o ritmo continuar`,
+  };
+}
+
 /**
  * Conta há quantos dias seguidos o índice vem subindo, olhando do fim para o
  * começo. Serve para dizer "piorando há 5 dias" em vez de só "piorando".
@@ -402,6 +452,7 @@ function gerarAlertas(porSetor, seriesPorSetor = {}) {
     const serie = seriesPorSetor[setor.setor] || [];
     const tendencia = calcularTendencia(serie);
     const diasPiorando = diasSeguidosPiorando(serie);
+    const previsao = preverDiasAteCritico(serie, indice);
 
     // Complemento sobre a direção do movimento. Só entra quando há dias
     // suficientes para a leitura ser confiável — dizer "piorando" com base em
@@ -425,6 +476,7 @@ function gerarAlertas(porSetor, seriesPorSetor = {}) {
         indice: Number(indice.toFixed(2)),
         tendencia: tendencia.direcao,
         diasPiorando,
+        previsao,
         mensagem: `${nomeSetor(setor.setor)} está em risco alto. `
           + `Fator principal: ${principal.toLowerCase()}.${complemento}`,
       });
@@ -436,6 +488,7 @@ function gerarAlertas(porSetor, seriesPorSetor = {}) {
         indice: Number(indice.toFixed(2)),
         tendencia: tendencia.direcao,
         diasPiorando,
+        previsao,
         mensagem: `${nomeSetor(setor.setor)} está em risco médio.${complemento || ' Vale acompanhar de perto.'}`,
       });
     } else if (tendencia.confiavel && tendencia.direcao === 'piorando' && diasPiorando >= 3) {
@@ -449,6 +502,7 @@ function gerarAlertas(porSetor, seriesPorSetor = {}) {
         indice: Number(indice.toFixed(2)),
         tendencia: 'piorando',
         diasPiorando,
+        previsao,
         mensagem: `${nomeSetor(setor.setor)} ainda está em risco baixo, `
           + `mas vem piorando há ${diasPiorando} dias.`,
       });
@@ -482,6 +536,7 @@ module.exports = {
   gerarRecomendacoesPorSetor,
   calcularTendencia,
   diasSeguidosPiorando,
+  preverDiasAteCritico,
   definirUrgencia,
   gerarAlertas,
 };

@@ -104,6 +104,52 @@ ok('dia do meio é ignorado com quantidade ímpar',
   `${t.direcao} variacao=${t.variacao} (esperado 2.0)`);
 
 // ---------------------------------------------------------------------------
+secao('PREVISAO DE RISCO ALTO');
+
+// Ritmo: subiu 0,1 por dia. Do 2,9 atual ao limite 3,4 faltam 0,5 -> 5 dias.
+const seriePiorando = serie(2.0, 2.1, 2.2, 2.3, 2.4, 2.5, 2.6, 2.7, 2.8, 2.9);
+let p = analise.preverDiasAteCritico(seriePiorando, 2.9);
+ok('projeta 5 dias num ritmo de 0,1 por dia',
+  p !== null && p.dias === 5, p ? `dias=${p.dias}` : 'null');
+
+ok('a mensagem cita o prazo',
+  p !== null && p.mensagem.includes('5 dias'), p ? p.mensagem : 'null');
+
+ok('setor estável não recebe previsão',
+  analise.preverDiasAteCritico(serie(2.5, 2.5, 2.5, 2.5, 2.5, 2.5), 2.5) === null);
+
+ok('setor melhorando não recebe previsão',
+  analise.preverDiasAteCritico(serie(3.2, 3.0, 2.8, 2.6, 2.4, 2.2), 2.2) === null);
+
+// Mesma trava de calcularTendencia: com menos de 4 dias não há leitura confiável
+ok('poucos dias não geram previsão',
+  analise.preverDiasAteCritico(serie(2.0, 2.5, 3.0), 3.0) === null);
+
+// Quem já passou do limite não tem o que prever — o problema é hoje
+ok('setor já em risco alto não recebe previsão',
+  analise.preverDiasAteCritico(seriePiorando, 3.9) === null);
+
+// Piora quase imperceptível projetaria meses à frente: isso é chute, não dado
+ok('piora lenta demais fica fora do horizonte',
+  analise.preverDiasAteCritico(
+    serie(2.00, 2.01, 2.02, 2.03, 2.04, 2.05, 2.06, 2.07), 2.07) === null);
+
+ok('índice inválido não quebra a previsão',
+  analise.preverDiasAteCritico(seriePiorando, null) === null);
+
+// A previsão precisa chegar ao painel junto do alerta, senão ninguém a vê
+const alertasComPrevisao = analise.gerarAlertas(
+  [{
+    setor: 'producao', total: 10,
+    media_estresse: 3.5, media_sono: 2.5,
+    media_carga_trabalho: 3.5, media_ambiente_fisico: 2.5,
+  }],
+  { producao: seriePiorando },
+);
+ok('gerarAlertas anexa o campo previsao',
+  alertasComPrevisao.length === 1 && 'previsao' in alertasComPrevisao[0]);
+
+// ---------------------------------------------------------------------------
 secao('DIAS SEGUIDOS PIORANDO');
 
 ok('3 dias seguidos subindo',
