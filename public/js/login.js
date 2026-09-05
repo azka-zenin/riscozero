@@ -111,6 +111,37 @@ if (formLogin) {
     });
   }
 
+  // Atalho pra apresentação: Ctrl+A entra direto como admin, sem digitar
+  // nada — só pra não ficar parado no teclado na frente da banca.
+  //
+  // POR QUE SÓ FUNCIONA NO SERVIDOR DE DEMONSTRAÇÃO (testes/servidor-demo.js):
+  // aqui é a tela de login de verdade, publicada também pelo servidor real
+  // (server.js + MongoDB Atlas, ver render.yaml). Um atalho que entrasse
+  // direto sem checar senha seria uma porta dos fundos na autenticação — quem
+  // abrisse o painel publicado e apertasse Ctrl+A viraria admin sem senha
+  // nenhuma. Por isso o atalho só PREENCHE os campos com a conta de demo já
+  // documentada (pedro@ceeppg.br / senha123, ver LEIA-ME.md) e ENVIA o
+  // formulário — a senha ainda passa pela checagem normal do backend em
+  // routes/auth.js. Continua funcionando de verdade só quando o front
+  // descobre, por /api/saude, que está rodando contra o banco simulado; no
+  // servidor real /api/saude devolve "conectado" e o atalho não faz nada.
+  let modoDemo = false;
+  fetch('/api/saude')
+    .then((resposta) => resposta.json())
+    .then((dados) => { modoDemo = dados.banco === 'simulado'; })
+    .catch(() => {}); // sem resposta, mantém modoDemo em false — mais seguro que assumir demo
+
+  document.addEventListener('keydown', (evento) => {
+    if (!modoDemo) return;
+    if (!evento.ctrlKey || evento.metaKey || evento.altKey) return;
+    if (evento.key !== 'a' && evento.key !== 'A') return;
+
+    evento.preventDefault(); // não deixa o navegador "selecionar tudo" da página
+    campoEmail.value = 'pedro@ceeppg.br';
+    campoSenha.value = 'senha123';
+    formLogin.requestSubmit();
+  });
+
   formLogin.addEventListener('submit', async (evento) => {
     evento.preventDefault();
 
