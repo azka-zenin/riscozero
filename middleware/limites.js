@@ -97,4 +97,50 @@ const limiteFormulario = criarLimitador({
   chave: (req) => origemDe(req),
 });
 
-module.exports = { limiteLogin, limiteLoginPorIP, limiteFormulario };
+// ---------------------------------------------------------------------------
+// Rotas de escrita autenticadas — por USUÁRIO, não por IP.
+//
+// POR QUE POR USUÁRIO: login e formulário são as únicas rotas que um
+// desconhecido consegue chamar sem token, então travar por IP faz sentido
+// para as duas. Daqui para baixo quem chama já está identificado por um
+// login — o risco não é mais "alguém de fora adivinhando", é "um token
+// vazado ou uma conta comprometida automatizando chamadas". Travar por
+// usuário barra esse abuso sem arriscar derrubar uma equipe inteira que sai
+// pelo mesmo IP.
+// ---------------------------------------------------------------------------
+
+// AÇÃO PÓS-ALERTA — a rota exige só login (não admin), então qualquer conta
+// de gestão vazada conseguiria despejar linhas em acoes_alerta sem limite
+// algum antes desta trava existir.
+const limiteAcaoAlerta = criarLimitador({
+  limite: 20,
+  janelaMs: 15 * 60 * 1000,
+  chave: (req) => req.usuario._id.toString(),
+});
+
+// TROCAR A PRÓPRIA SENHA — trocar de senha é raro; um volume alto na mesma
+// conta é sinal de automação testando um token roubado, não uso normal.
+const limiteTrocarSenha = criarLimitador({
+  limite: 10,
+  janelaMs: 15 * 60 * 1000,
+  chave: (req) => req.usuario._id.toString(),
+});
+
+// CRUD DE CONTAS — só administradores chegam aqui (rota já exige
+// exigirAdmin). O volume normal de criar/editar/remover contas é baixo; um
+// token de admin comprometido não deveria conseguir esvaziar ou inflar a
+// base de contas de uma vez.
+const limiteEscritaUsuarios = criarLimitador({
+  limite: 30,
+  janelaMs: 15 * 60 * 1000,
+  chave: (req) => req.usuario._id.toString(),
+});
+
+module.exports = {
+  limiteLogin,
+  limiteLoginPorIP,
+  limiteFormulario,
+  limiteAcaoAlerta,
+  limiteTrocarSenha,
+  limiteEscritaUsuarios,
+};

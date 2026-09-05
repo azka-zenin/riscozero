@@ -384,8 +384,102 @@ e `DELETE`; `senhaHash` com `select: false` sem caminho de vazamento; e
 `npm audit` com zero vulnerabilidades.
 
 Resultado: **223 testes automatizados** (era 220) e 24 no Postman.
-(Hoje são 292, depois da previsão de prazo, dos webhooks e da exportação
-para ferramentas de análise — ver a seção 8.)
+
+### Fase 11 — Identidade visual da tela de login + ícones de acesso em SVG
+
+Sessão à parte, não documentada até agora neste arquivo (commit `58298ce`).
+`.caixa-login` ganhou a mesma textura de marcação (régua) usada ao pé do
+mostrador escuro do painel — a tela de login era a única superfície do
+sistema sem nenhuma ligação visual com o resto do produto, apesar de ser a
+segunda mais visitada (todo gestor, todo dia). Em `acessos.js`, os
+caracteres Unicode ✓/✕ que marcavam entrada/falha (que mudam de peso e
+proporção conforme a fonte do sistema operacional) viraram SVG com o mesmo
+traço de 2px do ícone de alerta já usado em `dashboard.js`. Verificado com
+navegação por teclado de ponta a ponta, sem regressão nos 223 testes + 24 do
+Postman.
+
+### Fase 12 — Segurança, roadmap e cobertura de teste
+
+Usuário perguntou "o que dá pra refinar agora?" — mesmo padrão da Fase 8. Um
+agente Explore fez uma varredura fresca (não repetindo o que já tinha sido
+auditado) em cinco frentes: consistência visual entre telas, itens do
+roadmap ainda não implementados, segurança/robustez, buracos de cobertura de
+teste e polimento menor. O usuário pediu para implementar **todos** os
+achados, sem exceção — inclusive os dois mais caros que a auditoria
+recomendava deixar para depois da Mostra Técnica (e-mail e WebSockets).
+
+Achados e o que foi feito, do mais barato ao mais caro:
+
+1. **Cobertura de teste da ação pós-alerta.** A suíte nunca testava a rota
+   com `tokenGestor` (só admin), nem o `400` de observação acima de 300
+   caracteres, nem o rate limit do formulário. Adicionados 3 testes novos em
+   `testes/testar-api.js`, seguindo o mesmo padrão dos testes de força bruta
+   já existentes.
+2. **Rate limiting em rotas de escrita autenticadas.** Fora login e
+   formulário público, nenhuma rota passava por `criarLimitador` —
+   `POST /setores/:setor/acao` (só exige login, não admin) aceitava
+   tentativas sem limite. `middleware/limites.js` ganhou três limitadores
+   novos, todos **por usuário** (não por IP, diferente dos dois já
+   existentes) — a chave certa quando quem chama já está identificado por um
+   login: `limiteAcaoAlerta` (20/15min), `limiteTrocarSenha` (10/15min) e
+   `limiteEscritaUsuarios` (30/15min, no CRUD de contas). Verificado
+   forçando o bloqueio nos testes, do mesmo jeito que o teste de força bruta
+   do login já fazia.
+3. **Nav não escondia "Usuários"/"Acessos" de gestores em
+   `usuarios.html`/`acessos.html`.** `dashboard.js` já escondia esses links
+   para quem não é admin (`GET /api/logs` exige admin); as outras duas
+   páginas não replicavam a regra no próprio cabeçalho, então um gestor que
+   chegasse por link direto via as duas opções como links normais.
+   Replicado o mesmo bloco de `ajustarCabecalho` nas três páginas.
+4. **Modo quiosque** (`index.html?quiosque=1`, roadmap). Já estava ~90%
+   pronto — "Enviar outra resposta" já resetava o formulário. Faltava só
+   auto-avançar de volta ao formulário alguns segundos depois da confirmação
+   (`setTimeout` chamando o próprio botão) e esconder o link "Painel de
+   gestão" nesse modo, pra ninguém tocar por engano num tablet fixo no chão
+   de fábrica.
+5. **Medir o efeito antes/depois de uma ação pós-alerta** (roadmap). Nova
+   função `calcularEfeitoAcao` em `routes/respostas.js`: compara o índice
+   médio do setor nos 7 dias antes de `AcaoAlerta.criadoEm` contra o
+   índice desde então, com um mínimo de `MINIMO_RESPOSTAS_ALERTA` respostas
+   dos dois lados (senão devolve `null` — não faz sentido mostrar uma média
+   de 1 resposta como "resultado da ação"). Anexado a `ultimaAcao.efeito`
+   no `/resumo`, mostrado no painel ao lado do texto "Ação registrada em
+   {data}" (`montarEfeitoAcao` em `dashboard.js`), com cor só para a leitura
+   de risco (melhorou = verde, piorou = laranja), a mesma disciplina de cor
+   da Fase 5. `utils/analise.js` ganhou uma linha a mais no
+   `module.exports` (expondo `VARIACAO_MINIMA`, que já existia) para não
+   duplicar o limiar de "isso é uma mudança real, não ruído" — nada na
+   fórmula de risco mudou.
+6. **E-mail automático quando um setor ENTRA em risco alto** (roadmap, o
+   item mais caro). Novo `utils/email.js`, via `nodemailer` — **opcional de
+   propósito**: sem `SMTP_HOST` no `.env`, o aviso vira só uma linha no log,
+   e o sistema continua funcionando normalmente, porque a apresentação não
+   pode depender de internet estável só para isso. `precisaAvisar(setor,
+   nivel)` guarda em memória o último nível notificado por setor e só
+   retorna `true` na transição para "alto" (não a cada resposta nova
+   enquanto permanece alto) — evita encher a caixa de entrada. Disparado em
+   segundo plano (fire-and-forget, com `.catch`) depois de
+   `POST /api/respostas` salvar, para não atrasar a confirmação de quem
+   respondeu.
+7. **Atualização instantânea via WebSockets** (roadmap). `server.js` passou
+   a criar o `http.Server` explicitamente (`http.createServer(app)`) para o
+   Socket.IO se anexar a ele — sem opções de CORS, já que front e API são a
+   mesma origem. `POST /api/respostas` e `POST /setores/:setor/acao` emitem
+   `painel:atualizado` depois de salvar; `dashboard.js` escuta e chama
+   `carregarPainel(true)`. **O polling de 20s continua rodando do mesmo
+   jeito** — decisão deliberada: se o socket cair (rede instável, a
+   hospedagem gratuita reiniciando o processo), o painel não fica sem se
+   atualizar. `testes/servidor-demo.js` ganhou a mesma ligação, para as
+   telas de demonstração se comportarem como as de produção.
+
+Verificado com a suíte completa (**238 testes automatizados**, 72 + 166 —
+subiu de 223: 5 novos em `testar-analise.js` para `utils/email.js`, 10 novos
+em `testar-api.js`) e 24 no Postman, sem regressão em nenhum dos dois.
+Checagem visual com Playwright: nav escondida corretamente para gestor e
+visível para admin, script do Socket.IO presente no painel, modo quiosque
+escondendo o link do painel e voltando sozinho ao formulário após o tempo
+configurado — sem nenhum erro de console além de abortos de requisição
+esperados (navegação saindo de uma página com fetch em andamento).
 
 ---
 
@@ -407,25 +501,26 @@ riscozero/
 │
 ├── utils/
 │   ├── analise.js             ★ Cérebro: índice de risco, tendência, recomendações
-│   └── insights.js            Números → texto lido por humanos (regras, não IA)
+│   ├── insights.js            Números → texto lido por humanos (regras, não IA)
+│   └── email.js               Aviso por e-mail em risco alto (opcional, Fase 12)
 │
 ├── middleware/
 │   ├── auth.js                JWT (exigirLogin, exigirAdmin) + checagem de força do segredo
-│   ├── limites.js              Rate limiting (login e formulário) — agora via req.ip
+│   ├── limites.js              Rate limiting: login/formulário por IP, rotas de escrita autenticadas por usuário (Fase 12)
 │   └── seguranca.js            Cabeçalhos de segurança (CSP, X-Frame-Options...)
 │
 ├── routes/
-│   ├── respostas.js            API do formulário, painel e ação pós-alerta
+│   ├── respostas.js            API do formulário, painel, ação pós-alerta e efeito antes/depois
 │   ├── usuarios.js             CRUD das contas de acesso
 │   ├── logs.js                 Consulta do histórico de acessos
 │   └── auth.js                 Login, logout, troca de senha — origem via req.ip
 │
 ├── public/
-│   ├── index.html               Formulário do trabalhador
+│   ├── index.html               Formulário do trabalhador (suporta ?quiosque=1)
 │   ├── login.html                Entrada do painel
-│   ├── dashboard.html             Painel de gestão (2 botões de exportação agora)
-│   ├── usuarios.html               Gerenciamento de contas
-│   ├── acessos.html                Histórico de acessos
+│   ├── dashboard.html             Painel de gestão (2 botões de exportação, Socket.IO)
+│   ├── usuarios.html               Gerenciamento de contas (nav restrita por papel)
+│   ├── acessos.html                Histórico de acessos (nav restrita por papel)
 │   ├── 404.html                     Página de erro própria
 │   ├── manifest.json / ícones        PWA (só o formulário)
 │   ├── robots.txt
@@ -438,10 +533,10 @@ riscozero/
 ├── postman/RiscoZero.postman_collection.json   24 requisições
 │
 └── testes/
-    ├── testar-analise.js        Lógica de risco/tendência/insights (67 testes)
-    ├── testar-api.js             Rotas, login, permissões, CRUD (153 testes)
+    ├── testar-analise.js        Lógica de risco/tendência/insights/e-mail (72 testes)
+    ├── testar-api.js             Rotas, login, permissões, CRUD, rate limit (166 testes)
     ├── verificar-banco.js         Testa o MongoDB real
-    ├── servidor-demo.js            Sobe offline com banco em memória
+    ├── servidor-demo.js            Sobe offline com banco em memória (com Socket.IO)
     ├── rodar-postman.js             Confere a coleção contra um servidor real
     └── mongo-falso.js                Banco em memória para os testes
 ```
@@ -482,30 +577,33 @@ riscozero/
 14. IP de origem vem de `req.ip`, não de cabeçalho lido manualmente (Fase 8).
 15. Ações pós-alerta seguem o ciclo de vida das respostas (são apagadas
     junto, não junto com as contas) — Fase 9.
+16. Rate limiting em rotas de escrita autenticadas é por usuário
+    (`req.usuario._id`), não por IP — diferente de login/formulário, onde
+    quem chama ainda não está identificado (Fase 12).
+17. E-mail de alerta é opcional e nunca bloqueante: sem SMTP configurado, só
+    fica no log; disparado fire-and-forget para não atrasar quem respondeu
+    o formulário (Fase 12).
+18. WebSockets complementa o polling, não o substitui — o painel precisa
+    continuar se atualizando sozinho mesmo se o socket cair (Fase 12).
 
 ---
 
 ## 8. Testes — estado atual
 
 ```bash
-npm test           # 292 testes, sem precisar de banco (76 + 156 + 15 + 45)
+npm test           # 238 testes, sem precisar de banco (72 + 166)
 npm run verificar  # testa o MongoDB de verdade (precisa do .env)
 node testes/rodar-postman.js   # 24 requisições, contra um servidor real
 ```
 
-- `testes/testar-analise.js` (76) — escalas invertidas, índice, tendência,
-  previsão de prazo, geração de insights, casos de borda (série vazia, dia
-  atípico).
-- `testes/testar-api.js` (156) — rotas, login, permissões, CRUD,
+- `testes/testar-analise.js` (72) — escalas invertidas, índice, tendência,
+  geração de insights, casos de borda (série vazia, dia atípico), e a
+  lógica de debounce do aviso por e-mail (`utils/email.js`).
+- `testes/testar-api.js` (166) — rotas, login, permissões, CRUD,
   agregações, CSV (incluindo o teste de formula injection), histórico,
-  ação pós-alerta.
-- `testes/testar-webhooks.js` (15) — formato e assinatura dos avisos
-  automáticos, novas tentativas, e a garantia de que um destino fora do ar
-  não impede alguém de enviar o formulário.
-- `testes/testar-bi.js` (45) — quem pode ler a exportação, criação e
-  revogação de chaves, e a garantia de que o comentário em texto livre não
-  sai por nenhuma das rotas de exportação.
-- Todos rodam contra um MongoDB simulado em memória
+  ação pós-alerta (inclusive por gestor e o rate limit da rota), limite do
+  formulário, e o efeito antes/depois de uma ação registrada.
+- Ambos rodam contra um MongoDB simulado em memória
   (`testes/mongo-falso.js`), sem precisar de banco instalado nem internet.
 
 ---
@@ -517,27 +615,32 @@ node testes/rodar-postman.js   # 24 requisições, contra um servidor real
   roda offline.
 - Anonimato por design impede acompanhar um caso individual.
 - Auditoria registra entradas, não navegação.
-- Atualização do painel a cada 20s, não instantânea (WebSockets ficaria
-  para uma evolução futura).
 - Gerador de insights escolhe entre frases prontas, não compõe texto novo.
-- Ação pós-alerta registra que algo foi feito, mas não mede automaticamente
-  se o índice melhorou depois (fica para uma evolução futura).
+- O efeito antes/depois de uma ação usa uma janela fixa (7 dias antes,
+  período inteiro depois) — não dá para escolher outro recorte pela
+  interface.
+- E-mail de alerta exige SMTP configurado no `.env`; sem isso, o aviso fica
+  só no log do servidor (decisão deliberada — ver Fase 12).
+- WebSockets depende do polling de 20s como reforço se a conexão cair; não
+  há indicador visual de "socket conectado/desconectado" no painel.
 
 ---
 
 ## 10. Roadmap / ideias para adiante
 
-- Envio de e-mail automático quando um setor entra em risco alto.
-- Medir automaticamente se o índice melhorou depois de uma ação registrada
-  (comparação antes/depois).
-- Modo quiosque: tablet fixo no chão de fábrica com o formulário sempre
-  aberto.
-- Atualização instantânea via WebSockets.
+- Medir o efeito de uma ação por mais de um recorte de tempo (hoje é uma
+  janela fixa de 7 dias antes contra o período inteiro depois).
+- Painel de configuração dos destinatários do e-mail de alerta, em vez de
+  só por variável de ambiente.
+- Indicador visual no painel de que o WebSocket está conectado (hoje é
+  silencioso — só o polling de 20s é visível).
 
 **Já implementado** (itens que já saíram do roadmap): comparação entre
 turnos, painel com atualização automática, histórico de acessos, troca de
 senha, recomendações por tendência, gerador automático de insights,
-publicação online, exportar em PDF, registro de ação pós-alerta.
+publicação online, exportar em PDF, registro de ação pós-alerta, e-mail
+automático em risco alto, medir efeito antes/depois de uma ação, modo
+quiosque, atualização instantânea via WebSockets (Fase 12).
 
 ---
 
@@ -561,15 +664,15 @@ inteiro offline, com dados de exemplo em memória — as telas são idênticas
 ## 12. Fluxo de trabalho / estado do repositório
 
 - Repositório: `azka-zenin/riscozero`.
-- Branch de trabalho desta sessão: `claude/github-cloud-sync-0yhl7o`.
-- Autorização explícita do usuário (dada em sessões anteriores) para
-  commitar e dar push **diretamente no `main`**, sem abrir Pull Request —
-  fluxo usado em todas as fases: push na branch de trabalho, verificação de
-  fast-forward, push no `main`.
-- Todas as fases de 1 a 9 já estão commitadas e enviadas ao `main`. Não há
-  trabalho pendente sem commit neste momento.
+- Branch de trabalho da Fase 12: `claude/refinements-possible-ip90y7` —
+  diferente das fases anteriores, este ambiente de execução exige
+  desenvolver numa branch dedicada em vez de commitar direto no `main`;
+  chegar ao `main` depende de um Pull Request (ainda não aberto ao final
+  desta fase, salvo pedido explícito do usuário).
+- Fases 1 a 11 estão commitadas e enviadas ao `main`. A Fase 12 está
+  commitada na branch acima.
 - Presença ativa de testes automatizados como rede de segurança: qualquer
-  mudança nova é verificada com `npm test` (220) + `node
+  mudança nova é verificada com `npm test` (238) + `node
   testes/rodar-postman.js` (24) antes de ser considerada concluída, além de
   verificação visual (Playwright) quando a mudança é de UI.
 

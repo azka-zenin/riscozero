@@ -128,6 +128,13 @@
   -->
   <script src="js/transicoes.js"></script>
   <script src="js/vendor/chart.umd.js"></script>
+  <!--
+    Servido pelo nosso próprio servidor (o pacote socket.io no backend expõe
+    este caminho sozinho) — não é CDN, mesma regra do Chart.js acima. Se por
+    algum motivo não carregar, o painel continua funcionando só com o
+    polling de 20s (ver dashboard.js).
+  -->
+  <script src="/socket.io/socket.io.js"></script>
   <script src="js/login.js"></script>
   <script src="js/dashboard.js"></script>
 </body>

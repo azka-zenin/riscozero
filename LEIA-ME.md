@@ -267,22 +267,20 @@ riscozero/
 │   ├── Resposta.js        Formato de uma resposta + setores e turnos válidos
 │   ├── Usuario.js         Contas de acesso + criptografia de senha
 │   ├── LogAcesso.js       Registro de entradas e tentativas que falharam
-│   ├── AcaoAlerta.js      Registro de que a gestão agiu sobre um alerta
-│   └── TokenBI.js         Chaves de leitura para Power BI e afins
+│   └── AcaoAlerta.js      Registro de que a gestão agiu sobre um alerta
 │
 ├── utils/
-│   ├── analise.js         ★ Cérebro: risco, tendência, previsão e recomendações
+│   ├── analise.js         ★ Cérebro: risco, tendência e recomendações
 │   ├── insights.js        Transforma os números em texto lido por humanos
-│   └── webhooks.js        Avisa sistemas de fora quando um setor piora
+│   └── email.js           Aviso por e-mail quando um setor entra em risco alto (opcional)
 │
 ├── middleware/
 │   ├── auth.js            Verifica o token JWT e o papel do usuário
-│   ├── limites.js         Freio contra força bruta no login e envio em massa
+│   ├── limites.js         Freio contra força bruta e abuso: login, formulário e rotas de escrita autenticadas
 │   └── seguranca.js       Cabeçalhos de segurança (CSP, X-Frame-Options...)
 │
 ├── routes/
 │   ├── respostas.js       API do formulário e do painel
-│   ├── bi.js              Exportação para ferramentas de análise
 │   ├── usuarios.js        CRUD das contas de acesso
 │   ├── logs.js            Consulta do histórico de acessos
 │   └── auth.js            Login, logout e troca de senha
@@ -334,12 +332,6 @@ riscozero/
 | GET | `/api/respostas/turnos` | Logado | Risco por turno de trabalho |
 | GET | `/api/respostas/comentarios` | Logado | Comentários deixados |
 | GET | `/api/respostas/exportar` | Logado | Baixa tudo em CSV |
-| GET | `/api/bi/completo` | Chave BI ou logado | Uma linha por resposta, paginado |
-| GET | `/api/bi/agregado` | Chave BI ou logado | Médias e índice por setor e por turno |
-| GET | `/api/bi/serie` | Chave BI ou logado | Índice dia a dia, opcionalmente por setor |
-| POST | `/api/bi/chaves` | **Admin** | Cria uma chave de leitura (valor mostrado uma vez) |
-| GET | `/api/bi/chaves` | **Admin** | Lista as chaves, sem os valores |
-| DELETE | `/api/bi/chaves/:id` | **Admin** | Revoga uma chave |
 | POST | `/api/usuarios` | **Admin** | Cria conta |
 | GET | `/api/usuarios` | Logado | Lista contas |
 | GET | `/api/usuarios/:id` | Logado | Detalha uma conta |
@@ -349,7 +341,6 @@ riscozero/
 | GET | `/api/logs/resumo` | **Admin** | Números e sinais de alerta do histórico |
 
 As rotas de dados aceitam `?periodo=7`, `?periodo=30` ou `?periodo=tudo`.
-As rotas `/api/bi` usam `?de=AAAA-MM-DD&ate=AAAA-MM-DD` — ver `docs/POWER-BI.md`.
 
 **Testando no Postman:** importe `postman/RiscoZero.postman_collection.json`,
 rode a requisição **Login** e as demais já funcionam — o token é guardado
@@ -360,18 +351,16 @@ automaticamente.
 ## Testes
 
 ```bash
-npm test           # 292 testes, sem precisar de banco
+npm test           # 238 testes, sem precisar de banco
 npm run verificar  # testa o MongoDB de verdade (precisa do .env)
 ```
 
-O `npm test` roda quatro conjuntos:
+O `npm test` roda dois conjuntos:
 
 | Arquivo | O que cobre |
 |---|---|
-| `testes/testar-analise.js` | Escalas invertidas, índice, tendência, previsão e geração de insights — inclusive casos de borda como série vazia e dia atípico |
+| `testes/testar-analise.js` | Escalas invertidas, índice, tendência e geração de insights — inclusive casos de borda como série vazia e dia atípico |
 | `testes/testar-api.js` | Rotas, login, permissões, CRUD, agregações, CSV e histórico |
-| `testes/testar-webhooks.js` | Formato e assinatura dos avisos, novas tentativas, e que um destino fora do ar não derruba o envio do formulário |
-| `testes/testar-bi.js` | Quem pode ler a exportação, revogação de chave e a garantia de que o comentário não vaza por ela |
 
 Ambos usam um MongoDB simulado em memória (`testes/mongo-falso.js`), então
 rodam em qualquer computador, sem internet e sem banco instalado.
@@ -396,12 +385,14 @@ O projeto é escolar e tem simplificações conscientes:
   pessoas ou empresas reais.
 - **A auditoria registra entradas, não visualizações**: sabemos quem entrou e
   quando, mas não que telas a pessoa abriu depois.
-- **O painel atualiza a cada 20 segundos, não instantaneamente.** Se alguém
-  responder o formulário enquanto o painel está aberto, aparece no próximo
-  ciclo. Atualização de verdade em tempo real exigiria outra tecnologia
-  (WebSockets), que fica mapeada como evolução possível.
+- **O painel atualiza quase na hora via WebSockets**, com o ciclo de 20
+  segundos como reforço — se o socket cair (rede instável, hospedagem
+  gratuita reiniciando), o painel ainda se atualiza sozinho pelo polling.
 - **O gerador de insights escolhe entre frases prontas.** Cobre bem os casos
   do sistema, mas não escreve nada além do que foi previsto.
+- **O e-mail automático de risco alto é opcional.** Sem SMTP configurado no
+  `.env`, o aviso fica só no log do servidor — de propósito, para a
+  apresentação não depender de internet estável só para isso funcionar.
 
 Assumir essas limitações é melhor do que ser pego afirmando que o sistema é mais
 robusto do que é.
@@ -447,15 +438,15 @@ banca, a pergunta pode cair para qualquer integrante.
 - [x] Publicação online (ver `PUBLICAR.md`)
 - [x] Exportar relatório em PDF, além do CSV
 - [x] Registro de ações: anotar o que a gestão fez após cada alerta
-- [x] Previsão de em quantos dias um setor chega ao risco alto
-- [x] Aviso automático (webhook) para o RH quando um setor muda de gravidade
-- [x] Exportação para Power BI e afins (ver `docs/POWER-BI.md`)
+- [x] Envio de e-mail automático quando um setor entra em risco alto (opcional, ver `.env.example`)
+- [x] Medir automaticamente se o índice melhorou depois de uma ação registrada
+- [x] Modo quiosque: `index.html?quiosque=1` volta sozinho ao formulário após cada envio
+- [x] Atualização instantânea via WebSockets, com o ciclo de 20 segundos como reforço
 
 ## Ideias para adiante
 
-- [ ] Envio de e-mail automático quando um setor entra em risco alto — os
-      webhooks já disparam o evento; falta uma ponta que mande o e-mail
-- [ ] Medir automaticamente se o índice melhorou depois de uma ação
-      registrada — o registro em si já existe, falta a comparação antes/depois
-- [ ] Modo quiosque: um tablet no chão de fábrica com o formulário sempre aberto
-- [ ] Atualização instantânea via WebSockets, em vez do ciclo de 20 segundos
+- [ ] Medir automaticamente o efeito de uma ação por mais de um recorte de
+      tempo (hoje compara uma janela fixa de 7 dias antes contra o período
+      inteiro depois)
+- [ ] Painel de configuração dos destinatários do e-mail de alerta, em vez de
+      só por variável de ambiente

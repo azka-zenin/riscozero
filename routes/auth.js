@@ -6,7 +6,7 @@ const router = express.Router();
 const { Usuario } = require('../models/Usuario');
 const { registrar } = require('../models/LogAcesso');
 const { gerarToken, exigirLogin } = require('../middleware/auth');
-const { limiteLogin, limiteLoginPorIP } = require('../middleware/limites');
+const { limiteLogin, limiteLoginPorIP, limiteTrocarSenha } = require('../middleware/limites');
 
 /** Descobre de onde veio a requisição, para o registro de acesso. */
 function origemDa(req) {
@@ -92,7 +92,7 @@ router.post('/logout', exigirLogin, (req, res) => {
 // Troca da própria senha, sem precisar de administrador. Exige a senha atual
 // para que alguém que encontre um computador destravado não consiga assumir a
 // conta trocando a senha.
-router.post('/trocar-senha', exigirLogin, async (req, res) => {
+router.post('/trocar-senha', exigirLogin, limiteTrocarSenha, async (req, res) => {
   try {
     const { senhaAtual, senhaNova } = req.body;
 

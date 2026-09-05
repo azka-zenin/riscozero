@@ -6,43 +6,20 @@
   <title>RiscoZero — Usuários</title>
   <!-- As fontes vêm do próprio projeto (public/fonts), não de CDN: se a rede
        da escola bloquear fontes externas, a identidade visual não muda. -->
-  <!-- O robots.txt hoje bloqueia o site inteiro, mas ele existe para o
-       período de demonstração. Se um dia for aberto para divulgar o
-       formulário público, estas telas do painel continuam fora de qualquer
-       buscador por conta própria. -->
-  <meta name="robots" content="noindex, nofollow">
-  <meta name="description" content="Gerenciamento das contas que podem entrar no painel de gestão.">
-
-  <!-- Cartão de link (WhatsApp, Telegram, redes). Sem isto, o endereço
-       compartilhado na Mostra aparece como URL crua, sem dizer o que é.
-       og:image fica relativo de propósito: o endereço público só existe
-       depois de publicar, e a maioria dos leitores resolve o caminho
-       relativo contra a própria página. -->
-  <meta property="og:type" content="website">
-  <meta property="og:site_name" content="RiscoZero">
-  <meta property="og:locale" content="pt_BR">
-  <meta property="og:title" content="RiscoZero — Contas de acesso">
-  <meta property="og:description" content="Gerenciamento das contas que podem entrar no painel de gestão.">
-  <meta property="og:image" content="icone-512.png">
-  <meta name="twitter:card" content="summary">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <meta name="theme-color" content="#14110E">
-  <link rel="preload" href="fonts/manrope-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
+  <meta name="theme-color" content="#1B3FA0">
+  <link rel="preload" href="fonts/public-sans-latin-400-normal.woff2" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <!-- Primeiro elemento focável da página: quem navega por teclado ou leitor
-       de tela pula o cabeçalho e a navegação (repetidos em toda tela) e cai
-       direto no conteúdo. Fica invisível até receber foco. -->
-  <a class="pular-conteudo" href="#conteudo-principal">Pular para o conteúdo</a>
   <header class="topo">
     <a href="index.html" class="marca">Risco<span>Zero</span></a>
     <nav>
       <a href="index.html">Formulário</a>
       <a href="dashboard.html">Painel</a>
-      <a href="usuarios.html" class="ativo">Usuários</a>
-      <a href="chaves.html">Chaves</a>
-      <a href="acessos.html">Acessos</a>
+      <!-- Só aparecem para administradores; o JS decide ao carregar a página -->
+      <a href="usuarios.html" id="link-usuarios" class="ativo" style="display:none">Usuários</a>
+      <a href="acessos.html" id="link-acessos" style="display:none">Acessos</a>
     </nav>
     <div class="conta-usuario">
       <span class="usuario-logado" id="usuario-logado"></span>
@@ -50,11 +27,7 @@
     </div>
   </header>
 
-    <noscript>
-    <p class="aviso-sem-js">A tela de contas precisa de JavaScript. Ative o JavaScript no navegador e recarregue a página.</p>
-  </noscript>
-
-<main id="conteudo-principal" class="largo">
+  <main class="largo">
     <h1>Contas de acesso</h1>
     <p class="subtitulo">
       Quem pode entrar no painel de gestão. O formulário do trabalhador continua
@@ -158,22 +131,6 @@
   <footer class="rodape">
     RiscoZero — Mostra Técnica 2026 · CEEP-PG · Equipe 1
   </footer>
-
-  <!-- Confirmação de remoção de conta. Substitui window.confirm() (a caixa
-       nativa do navegador) por um painel no visual do próprio sistema — ver
-       confirmarRemocao() em usuarios.js. Escondido até alguém clicar em
-       "Remover" numa conta. -->
-  <div class="fundo-confirmacao" id="fundo-confirmacao" style="display:none">
-    <div class="painel-confirmacao" role="alertdialog" aria-modal="true"
-         aria-labelledby="titulo-confirmacao" aria-describedby="texto-confirmacao">
-      <h2 id="titulo-confirmacao">Remover conta</h2>
-      <p id="texto-confirmacao"></p>
-      <div class="acoes-confirmacao">
-        <button type="button" class="botao secundario" id="botao-cancelar-remocao">Cancelar</button>
-        <button type="button" class="botao perigo" id="botao-confirmar-remocao">Remover</button>
-      </div>
-    </div>
-  </div>
 
   <script src="js/transicoes.js"></script>
   <script src="js/login.js"></script>

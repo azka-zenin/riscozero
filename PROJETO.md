@@ -104,14 +104,6 @@ sem legenda.
   vire ruído e ninguém preste atenção).
 - **Recomendações geradas por regras**, priorizadas por tendência: um setor em
   risco alto e piorando pede ação hoje; o mesmo risco em queda pode esperar.
-- **Previsão de prazo**: para um setor que ainda não é crítico mas vem
-  piorando em ritmo constante, o alerta diz em quantos dias ele chega ao risco
-  alto. Transforma "está piorando" em "restam cinco dias para agir".
-- **Aviso automático para sistemas de fora** (webhook assinado), disparado
-  quando um setor muda de gravidade — para que o RH não dependa de alguém
-  abrir o painel naquele dia.
-- **Exportação para ferramentas de análise** (Power BI, Looker, planilhas),
-  com chave de leitura própria, revogável, que nunca devolve os comentários.
 - **Comentários da equipe**, exibidos como texto puro (proteção contra XSS).
 - **Atualização automática a cada 20 segundos**, sem recarregar a página, com
   indicador de conexão — se a rede cair, o painel não apaga os dados: fica
@@ -208,15 +200,11 @@ riscozero/
 
 ## 7. Qualidade e testes
 
-- **292 testes automatizados** (`npm test`), rodando contra um MongoDB
+- **238 testes automatizados** (`npm test`), rodando contra um MongoDB
   simulado em memória — funcionam em qualquer máquina, sem banco instalado e
-  sem internet. Cobrem a lógica de risco, tendência e previsão (inclusive
-  casos de borda, como série vazia ou um dia atípico que não deve virar
-  tendência), as rotas da API, login, permissões, CRUD de contas, agregações,
-  os avisos automáticos e a exportação para análise. Dois testes existem
-  especificamente para garantir o que **não** pode acontecer: um destino de
-  webhook fora do ar não pode impedir alguém de enviar o formulário, e o
-  comentário em texto livre não pode sair por nenhuma rota de exportação.
+  sem internet. Cobrem a lógica de risco e tendência (inclusive casos de
+  borda, como série vazia ou um dia atípico que não deve virar tendência), as
+  rotas da API, login, permissões, CRUD de contas e agregações.
 - **24 testes de API via Postman** (`node testes/rodar-postman.js`),
   validando a coleção publicada em `postman/RiscoZero.postman_collection.json`
   contra um servidor real.
@@ -317,6 +305,33 @@ Mesmo padrão de disciplina das rodadas anteriores: tudo aditivo, nenhuma
 mudança na lógica de cálculo de risco, suíte completa (220 testes + 24 do
 Postman) e verificação visual antes de integrar.
 
+### 8.4 — Segurança adicional e os quatro itens do roadmap
+
+Rodada motivada por uma varredura fresca de oportunidades — não repetindo o
+que já tinha sido auditado — cobrindo consistência entre telas, segurança,
+cobertura de teste e os itens do roadmap que ainda estavam em aberto.
+
+- **Rate limiting em rotas de escrita autenticadas.** Fora login e
+  formulário, nenhuma rota tinha teto de tentativas — um token vazado
+  conseguiria, por exemplo, despejar linhas em "ações de alerta" sem
+  limite. Passou a existir um limitador por usuário (não por IP, já que
+  quem chama está identificado) nessas rotas.
+- **Nav do painel restrita por papel** também em `usuarios.html` e
+  `acessos.html`, não só em `dashboard.html` — um gestor que chegasse por
+  link direto via a opção "Acessos" (que exige administrador) como um link
+  normal, e só descobria a restrição depois de clicar.
+- **Os três últimos itens do roadmap, implementados**: e-mail automático
+  quando um setor entra em risco alto (opcional — sem SMTP configurado, o
+  aviso fica só no log, para não depender de internet no dia da
+  apresentação); a comparação antes/depois de uma ação registrada, exibida
+  junto ao registro no painel; modo quiosque (`?quiosque=1`) para um
+  tablet fixo no chão de fábrica; e atualização quase instantânea via
+  WebSockets, com o polling de 20s mantido como reforço caso a conexão
+  caia.
+
+Suíte completa: **238 testes** (era 223) + 24 do Postman, e verificação
+visual antes de integrar.
+
 ---
 
 ## 9. Auditoria final
@@ -375,21 +390,22 @@ Simplificações conscientes, assumidas abertamente:
   acompanhar um caso individual.
 - **Auditoria registra entradas, não navegação** — sabe-se quem entrou e
   quando, não quais telas a pessoa abriu depois.
-- **Atualização a cada 20 segundos, não instantânea** — tempo real de
-  verdade exigiria WebSockets (mapeado como evolução futura).
 - **Gerador de insights escolhe entre frases prontas** — cobre bem os casos
   do sistema, mas não compõe texto além do que foi previsto.
+- **E-mail de alerta depende de SMTP configurado** — sem isso, o aviso fica
+  só no log do servidor, de propósito, para não depender de internet
+  estável no dia da apresentação.
+- **WebSockets depende do polling de 20s como reforço** se a conexão cair;
+  não há indicador visual de "conectado/desconectado" no painel.
 
 ---
 
 ## 11. Evolução futura mapeada
 
-- Envio de e-mail automático quando um setor entra em risco alto (o evento
-  já é disparado pelos webhooks; falta a ponta que monta e envia o e-mail)
-- Medir automaticamente se o índice melhorou depois de uma ação registrada
-  (o registro em si já existe — falta a comparação antes/depois)
-- Modo quiosque para tablet fixo no chão de fábrica
-- Atualização instantânea via WebSockets
+- Medir o efeito de uma ação por mais de um recorte de tempo (hoje é uma
+  janela fixa de 7 dias antes contra o período inteiro depois)
+- Painel de configuração dos destinatários do e-mail de alerta, em vez de
+  só por variável de ambiente
 
 ---
 
@@ -408,5 +424,4 @@ inteiro offline, com dados de exemplo em memória — as telas são idênticas �
 de produção.
 
 Detalhes completos de instalação, comandos e resolução de problemas em
-`LEIA-ME.md`; roteiro de apresentação em `APRESENTACAO.md`; conexão de
-ferramentas de análise em `docs/POWER-BI.md`.
+`LEIA-ME.md`; roteiro de apresentação em `APRESENTACAO.md`.

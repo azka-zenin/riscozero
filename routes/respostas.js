@@ -20,9 +20,9 @@ const { AcaoAlerta } = require('../models/AcaoAlerta');
 const { exigirLogin } = require('../middleware/auth');
 const analise = require('../utils/analise');
 const insights = require('../utils/insights');
+const email = require('../utils/email');
 const config = require('../config');
-const { limiteFormulario } = require('../middleware/limites');
-const webhooks = require('../utils/webhooks');
+const { limiteFormulario, limiteAcaoAlerta } = require('../middleware/limites');
 
 // ---------------------------------------------------------------------------
 // Filtro de período (?periodo=7, 30 ou tudo)
@@ -68,85 +68,101 @@ function comoSetor(documento) {
   return { setor: _id, ...resto };
 }
 
-// ---------------------------------------------------------------------------
-// Aviso automático de alerta para sistemas de fora
-// ---------------------------------------------------------------------------
-
-// Última gravidade já avisada de cada setor, para não repetir o mesmo aviso.
-//
-// POR QUE ISSO É NECESSÁRIO: sem memória, cada resposta enviada por um setor
-// em risco alto geraria um novo aviso idêntico. Num setor com trinta pessoas
-// respondendo por dia, o RH receberia trinta mensagens dizendo a mesma coisa
-// e passaria a ignorar todas.
-//
-// Fica em memória de propósito: se o servidor reiniciar, o primeiro aviso de
-// cada setor é reenviado. Repetir um alerta depois de uma reinicialização é
-// bem menos grave do que deixar de avisar, e evita mais uma coleção no banco.
-const ultimaGravidadeAvisada = new Map();
+// Quantos dias antes da ação entram na janela de "antes". A janela de
+// "depois" fica em aberto (da ação até agora) — não faz sentido cortá-la
+// cedo, já que é exatamente esse período que diz se a ação está funcionando.
+const JANELA_EFEITO_ACAO_DIAS = 7;
 
 /**
- * Recalcula o alerta de um setor e avisa quem estiver escutando, mas só
- * quando a gravidade mudou desde o último aviso.
+ * Compara o índice de risco do setor antes e depois de uma ação registrada.
  *
- * Roda depois de gravar uma resposta, e não dentro do GET /resumo, por dois
- * motivos: o painel busca o resumo a cada 20 segundos por gestor aberto, o que
- * transformaria o aviso em enxurrada; e o RH precisa ser avisado mesmo quando
- * ninguém abriu o painel naquele dia — que é justamente o caso em que o aviso
- * automático faz diferença.
+ * NÃO mede se a ação "causou" a mudança — só compara as duas médias. Some
+ * dados no meio caminho é intencional: um setor pode ter caído em risco
+ * baixo por outros motivos, e cabe à gestão interpretar o número, não ao
+ * sistema apontar causa.
+ *
+ * Devolve null quando não há respostas suficientes de um dos dois lados
+ * para a comparação valer alguma coisa — mostrar uma média de 1 resposta
+ * como "resultado da ação" seria dar confiança a um número que não tem.
  */
-async function avisarSeAlertaMudou(setor) {
-  if (!webhooks.destinoDe('alerta_criado')) return;
+async function calcularEfeitoAcao(setor, dataAcao) {
+  const inicioAntes = new Date(dataAcao);
+  inicioAntes.setDate(inicioAntes.getDate() - JANELA_EFEITO_ACAO_DIAS);
 
-  const { match } = filtroPeriodo('30');
-  const filtroSetor = { ...match, setor };
-
-  const [medias, evolucao] = await Promise.all([
+  const [resultadoAntes, resultadoDepois] = await Promise.all([
     Resposta.aggregate([
-      { $match: filtroSetor },
-      { $group: { _id: '$setor', ...camposDeMedia() } },
+      { $match: { setor, data_envio: { $gte: inicioAntes, $lt: dataAcao } } },
+      { $group: { _id: null, ...camposDeMedia() } },
     ]),
     Resposta.aggregate([
-      { $match: filtroSetor },
-      {
-        $group: {
-          _id: {
-            dia: {
-              $dateToString: {
-                format: '%Y-%m-%d',
-                date: '$data_envio',
-                timezone: config.FUSO_HORARIO,
-              },
-            },
-          },
-          ...camposDeMedia(),
-        },
-      },
-      { $sort: { '_id.dia': 1 } },
+      { $match: { setor, data_envio: { $gte: dataAcao } } },
+      { $group: { _id: null, ...camposDeMedia() } },
     ]),
   ]);
 
-  if (medias.length === 0) return;
+  const antes = resultadoAntes[0];
+  const depois = resultadoDepois[0];
+  const minimo = config.MINIMO_RESPOSTAS_ALERTA;
 
-  const serie = evolucao.map((linha) => ({
-    dia: linha._id.dia,
-    indiceRisco: analise.calcularIndiceRisco({
-      estresse: linha.media_estresse,
-      sono: linha.media_sono,
-      carga_trabalho: linha.media_carga_trabalho,
-      ambiente_fisico: linha.media_ambiente_fisico,
-    }),
-  }));
+  if (!antes || !depois || antes.total < minimo || depois.total < minimo) {
+    return null;
+  }
 
-  const alertas = analise.gerarAlertas([comoSetor(medias[0])], { [setor]: serie });
+  const indiceAntes = analise.calcularIndiceRisco({
+    estresse: antes.media_estresse,
+    sono: antes.media_sono,
+    carga_trabalho: antes.media_carga_trabalho,
+    ambiente_fisico: antes.media_ambiente_fisico,
+  });
+  const indiceDepois = analise.calcularIndiceRisco({
+    estresse: depois.media_estresse,
+    sono: depois.media_sono,
+    carga_trabalho: depois.media_carga_trabalho,
+    ambiente_fisico: depois.media_ambiente_fisico,
+  });
 
-  // Sem alerta significa que o setor está bem. Limpar a memória aqui é o que
-  // permite avisar de novo se ele voltar a piorar mais para frente.
-  const gravidade = alertas.length > 0 ? alertas[0].gravidade : null;
-  if (ultimaGravidadeAvisada.get(setor) === gravidade) return;
-  ultimaGravidadeAvisada.set(setor, gravidade);
+  const variacao = indiceDepois - indiceAntes;
+  // Mesmo limiar usado para decidir tendência (ver utils/analise.js) — abaixo
+  // dele é oscilação normal, não uma mudança real de patamar.
+  let direcao = 'estavel';
+  if (variacao <= -analise.VARIACAO_MINIMA) direcao = 'melhorou';
+  else if (variacao >= analise.VARIACAO_MINIMA) direcao = 'piorou';
 
-  if (!gravidade) return;
-  webhooks.dispararEmSegundoPlano('alerta_criado', alertas[0]);
+  return {
+    indiceAntes: Number(indiceAntes.toFixed(2)),
+    indiceDepois: Number(indiceDepois.toFixed(2)),
+    variacao: Number(variacao.toFixed(2)),
+    direcao,
+  };
+}
+
+// Só olha os últimos 30 dias do setor — o mesmo horizonte que o painel usa
+// por padrão — para decidir se ele está em risco alto agora, não desde
+// sempre. Roda em segundo plano, sem atrasar a resposta ao formulário: quem
+// respondeu não deveria esperar um envio de e-mail para ver a confirmação.
+async function verificarAlertaEmail(setor) {
+  const corte = new Date();
+  corte.setDate(corte.getDate() - 29);
+  corte.setHours(0, 0, 0, 0);
+
+  const [resultado] = await Resposta.aggregate([
+    { $match: { setor, data_envio: { $gte: corte } } },
+    { $group: { _id: null, ...camposDeMedia() } },
+  ]);
+
+  if (!resultado || resultado.total < config.MINIMO_RESPOSTAS_ALERTA) return;
+
+  const indice = analise.calcularIndiceRisco({
+    estresse: resultado.media_estresse,
+    sono: resultado.media_sono,
+    carga_trabalho: resultado.media_carga_trabalho,
+    ambiente_fisico: resultado.media_ambiente_fisico,
+  });
+  const { nivel } = analise.classificarRisco(indice);
+
+  if (email.precisaAvisar(setor, nivel)) {
+    await email.avisarRiscoAlto(analise.nomeSetor(setor), indice);
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -176,28 +192,11 @@ router.post('/', limiteFormulario, async (req, res) => {
       mensagem: 'Resposta registrada com sucesso.',
     });
 
-    // Daqui para baixo o trabalhador já recebeu a confirmação dele. Nada
-    // aqui pode alterar a resposta HTTP, e nada aqui pode derrubar o
-    // processo — quem envia o formulário não tem culpa se o RH está fora do ar.
-    //
-    // O comentário em texto livre fica de fora do aviso de propósito: é o
-    // campo que pode identificar quem respondeu, e a mesma trava que o painel
-    // aplica (MINIMO_RESPOSTAS_COMENTARIO) não teria como valer do outro lado
-    // da integração.
-    webhooks.dispararEmSegundoPlano('resposta_criada', {
-      setor: resposta.setor,
-      setorNome: analise.nomeSetor(resposta.setor),
-      turno: resposta.turno,
-      estresse: resposta.estresse,
-      sono: resposta.sono,
-      carga_trabalho: resposta.carga_trabalho,
-      ambiente_fisico: resposta.ambiente_fisico,
-      temComentario: Boolean(resposta.comentario),
-    });
-
-    avisarSeAlertaMudou(resposta.setor).catch((erro) => {
-      console.error('Erro ao verificar alerta para aviso automático:', erro.message);
-    });
+    // Depois de responder — nada aqui deve atrasar nem quebrar a confirmação
+    // que a pessoa já recebeu.
+    verificarAlertaEmail(resposta.setor).catch((erro) =>
+      console.error('Erro ao verificar alerta de e-mail:', erro.message));
+    req.app.get('io')?.emit('painel:atualizado', { tipo: 'resposta' });
   } catch (erro) {
     if (erro.name === 'ValidationError') {
       // Devolve a primeira mensagem de erro, já escrita em português no model
@@ -428,7 +427,12 @@ router.get('/resumo', async (req, res) => {
       for (const setor of recomendacoesPorSetor) {
         const ultima = acoes.find((a) => a.setor === setor.setor);
         setor.ultimaAcao = ultima
-          ? { criadoPor: ultima.criadoPor, criadoEm: ultima.criadoEm, observacao: ultima.observacao }
+          ? {
+              criadoPor: ultima.criadoPor,
+              criadoEm: ultima.criadoEm,
+              observacao: ultima.observacao,
+              efeito: await calcularEfeitoAcao(setor.setor, ultima.criadoEm),
+            }
           : null;
       }
     }
@@ -473,9 +477,10 @@ router.get('/resumo', async (req, res) => {
 });
 
 // POST /api/respostas/setores/:setor/acao — marca que a gestão agiu sobre o
-// alerta daquele setor. Não mede se o índice melhorou depois (fica para uma
-// evolução futura) — só registra que alguém viu e fez algo a respeito.
-router.post('/setores/:setor/acao', async (req, res) => {
+// alerta daquele setor. O efeito da ação (índice antes/depois) é calculado à
+// parte, em calcularEfeitoAcao, e anexado quando o painel busca o resumo —
+// esta rota só registra que alguém viu e fez algo a respeito.
+router.post('/setores/:setor/acao', limiteAcaoAlerta, async (req, res) => {
   const { setor } = req.params;
 
   if (!Object.keys(SETORES).includes(setor)) {
@@ -499,14 +504,7 @@ router.post('/setores/:setor/acao', async (req, res) => {
       criadoEm: acao.criadoEm,
       observacao: acao.observacao,
     });
-
-    webhooks.dispararEmSegundoPlano('acao_registrada', {
-      setor: acao.setor,
-      setorNome: analise.nomeSetor(acao.setor),
-      criadoPor: acao.criadoPor,
-      criadoEm: acao.criadoEm,
-      observacao: acao.observacao,
-    });
+    req.app.get('io')?.emit('painel:atualizado', { tipo: 'acao', setor });
   } catch (erro) {
     console.error('Erro ao registrar ação de alerta:', erro.message);
     res.status(500).json({ erro: 'Erro ao registrar a ação.' });

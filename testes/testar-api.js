@@ -267,6 +267,36 @@ async function rodar() {
   const producaoComAcao = resumoComAcao.dados.recomendacoesPorSetor.find((s) => s.setor === 'Producao');
   ok('resumo passa a trazer a ultima acao do setor',
     !!producaoComAcao.ultimaAcao && producaoComAcao.ultimaAcao.criadoPor === 'Pedro Marques');
+  ok('efeito comeca nulo: ainda nao ha respostas depois da acao',
+    producaoComAcao.ultimaAcao.efeito === null, JSON.stringify(producaoComAcao.ultimaAcao.efeito));
+
+  // A rota exige só login, não papel de administrador — um gestor também
+  // pode marcar que agiu sobre um alerta.
+  r = await pedir('POST', '/api/respostas/setores/Producao/acao', {
+    token: tokenGestor,
+    corpo: { observacao: 'Gestora também acompanhou o caso.' },
+  });
+  ok('gestor tambem pode registrar acao pos-alerta', r.status === 201, `status ${r.status}`);
+
+  r = await pedir('POST', '/api/respostas/setores/Producao/acao', {
+    token: tokenAdmin,
+    corpo: { observacao: 'a'.repeat(301) },
+  });
+  ok('observacao acima de 300 caracteres barrada', r.status === 400, `status ${r.status}`);
+
+  // A rota exigia só login, sem nenhum teto de tentativas — um token vazado
+  // conseguiria despejar linhas em acoes_alerta sem limite. Mesma técnica do
+  // teste de força bruta do login, adaptada para esta rota (agora por
+  // usuário, não por IP — ver middleware/limites.js).
+  let bloqueouAcao = false;
+  for (let i = 0; i < 20; i++) {
+    const tentativa = await pedir('POST', '/api/respostas/setores/Producao/acao', {
+      token: tokenAdmin,
+      corpo: { observacao: `ação em lote ${i}` },
+    });
+    if (tentativa.status === 429) { bloqueouAcao = true; break; }
+  }
+  ok('limite de tentativas na acao pos-alerta bloqueia abuso', bloqueouAcao);
 
   // -------------------------------------------------------------------------
   secao('PAINEL — filtro de período');
@@ -809,6 +839,20 @@ async function rodar() {
   ok('teto por IP barra varredura que troca de e-mail a cada tentativa', bloqueouPorIP);
 
   // -------------------------------------------------------------------------
+  secao('LIMITE DO FORMULÁRIO');
+
+  // Rota pública e anônima: 30 envios por hora, por IP (ver
+  // middleware/limites.js). Mesma técnica dos testes de força bruta acima.
+  let bloqueouFormulario = false;
+  for (let i = 0; i < 25; i++) {
+    const tentativa = await pedir('POST', '/api/respostas', {
+      corpo: { setor: 'TI', turno: 'Manha', estresse: 3, sono: 3, carga_trabalho: 3, ambiente_fisico: 3 },
+    });
+    if (tentativa.status === 429) { bloqueouFormulario = true; break; }
+  }
+  ok('limite de 30 envios por hora bloqueia envio em massa no formulário', bloqueouFormulario);
+
+  // -------------------------------------------------------------------------
   secao('CABEÇALHOS DE SEGURANÇA');
 
   r = await pedir('GET', '/api/saude');
@@ -817,6 +861,55 @@ async function rodar() {
   ok('define política de conteúdo', !!r.headers.get('content-security-policy'));
   ok('política não libera script de fora',
     (r.headers.get('content-security-policy') || '').includes("script-src 'self'"));
+
+  // -------------------------------------------------------------------------
+  secao('EFEITO DA AÇÃO PÓS-ALERTA (antes/depois)');
+
+  // Setor isolado, não usado em nenhuma outra seção deste arquivo — o teste
+  // não depende de dados criados por nenhuma seção anterior nem interfere
+  // com nenhuma assertiva já verificada.
+  const inicioJanela = new Date();
+  inicioJanela.setDate(inicioJanela.getDate() - 3);
+
+  await Resposta.insertMany([
+    { setor: 'Manutencao', turno: 'Manha', estresse: 5, sono: 1, carga_trabalho: 5, ambiente_fisico: 1, data_envio: inicioJanela },
+    { setor: 'Manutencao', turno: 'Tarde', estresse: 5, sono: 1, carga_trabalho: 5, ambiente_fisico: 1, data_envio: inicioJanela },
+    { setor: 'Manutencao', turno: 'Noite', estresse: 5, sono: 1, carga_trabalho: 5, ambiente_fisico: 1, data_envio: inicioJanela },
+  ]);
+
+  // tokenBiaNovo, não tokenAdmin nem tokenGestor: o teste de limite de
+  // tentativas logo acima já esgotou o teto da conta admin nesta rota de
+  // propósito, e a conta da gestora original (Ana) foi removida na seção de
+  // CRUD de contas, mais acima.
+  r = await pedir('POST', '/api/respostas/setores/Manutencao/acao', {
+    token: tokenBiaNovo,
+    corpo: { observacao: 'Redistribuímos as tarefas do turno da noite.' },
+  });
+  ok('acao registrada para o teste de efeito', r.status === 201, `status ${r.status}`);
+  const dataAcaoManutencao = new Date(r.dados.criadoEm);
+
+  r = await pedir('GET', '/api/respostas/resumo?periodo=tudo', { token: tokenAdmin });
+  let manutencao = r.dados.recomendacoesPorSetor.find((s) => s.setor === 'Manutencao');
+  ok('efeito ainda nulo sem respostas depois da acao',
+    !!manutencao && manutencao.ultimaAcao.efeito === null);
+
+  // Respostas de "depois", com quadro bem melhor que o de "antes"
+  const depoisDaAcao = new Date(dataAcaoManutencao.getTime() + 1000);
+  await Resposta.insertMany([
+    { setor: 'Manutencao', turno: 'Manha', estresse: 2, sono: 4, carga_trabalho: 2, ambiente_fisico: 4, data_envio: depoisDaAcao },
+    { setor: 'Manutencao', turno: 'Tarde', estresse: 2, sono: 4, carga_trabalho: 2, ambiente_fisico: 4, data_envio: depoisDaAcao },
+    { setor: 'Manutencao', turno: 'Noite', estresse: 2, sono: 4, carga_trabalho: 2, ambiente_fisico: 4, data_envio: depoisDaAcao },
+  ]);
+
+  r = await pedir('GET', '/api/respostas/resumo?periodo=tudo', { token: tokenAdmin });
+  manutencao = r.dados.recomendacoesPorSetor.find((s) => s.setor === 'Manutencao');
+  ok('efeito calculado com dados dos dois lados',
+    !!manutencao && !!manutencao.ultimaAcao.efeito, JSON.stringify(manutencao && manutencao.ultimaAcao));
+  ok('efeito aponta melhora (indice caiu depois da acao)',
+    manutencao.ultimaAcao.efeito.direcao === 'melhorou', JSON.stringify(manutencao.ultimaAcao.efeito));
+  ok('efeito traz indice de antes maior que o de depois',
+    manutencao.ultimaAcao.efeito.indiceAntes > manutencao.ultimaAcao.efeito.indiceDepois,
+    JSON.stringify(manutencao.ultimaAcao.efeito));
 
   // -------------------------------------------------------------------------
   console.log('\n' + '='.repeat(52));
