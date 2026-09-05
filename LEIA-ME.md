@@ -430,7 +430,7 @@ banca, a pergunta pode cair para qualquer integrante.
 
 ## Já implementado desde a versão anterior
 
-- [x] Comparação entre turnos (manhã, tarde, noite)
+- [x] Comparação entre turnos (manhã, tarde, noite, madrugada, comercial)
 - [x] Painel que se atualiza sozinho, com indicador de conexão
 - [x] Histórico de acessos e troca de senha
 - [x] Recomendações que consideram a tendência, não só o momento

@@ -472,7 +472,7 @@ function montarPainel(resumo, evolucao, comentarios) {
           Separar por turno revela diferenças que a média do dia esconde.
         </p>
         ${porTurno && porTurno.length > 0
-          ? `<div class="area-grafico"><canvas id="grafico-turnos" role="img" aria-label="Gráfico de barras: índice de risco por turno de trabalho — manhã, tarde e noite."></canvas></div>`
+          ? `<div class="area-grafico"><canvas id="grafico-turnos" role="img" aria-label="Gráfico de barras: índice de risco por turno de trabalho."></canvas></div>`
           : `<p class="vazio-simples">
                Nenhuma resposta neste período informou o turno. Respostas
                gravadas antes desse campo existir não entram nesta comparação.

@@ -212,10 +212,13 @@ function insightTurnos(porTurno) {
     };
   }
 
+  // Sem "da"/"do" de propósito: alguns turnos são período (Manhã, Noite,
+  // Madrugada — concordam com "da") e outros são adjetivo (Comercial — "da
+  // comercial" estaria errado). O nome sozinho funciona nos dois casos.
   const partes = [
-    `O turno da ${pior.turnoNome.toLowerCase()} concentra o maior risco `
+    `O turno ${pior.turnoNome} concentra o maior risco `
     + `(${num(pior.indiceRisco, 2)}), contra ${num(melhor.indiceRisco, 2)} `
-    + `do turno da ${melhor.turnoNome.toLowerCase()}.`,
+    + `do turno ${melhor.turnoNome}.`,
   ];
 
   // Sono é o indicador que mais distingue turnos na prática, então vale
@@ -228,8 +231,8 @@ function insightTurnos(porTurno) {
   }
 
   partes.push(
-    `Vale checar se a escala e o dimensionamento da equipe do turno da `
-    + `${pior.turnoNome.toLowerCase()} estão adequados.`
+    `Vale checar se a escala e o dimensionamento da equipe do turno `
+    + `${pior.turnoNome} estão adequados.`
   );
 
   return {

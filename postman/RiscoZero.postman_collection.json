@@ -310,7 +310,7 @@
                 "respostas"
               ]
             },
-            "description": "**Público — não precisa de login.**\n\nÉ a única rota aberta: qualquer trabalhador precisa conseguir responder sem ter conta.\n\n**Setores aceitos:** Producao, Manutencao, Qualidade, Logistica, TI, Administrativo\n\n**Turnos aceitos:** Manha, Tarde, Noite\n\n**Escalas (1 a 5, número inteiro):**\n\n| Campo | Nota 5 significa |\n|---|---|\n| estresse | muito estressado (ruim) |\n| sono | dormiu muito bem (bom) |\n| carga_trabalho | sobrecarregado (ruim) |\n| ambiente_fisico | muito confortável (bom) |\n\nRepare que sono e ambiente apontam para o lado oposto — o sistema inverte esses dois ao calcular o índice de risco.\n\n`comentario` é opcional, máximo de 500 caracteres. Todos os outros campos são obrigatórios."
+            "description": "**Público — não precisa de login.**\n\nÉ a única rota aberta: qualquer trabalhador precisa conseguir responder sem ter conta.\n\n**Setores aceitos:** Producao, Manutencao, Qualidade, Logistica, TI, Administrativo\n\n**Turnos aceitos:** Manha, Tarde, Noite, Madrugada, Comercial\n\n**Escalas (1 a 5, número inteiro):**\n\n| Campo | Nota 5 significa |\n|---|---|\n| estresse | muito estressado (ruim) |\n| sono | dormiu muito bem (bom) |\n| carga_trabalho | sobrecarregado (ruim) |\n| ambiente_fisico | muito confortável (bom) |\n\nRepare que sono e ambiente apontam para o lado oposto — o sistema inverte esses dois ao calcular o índice de risco.\n\n`comentario` é opcional, máximo de 500 caracteres. Todos os outros campos são obrigatórios."
           }
         },
         {

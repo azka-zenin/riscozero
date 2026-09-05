@@ -106,28 +106,56 @@ function sortearNota(perfil, ajuste = 0) {
 // Turnos e as faixas de horário em que acontecem. O horário sorteado precisa
 // combinar com o turno informado, senão os dados de demonstração ficariam
 // incoerentes (alguém do turno da noite respondendo às 8h da manhã).
+//
+// Madrugada divide ao meio o bloco que antes era só "Noite" (22h-5h): Noite
+// fica com a entrada da escala (22h-1h) e Madrugada com o miolo mais pesado
+// (2h-5h) — duas equipes menores em vez de uma, como acontece de verdade em
+// operação contínua. Comercial é expediente de escritório (8h-18h) e se
+// sobrepõe de propósito a Manhã/Tarde: representa outra população de
+// trabalhador (o pessoal do setor Administrativo), não um turno de fábrica.
 const TURNOS = [
   { chave: 'Manha', horaInicio: 6, horaFim: 13 },
   { chave: 'Tarde', horaInicio: 14, horaFim: 21 },
-  { chave: 'Noite', horaInicio: 22, horaFim: 5 },
+  { chave: 'Noite', horaInicio: 22, horaFim: 1 },
+  { chave: 'Madrugada', horaInicio: 2, horaFim: 5 },
+  { chave: 'Comercial', horaInicio: 8, horaFim: 18 },
 ];
 
 // Como o turno afeta as notas. Baseado em algo real: quem trabalha à noite
 // dorme pior (o corpo não descansa igual de dia) e conta com menos gente por
-// perto, o que aumenta a carga individual. Sem esse ajuste, os três turnos
-// sairiam praticamente iguais e o gráfico por turno não mostraria nada.
+// perto, o que aumenta a carga individual. Madrugada leva isso adiante (é o
+// ponto de menor vigília circadiana); Comercial não carrega desgaste de
+// turno de fábrica, só o baseline de quem trabalha em horário comum. Sem
+// esse ajuste, os turnos sairiam praticamente iguais e o gráfico por turno
+// não mostraria nada.
 const EFEITO_TURNO = {
   Manha: { estresse: 0, sono: 0.3, carga_trabalho: 0, ambiente_fisico: 0.2 },
   Tarde: { estresse: 0.2, sono: 0, carga_trabalho: 0.2, ambiente_fisico: 0 },
   Noite: { estresse: 0.4, sono: -1.1, carga_trabalho: 0.5, ambiente_fisico: -0.3 },
+  Madrugada: { estresse: 0.5, sono: -1.3, carga_trabalho: 0.5, ambiente_fisico: -0.3 },
+  Comercial: { estresse: 0, sono: 0.2, carga_trabalho: 0, ambiente_fisico: 0.3 },
 };
 
-/** Sorteia um turno, com a noite tendo menos gente que os outros. */
+// Pesos do sorteio de turno — Manhã e Tarde concentram a maior parte da
+// fábrica; Noite e Madrugada dividem a escala noturna, menor por natureza;
+// Comercial fica com uma fatia pequena, do tamanho do quadro administrativo.
+const PESOS_TURNO = [
+  { chave: 'Manha', peso: 0.38 },
+  { chave: 'Tarde', peso: 0.34 },
+  { chave: 'Noite', peso: 0.10 },
+  { chave: 'Madrugada', peso: 0.08 },
+  { chave: 'Comercial', peso: 0.10 },
+];
+
+/** Sorteia um turno conforme os pesos de PESOS_TURNO. */
 function sortearTurno() {
   const sorteio = Math.random();
-  if (sorteio < 0.42) return 'Manha';
-  if (sorteio < 0.80) return 'Tarde';
-  return 'Noite';
+  let acumulado = 0;
+  for (const { chave, peso } of PESOS_TURNO) {
+    acumulado += peso;
+    if (sorteio < acumulado) return chave;
+  }
+  return PESOS_TURNO[PESOS_TURNO.length - 1].chave; // salvaguarda de arredondamento
 }
 
 

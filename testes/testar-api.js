@@ -620,7 +620,7 @@ async function rodar() {
   ok('aceita resposta com turno', r.status === 201, `status ${r.status}`);
 
   r = await pedir('POST', '/api/respostas', {
-    corpo: { setor: 'TI', turno: 'Madrugada', estresse: 3, sono: 3, carga_trabalho: 3, ambiente_fisico: 3 },
+    corpo: { setor: 'TI', turno: 'Vespertino', estresse: 3, sono: 3, carga_trabalho: 3, ambiente_fisico: 3 },
   });
   ok('turno inventado barrado', r.status === 400, `status ${r.status}`);
 
@@ -679,7 +679,7 @@ async function rodar() {
   // campo agora e obrigatorio, todos os novos trazem o turno preenchido.
   ok('CSV traz turno em toda linha nova',
     textoCsv.split('\r\n').slice(1).filter(Boolean)
-      .every((l) => /;(Manhã|Tarde|Noite|Nao informado);/.test(l)));
+      .every((l) => /;(Manhã|Tarde|Noite|Madrugada|Comercial|Nao informado);/.test(l)));
 
   // -------------------------------------------------------------------------
   secao('TENDÊNCIA');

@@ -50,6 +50,8 @@ const NOMES_TURNOS = {
   Manha: 'Manhã',
   Tarde: 'Tarde',
   Noite: 'Noite',
+  Madrugada: 'Madrugada',
+  Comercial: 'Comercial',
 };
 
 /** Devolve o nome exibível de um setor; se for desconhecido, usa a própria chave. */

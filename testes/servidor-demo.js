@@ -95,28 +95,50 @@ function nota(base) {
 }
 
 // Como o turno afeta as notas: quem trabalha à noite dorme pior e costuma ter
-// menos gente por perto, o que aumenta a carga individual. Sem esse ajuste os
-// três turnos sairiam iguais e o gráfico por turno não mostraria nada.
+// menos gente por perto, o que aumenta a carga individual. Madrugada leva
+// isso adiante; Comercial (expediente de escritório) não carrega esse
+// desgaste. Sem esse ajuste os turnos sairiam iguais e o gráfico por turno
+// não mostraria nada.
 const EFEITO_TURNO = {
   Manha: { estresse: 0, sono: 0.3, carga: 0, ambiente: 0.2 },
   Tarde: { estresse: 0.2, sono: 0, carga: 0.2, ambiente: 0 },
   Noite: { estresse: 0.4, sono: -1.1, carga: 0.5, ambiente: -0.3 },
+  Madrugada: { estresse: 0.5, sono: -1.3, carga: 0.5, ambiente: -0.3 },
+  Comercial: { estresse: 0, sono: 0.2, carga: 0, ambiente: 0.3 },
 };
 
+// Mesmos pesos de seed.js: Manhã/Tarde concentram a fábrica, Noite/Madrugada
+// dividem a escala noturna, Comercial fica com a fatia do quadro administrativo.
+const PESOS_TURNO = [
+  { chave: 'Manha', peso: 0.38 },
+  { chave: 'Tarde', peso: 0.34 },
+  { chave: 'Noite', peso: 0.10 },
+  { chave: 'Madrugada', peso: 0.08 },
+  { chave: 'Comercial', peso: 0.10 },
+];
+
 function sortearTurno() {
-  const s = Math.random();
-  if (s < 0.42) return 'Manha';
-  if (s < 0.80) return 'Tarde';
-  return 'Noite';
+  const sorteio = Math.random();
+  let acumulado = 0;
+  for (const { chave, peso } of PESOS_TURNO) {
+    acumulado += peso;
+    if (sorteio < acumulado) return chave;
+  }
+  return PESOS_TURNO[PESOS_TURNO.length - 1].chave;
 }
 
 // Faixas de horário de cada turno. O horário sorteado precisa combinar com o
 // turno informado, senão os dados de demonstração ficariam incoerentes —
-// alguém do turno da noite respondendo às 8h da manhã.
+// alguém do turno da noite respondendo às 8h da manhã. Madrugada divide ao
+// meio o antigo bloco "Noite" (22h-5h); Comercial é expediente de escritório
+// e se sobrepõe de propósito a Manhã/Tarde — ver seed.js para o raciocínio
+// completo (as duas listas precisam ficar em sincronia).
 const FAIXAS_TURNO = [
   { chave: 'Manha', horaInicio: 6, horaFim: 13 },
   { chave: 'Tarde', horaInicio: 14, horaFim: 21 },
-  { chave: 'Noite', horaInicio: 22, horaFim: 5 },
+  { chave: 'Noite', horaInicio: 22, horaFim: 1 },
+  { chave: 'Madrugada', horaInicio: 2, horaFim: 5 },
+  { chave: 'Comercial', horaInicio: 8, horaFim: 18 },
 ];
 
 

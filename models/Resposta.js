@@ -27,6 +27,8 @@ const TURNOS = {
   Manha: 'Manhã',
   Tarde: 'Tarde',
   Noite: 'Noite',
+  Madrugada: 'Madrugada',
+  Comercial: 'Comercial',
 };
 
 // Regra reaproveitada pelos quatro indicadores: número inteiro de 1 a 5.
