@@ -17,12 +17,10 @@ as decisões. Se você só quer rodar o sistema, veja o `LEIA-ME.md`.
 | Sessão | Lista na memória do servidor | Token JWT assinado |
 | Permissões | Não existiam | Admin e gestor |
 
-A versão SQLite continua no histórico do Git, na tag `v2.0-sqlite`. Para
-recuperá-la:
-
-```bash
-git checkout v2.0-sqlite
-```
+O código da versão SQLite não foi preservado neste repositório Git — o
+commit inicial já chega com o esqueleto em MongoDB (v4.0). Este documento
+existe para explicar a troca de banco caso a banca pergunte, não para
+recuperar o código antigo.
 
 ---
 

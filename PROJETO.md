@@ -172,7 +172,7 @@ responsável pela camada de dados já tinha experiência com Mongo, e código qu
 quem mantém entende de verdade vale mais que a tecnologia "melhor no papel"
 escrita por alguém inseguro nela. Cálculos de média e agrupamento seriam mais
 diretos em SQL — a equipe sabe do trade-off. A versão anterior do projeto
-usava SQLite e está preservada no histórico do Git (`v2.0-sqlite`).
+usava SQLite; o que mudou na migração está documentado em `MIGRACAO.md`.
 
 ```
 riscozero/

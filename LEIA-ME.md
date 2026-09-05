@@ -244,8 +244,8 @@ Vale conhecer os dois lados, caso perguntem:
 - **A favor do SQL:** cálculos de média e agrupamento (que é o coração deste
   painel) são mais diretos de escrever em SQL do que em aggregation pipelines.
 
-A versão anterior do projeto usava SQLite e está preservada no histórico do Git,
-na tag `v2.0-sqlite`.
+A versão anterior do projeto usava SQLite; o que mudou na migração está
+documentado em `MIGRACAO.md`.
 
 ---
 
