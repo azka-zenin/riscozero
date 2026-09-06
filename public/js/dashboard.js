@@ -35,17 +35,31 @@ let ultimaAtualizacao = null;
 // mudar de 197 para 198 — distração pura, e ruim numa apresentação.
 let primeiraMontagem = true;
 
-// Se a página abre com um endereço de âncora (#secao-setores etc.), tenta
-// rolar até lá manualmente assim que o painel parar de se remontar — ver o
-// comentário completo em montarPainel(). A carga inicial pode chamar
-// montarPainel mais de uma vez em sequência rápida (ex.: o listener de
-// visibilitychange também dispara carregarPainel ao abrir a aba), e cada
-// chamada troca o conteúdo (logo, o elemento-alvo) inteiro. Uma tentativa
-// única corre o risco de mirar num elemento que a próxima montagem já
-// substituiu. Por isso vira um debounce: cada montagem cancela a tentativa
-// anterior e agenda outra; só a última — depois que as remontagens pararem
-// de verdade — chega a rodar.
-let corrigirHashPendente = !!location.hash;
+// Se a página abre com um endereço de âncora (#secao-setores etc.), o
+// navegador tenta rolar até lá SOZINHO, cedo demais — antes de os dados
+// chegarem e o painel existir de verdade. Ele erra feio (medido: acaba no
+// rodapé da página) e, o pior, não tenta de novo depois: rolagem nativa por
+// âncora só acontece uma vez, na carga.
+//
+// Em vez de tentar corrigir depois de errado, tiramos o hash da URL ANTES de
+// o navegador chegar a agir — history.scrollRestoration('manual') também
+// evita que ele restaure uma posição de rolagem antiga num F5. Guardamos o
+// hash à parte e fazemos a rolagem nós mesmos, na hora certa (depois que o
+// painel montar de verdade), devolvendo o endereço à URL nesse momento.
+const hashInicial = location.hash;
+if (hashInicial) {
+  history.replaceState(null, '', location.pathname + location.search);
+}
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+
+// A carga inicial pode chamar montarPainel mais de uma vez em sequência
+// rápida (ex.: o listener de visibilitychange também dispara carregarPainel
+// ao abrir a aba), e cada chamada troca o conteúdo (logo, o elemento-alvo)
+// inteiro. Uma tentativa única corre o risco de mirar num elemento que a
+// próxima montagem já substituiu. Por isso vira um debounce: cada montagem
+// cancela a tentativa anterior e agenda outra; só a última — depois que as
+// remontagens pararem de verdade — chega a rodar.
+let corrigirHashPendente = !!hashInicial;
 let temporizadorCorrigirHash = null;
 
 // Parece o mesmo que primeiraMontagem, mas responde a outra pergunta.
@@ -555,27 +569,23 @@ function montarPainel(resumo, evolucao, comentarios) {
   desenharGraficoSetores(porSetor, devoAnimar);
   desenharGraficoTurnos(porTurno, devoAnimar);
 
-  // Quando a página já abre com um endereço de âncora (ex.: alguém volta
-  // direto para #secao-setores por um link salvo), o navegador tenta rolar
-  // até lá sozinho ANTES de os gráficos e a animação de entrada assentarem —
-  // a altura da página ainda está mudando nesse momento, e o cálculo nativo
-  // erra feio (medido: acaba no rodapé da página, não na seção pedida).
-  // Corrigimos rolando manualmente — em debounce, ver corrigirHashPendente.
-  //
-  // 800ms, não um valor curto: no ambiente publicado (banco na nuvem,
-  // possivelmente "frio" no plano gratuito) o tempo entre a primeira busca de
-  // dados e uma eventual remontagem seguinte é bem maior que num teste local
-  // com banco em memória — medido: 150ms bastava local, mas o suficiente na
-  // internet real só apareceu depois de um F5 manual, com tudo já "quente".
+  // Ver o comentário completo em hashInicial, lá em cima: o hash foi tirado
+  // da URL antes de o navegador tentar rolar sozinho, e a rolagem de verdade
+  // é feita aqui, manualmente, depois que o painel monta. Debounce porque a
+  // carga inicial pode chamar montarPainel mais de uma vez em sequência
+  // rápida (ex.: visibilitychange também dispara carregarPainel), e cada
+  // chamada troca o elemento-alvo inteiro — só a última tentativa, depois
+  // que as remontagens realmente pararem, deve valer.
   if (corrigirHashPendente) {
     clearTimeout(temporizadorCorrigirHash);
     temporizadorCorrigirHash = setTimeout(() => {
-      // Reconsulta o alvo aqui dentro, não antes: se outra montagem
-      // aconteceu nesse meio-tempo, é o elemento dela que deve importar.
-      const alvo = document.querySelector(location.hash);
-      if (alvo) alvo.scrollIntoView();
+      const alvo = document.querySelector(hashInicial);
+      if (alvo) {
+        history.replaceState(null, '', location.pathname + location.search + hashInicial);
+        alvo.scrollIntoView();
+      }
       corrigirHashPendente = false;
-    }, 800);
+    }, 400);
   }
 }
 
