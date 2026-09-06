@@ -351,18 +351,20 @@ automaticamente.
 ## Testes
 
 ```bash
-npm test           # 238 testes, sem precisar de banco
+npm test           # 307 testes, sem precisar de banco
 npm run verificar  # testa o MongoDB de verdade (precisa do .env)
 ```
 
-O `npm test` roda dois conjuntos:
+O `npm test` roda quatro conjuntos:
 
 | Arquivo | O que cobre |
 |---|---|
-| `testes/testar-analise.js` | Escalas invertidas, índice, tendência e geração de insights — inclusive casos de borda como série vazia e dia atípico |
-| `testes/testar-api.js` | Rotas, login, permissões, CRUD, agregações, CSV e histórico |
+| `testes/testar-analise.js` (81) | Escalas invertidas, índice, tendência e geração de insights — inclusive casos de borda como série vazia e dia atípico |
+| `testes/testar-api.js` (166) | Rotas, login, permissões, CRUD, agregações, CSV e histórico |
+| `testes/testar-webhooks.js` (15) | Entrega para sistemas externos, falhas e novas tentativas |
+| `testes/testar-bi.js` (45) | Exportação para BI, ciclo de vida das chaves de leitura e filtros de data |
 
-Ambos usam um MongoDB simulado em memória (`testes/mongo-falso.js`), então
+Todos usam um MongoDB simulado em memória (`testes/mongo-falso.js`), então
 rodam em qualquer computador, sem internet e sem banco instalado.
 
 O `npm run verificar` faz o oposto: usa o banco de verdade, para confirmar que o

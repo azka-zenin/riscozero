@@ -219,7 +219,7 @@ Mostre a estrutura de pastas e explique o caminho do dado:
 > realmente mudou — senão a tela ficaria piscando a cada ciclo.
 
 **"Como vocês garantem que funciona?"**
-> Temos mais de 238 testes automatizados que rodam com um comando
+> Temos mais de 300 testes automatizados que rodam com um comando
 > (`npm test`), sem precisar de banco instalado. Eles verificam as rotas, o
 > login, as permissões, o CRUD, os cálculos e a geração dos textos —
 > incluindo casos de borda, como um dia atípico que não deve virar

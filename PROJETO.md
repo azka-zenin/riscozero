@@ -200,11 +200,12 @@ riscozero/
 
 ## 7. Qualidade e testes
 
-- **238 testes automatizados** (`npm test`), rodando contra um MongoDB
+- **307 testes automatizados** (`npm test`), rodando contra um MongoDB
   simulado em memória — funcionam em qualquer máquina, sem banco instalado e
   sem internet. Cobrem a lógica de risco e tendência (inclusive casos de
   borda, como série vazia ou um dia atípico que não deve virar tendência), as
-  rotas da API, login, permissões, CRUD de contas e agregações.
+  rotas da API, login, permissões, CRUD de contas, agregações, a exportação
+  para ferramentas de análise e a entrega para sistemas externos.
 - **24 testes de API via Postman** (`node testes/rodar-postman.js`),
   validando a coleção publicada em `postman/RiscoZero.postman_collection.json`
   contra um servidor real.
@@ -329,8 +330,8 @@ cobertura de teste e os itens do roadmap que ainda estavam em aberto.
   WebSockets, com o polling de 20s mantido como reforço caso a conexão
   caia.
 
-Suíte completa: **238 testes** (era 223) + 24 do Postman, e verificação
-visual antes de integrar.
+Suíte completa: **307 testes** + 24 do Postman, e verificação visual antes
+de integrar.
 
 ---
 
