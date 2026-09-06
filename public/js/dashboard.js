@@ -52,13 +52,20 @@ if (hashInicial) {
 }
 if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
 
-// A carga inicial pode chamar montarPainel mais de uma vez em sequência
-// rápida (ex.: o listener de visibilitychange também dispara carregarPainel
-// ao abrir a aba), e cada chamada troca o conteúdo (logo, o elemento-alvo)
-// inteiro. Uma tentativa única corre o risco de mirar num elemento que a
-// próxima montagem já substituiu. Por isso vira um debounce: cada montagem
-// cancela a tentativa anterior e agenda outra; só a última — depois que as
-// remontagens pararem de verdade — chega a rodar.
+// A carga inicial pode chamar montarPainel mais de uma vez, e nem sempre
+// depressa: no plano gratuito, uma instância "dormindo" pode levar 50s ou
+// mais para acordar (aviso do próprio Render). Nesse tempo, o temporizador de
+// atualização automática de 20s (iniciarAtualizacaoAutomatica, chamado sem
+// esperar a primeira carregarPainel terminar) já dispara sozinho uma ou duas
+// vezes, então mais de uma resposta pode chegar fora de ordem, minutos
+// depois da primeira. Cada montagem troca o conteúdo (logo, o elemento-alvo)
+// inteiro, então uma correção que desiste depois da primeira tentativa bem-
+// sucedida corre o risco de um retardatário substituir o elemento certo por
+// um novo, sem que nada role até ele depois. Por isso corrigirHashPendente
+// só desarma de vez depois de esgotado o prazo abaixo — até lá, toda
+// montagem cancela a tentativa anterior e agenda outra.
+const PRAZO_CORRIGIR_HASH_MS = 90000; // folga sobre o "50s ou mais" do Render
+const corrigirHashAte = Date.now() + PRAZO_CORRIGIR_HASH_MS;
 let corrigirHashPendente = !!hashInicial;
 let temporizadorCorrigirHash = null;
 
@@ -569,23 +576,26 @@ function montarPainel(resumo, evolucao, comentarios) {
   desenharGraficoSetores(porSetor, devoAnimar);
   desenharGraficoTurnos(porTurno, devoAnimar);
 
-  // Ver o comentário completo em hashInicial, lá em cima: o hash foi tirado
-  // da URL antes de o navegador tentar rolar sozinho, e a rolagem de verdade
-  // é feita aqui, manualmente, depois que o painel monta. Debounce porque a
-  // carga inicial pode chamar montarPainel mais de uma vez em sequência
-  // rápida (ex.: visibilitychange também dispara carregarPainel), e cada
-  // chamada troca o elemento-alvo inteiro — só a última tentativa, depois
-  // que as remontagens realmente pararem, deve valer.
+  // Ver o comentário completo em hashInicial e corrigirHashAte, lá em cima:
+  // o hash foi tirado da URL antes de o navegador tentar rolar sozinho, e a
+  // rolagem de verdade é feita aqui, manualmente, depois que o painel monta.
+  // Só desarma de vez depois do prazo — dentro dele, qualquer nova montagem
+  // (mesmo uma tardia, chegando bem depois de uma tentativa que já pareceu
+  // ter dado certo) cancela a rolagem agendada e agenda outra para o
+  // elemento atual, porque é o elemento da montagem MAIS RECENTE que importa.
   if (corrigirHashPendente) {
-    clearTimeout(temporizadorCorrigirHash);
-    temporizadorCorrigirHash = setTimeout(() => {
-      const alvo = document.querySelector(hashInicial);
-      if (alvo) {
-        history.replaceState(null, '', location.pathname + location.search + hashInicial);
-        alvo.scrollIntoView();
-      }
+    if (Date.now() > corrigirHashAte) {
       corrigirHashPendente = false;
-    }, 400);
+    } else {
+      clearTimeout(temporizadorCorrigirHash);
+      temporizadorCorrigirHash = setTimeout(() => {
+        const alvo = document.querySelector(hashInicial);
+        if (alvo) {
+          history.replaceState(null, '', location.pathname + location.search + hashInicial);
+          alvo.scrollIntoView();
+        }
+      }, 400);
+    }
   }
 }
 
