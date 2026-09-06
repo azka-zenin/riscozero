@@ -193,7 +193,17 @@ async function rodar() {
   // -------------------------------------------------------------------------
   secao('FILTRO DE DATAS');
 
-  const hojeISO = new Date().toISOString().slice(0, 10);
+  // A data tem que ser montada no fuso LOCAL, não com toISOString(): a rota lê
+  // "?de=AAAA-MM-DD" como meia-noite local (ver filtroDeDatas em routes/bi.js),
+  // enquanto toISOString() devolve a data em UTC. No Brasil (UTC-3) as duas
+  // divergem entre 21h e meia-noite — nesse intervalo o teste pedia o dia
+  // seguinte e não achava a resposta de "agora", falhando só à noite.
+  const hoje = new Date();
+  const hojeISO = [
+    hoje.getFullYear(),
+    String(hoje.getMonth() + 1).padStart(2, '0'),
+    String(hoje.getDate()).padStart(2, '0'),
+  ].join('-');
   r = await pedir('GET', `/api/bi/completo?de=${hojeISO}`, { token: chave });
   ok('filtro "de" corta o que é anterior', r.dados.total === 1, String(r.dados.total));
 

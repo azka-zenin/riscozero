@@ -69,6 +69,23 @@ const corrigirHashAte = Date.now() + PRAZO_CORRIGIR_HASH_MS;
 let corrigirHashPendente = !!hashInicial;
 let temporizadorCorrigirHash = null;
 
+// ...mas o prazo acima só vale enquanto quem manda na rolagem for o endereço,
+// e não a pessoa. No instante em que ela rola por conta própria, ir atrás da
+// âncora deixa de ser "levar aonde pediu" e vira arrancar a página da mão de
+// quem está lendo — inaceitável no meio de uma apresentação. O primeiro
+// gesto de rolagem cancela a correção de vez.
+if (corrigirHashPendente) {
+  const desistirDaCorrecao = () => {
+    corrigirHashPendente = false;
+    clearTimeout(temporizadorCorrigirHash);
+  };
+  // wheel/touchmove/keydown são o gesto humano; o "scroll" solto não serve
+  // aqui porque o nosso próprio scrollIntoView também o dispararia.
+  ['wheel', 'touchmove', 'keydown'].forEach((evento) => {
+    window.addEventListener(evento, desistirDaCorrecao, { once: true, passive: true });
+  });
+}
+
 // Parece o mesmo que primeiraMontagem, mas responde a outra pergunta.
 //
 // primeiraMontagem é "os NÚMEROS devem se animar?" — e a troca de período a
