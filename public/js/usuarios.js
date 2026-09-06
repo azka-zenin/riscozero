@@ -372,7 +372,7 @@ function ajustarCabecalho() {
   // as duas opções como links normais e só descobriria a restrição depois
   // de clicar.
   if (usuario.papel === 'admin') {
-    ['link-usuarios', 'link-acessos'].forEach((id) => {
+    ['link-usuarios', 'link-chaves', 'link-acessos'].forEach((id) => {
       const link = document.getElementById(id);
       if (link) link.style.display = '';
     });
