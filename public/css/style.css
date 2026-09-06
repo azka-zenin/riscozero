@@ -1911,6 +1911,14 @@ textarea { resize: vertical; }
   margin: 0 0 var(--e-7);
 }
 
+/* .topo é sticky (fica sobreposto ao conteúdo que rola por baixo dele). Sem
+   isto, clicar num atalho da nav-secoes rola a seção-alvo até encostar bem
+   no topo da viewport — que é exatamente onde o cabeçalho fixo cobre tudo,
+   escondendo o título e boa parte do conteúdo logo abaixo dele. */
+[id^="secao-"] {
+  scroll-margin-top: var(--e-12);
+}
+
 .nav-secoes a {
   color: var(--tinta-media);
   text-decoration: none;
