@@ -35,6 +35,19 @@ let ultimaAtualizacao = null;
 // mudar de 197 para 198 — distração pura, e ruim numa apresentação.
 let primeiraMontagem = true;
 
+// Se a página abre com um endereço de âncora (#secao-setores etc.), tenta
+// rolar até lá manualmente assim que o painel parar de se remontar — ver o
+// comentário completo em montarPainel(). A carga inicial pode chamar
+// montarPainel mais de uma vez em sequência rápida (ex.: o listener de
+// visibilitychange também dispara carregarPainel ao abrir a aba), e cada
+// chamada troca o conteúdo (logo, o elemento-alvo) inteiro. Uma tentativa
+// única corre o risco de mirar num elemento que a próxima montagem já
+// substituiu. Por isso vira um debounce: cada montagem cancela a tentativa
+// anterior e agenda outra; só a última — depois que as remontagens pararem
+// de verdade — chega a rodar.
+let corrigirHashPendente = !!location.hash;
+let temporizadorCorrigirHash = null;
+
 // Parece o mesmo que primeiraMontagem, mas responde a outra pergunta.
 //
 // primeiraMontagem é "os NÚMEROS devem se animar?" — e a troca de período a
@@ -541,6 +554,23 @@ function montarPainel(resumo, evolucao, comentarios) {
   desenharGraficoIndicadores(geral, devoAnimar);
   desenharGraficoSetores(porSetor, devoAnimar);
   desenharGraficoTurnos(porTurno, devoAnimar);
+
+  // Quando a página já abre com um endereço de âncora (ex.: alguém volta
+  // direto para #secao-setores por um link salvo), o navegador tenta rolar
+  // até lá sozinho ANTES de os gráficos e a animação de entrada assentarem —
+  // a altura da página ainda está mudando nesse momento, e o cálculo nativo
+  // erra feio (medido: acaba no rodapé da página, não na seção pedida).
+  // Corrigimos rolando manualmente — em debounce, ver corrigirHashPendente.
+  if (corrigirHashPendente) {
+    clearTimeout(temporizadorCorrigirHash);
+    temporizadorCorrigirHash = setTimeout(() => {
+      // Reconsulta o alvo aqui dentro, não antes: se outra montagem
+      // aconteceu nesse meio-tempo, é o elemento dela que deve importar.
+      const alvo = document.querySelector(location.hash);
+      if (alvo) alvo.scrollIntoView();
+      corrigirHashPendente = false;
+    }, 150);
+  }
 }
 
 /**
