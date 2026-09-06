@@ -434,6 +434,7 @@ main { flex: 1; }
 }
 
 .marca:hover::before { transform: translateY(-1px) scale(1.04); }
+.marca:focus-visible { outline: 2px solid var(--marca); outline-offset: 1px; }
 .marca span { color: var(--marca); }
 
 .topo nav {
@@ -720,7 +721,10 @@ h1 {
 .destaque .regua-preenchida.risco-baixo { background: var(--baixo-face); }
 .destaque .regua-preenchida.risco-medio { background: var(--medio-face); }
 .destaque .regua-preenchida.risco-alto  { background: var(--alto-face); }
-.destaque .regua-preenchida::after { box-shadow: 0 0 0 3px rgba(16, 31, 46, 0.9); }
+/* O anel que separa a bolinha da régua do fundo. Fora do mostrador ele usa
+   var(--papel) — aqui usa var(--face) pelo mesmo motivo: é a cor do fundo
+   logo atrás, e o anel só existe para abrir um respiro contra ela. */
+.destaque .regua-preenchida::after { box-shadow: 0 0 0 3px var(--face); }
 
 .destaque .regua-escala { color: var(--face-tinta-fraca); }
 
@@ -1067,17 +1071,17 @@ h1 {
    própria porque .painel é transparente e sem borda por padrão. */
 .painel.destaque-chave {
   border: 1px solid var(--medio-borda);
-  border-radius: 8px;
+  border-radius: var(--raio);
   background: var(--medio-fraco);
   padding: var(--e-8);
 }
 
 .valor-chave {
   display: flex;
-  gap: 0.75rem;
+  gap: var(--e-4);
   align-items: center;
   flex-wrap: wrap;
-  margin: 1rem 0;
+  margin: var(--e-5) 0;
 }
 
 /* A chave tem 69 caracteres: em tela estreita ela precisa quebrar em vez de
@@ -1085,12 +1089,12 @@ h1 {
 .valor-chave code {
   flex: 1 1 22rem;
   min-width: 0;
-  padding: 0.7rem 0.9rem;
+  padding: var(--e-3) var(--e-4);
   border: 1px solid var(--medio-borda);
-  border-radius: 6px;
+  border-radius: var(--raio-p);
   background: var(--papel);
   font-family: var(--dado);
-  font-size: 0.85rem;
+  font-size: var(--t-pequeno);
   word-break: break-all;
   user-select: all;
 }
@@ -1479,6 +1483,22 @@ input[type="password"] {
   font-family: inherit;
   font-size: var(--t-corpo);
   transition: border-color var(--transicao), box-shadow var(--transicao);
+}
+
+/* Seta própria no lugar da nativa do sistema operacional. O resto da interface
+   desenha os próprios ícones justamente para não depender do desenho do SO
+   (ver ICONES_ALERTA em dashboard.js) — o select era o último lugar em que um
+   ícone emprestado ainda aparecia, com formato e peso variando entre Windows,
+   Mac e Linux. A cor vai embutida no SVG porque background-image não enxerga
+   variável CSS; o bloco de impressão lá embaixo troca a versão clara. */
+select {
+  appearance: none;
+  -webkit-appearance: none;
+  padding-right: var(--e-9);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%23B8AFA2' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M4 6.5 8 10.5 12 6.5'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--e-5) center;
+  background-size: 16px 16px;
 }
 
 select:hover, textarea:hover, input:hover { border-color: var(--tinta-fraca); }
@@ -2738,6 +2758,13 @@ html.js-transicoes.saindo main { opacity: 0; transform: translateY(-4px); }
     --alto-fraco: #FBE7E4;
     --alto-borda: #F2C4BE;
     --alto-face: #B8342A;
+  }
+
+  /* A seta do select é a única cor que não vem de ficha: está embutida num
+     SVG de background, que não enxerga variável. Aqui ela vira a versão
+     escura, pelo mesmo motivo de todo o resto deste bloco. */
+  select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath fill='none' stroke='%2347596B' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round' d='M4 6.5 8 10.5 12 6.5'/%3E%3C/svg%3E");
   }
 
   /* Sem isto, muitos navegadores tiram cor de fundo ao imprimir "pra
