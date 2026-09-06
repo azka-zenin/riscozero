@@ -561,6 +561,12 @@ function montarPainel(resumo, evolucao, comentarios) {
   // a altura da página ainda está mudando nesse momento, e o cálculo nativo
   // erra feio (medido: acaba no rodapé da página, não na seção pedida).
   // Corrigimos rolando manualmente — em debounce, ver corrigirHashPendente.
+  //
+  // 800ms, não um valor curto: no ambiente publicado (banco na nuvem,
+  // possivelmente "frio" no plano gratuito) o tempo entre a primeira busca de
+  // dados e uma eventual remontagem seguinte é bem maior que num teste local
+  // com banco em memória — medido: 150ms bastava local, mas o suficiente na
+  // internet real só apareceu depois de um F5 manual, com tudo já "quente".
   if (corrigirHashPendente) {
     clearTimeout(temporizadorCorrigirHash);
     temporizadorCorrigirHash = setTimeout(() => {
@@ -569,7 +575,7 @@ function montarPainel(resumo, evolucao, comentarios) {
       const alvo = document.querySelector(location.hash);
       if (alvo) alvo.scrollIntoView();
       corrigirHashPendente = false;
-    }, 150);
+    }, 800);
   }
 }
 
