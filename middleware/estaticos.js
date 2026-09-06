@@ -25,19 +25,28 @@ const PASTA_PUBLICA = path.join(__dirname, '..', 'public');
 // faz nos dias antes de apresentar. Uma hora já evita rebuscar fonte/CSS/JS a
 // cada clique dentro da mesma sessão de demonstração, sem esse risco.
 //
-// O HTML é a exceção, e por causa do mesmo raciocínio levado até o fim: ele é
-// quem aponta para todo o resto. Guardado por uma hora, um push feito minutos
-// antes de apresentar não chegaria em quem já tinha aberto a página — nem
-// recarregando, porque o navegador nem chega a perguntar ao servidor.
+// HTML, CSS e JS são a exceção, pelo mesmo raciocínio levado até o fim: são
+// eles que mudam num push. Guardados por uma hora, uma correção feita minutos
+// antes de apresentar não chega em quem já tinha aberto a página — e, no caso
+// do CSS e do JS, nem recarregar resolve, porque o navegador não volta a
+// perguntar ao servidor por um <script src> ou <link> que ainda considera
+// fresco. Isso já custou horas de depuração: uma correção publicada e
+// funcionando era testada contra o arquivo velho que o navegador tinha em
+// mãos, e parecia não ter funcionado.
 //
 // no-cache não quer dizer "não guarde": quer dizer "guarde, mas confirme
 // comigo antes de usar". A confirmação é uma requisição minúscula que costuma
 // responder 304 (sem corpo), então o custo é quase nada e a garantia é que
 // ninguém fica preso numa versão antiga.
+//
+// O cache de uma hora continua valendo para fonte e ícone — que são os
+// arquivos pesados daqui e os que realmente não mudam de um push para o outro.
+const SEMPRE_CONFERIR = ['.html', '.css', '.js'];
+
 const estaticos = express.static(PASTA_PUBLICA, {
   maxAge: '1h',
   setHeaders(res, caminho) {
-    if (caminho.endsWith('.html')) {
+    if (SEMPRE_CONFERIR.some((ext) => caminho.endsWith(ext))) {
       res.setHeader('Cache-Control', 'no-cache');
     }
   },
