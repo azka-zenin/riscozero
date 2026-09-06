@@ -81,7 +81,8 @@ Se falhar, verifique:
 npm test
 ```
 
-**Esperado:** `156 testes passaram, 0 falharam`
+**Esperado:** `307 testes passaram, 0 falharam` (a última linha de cada
+bloco: 81 + 166 + 15 + 45)
 
 ---
 
@@ -224,7 +225,7 @@ Isto ativa um banco em **memória** com dados de exemplo. As telas são **exatam
 2. ✅ `npm install`
 3. ✅ `npm run verificar` passou
 4. ✅ `npm run seed` rodado
-5. ✅ `npm test` passou (156 testes)
+5. ✅ `npm test` passou (307 testes)
 6. ✅ `npm start` servidor ligado
 7. ✅ 3 abas do navegador abertas
 8. ✅ Fluxo testado (formulário → login → painel)
