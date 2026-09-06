@@ -6,6 +6,11 @@
 > que o sistema é, como foi construído, todas as rodadas de trabalho pelas
 > quais passou, e onde as coisas estão agora.
 
+**Estado em 06/09/2026** — 13 fases concluídas, todas no `main`. Sistema
+publicado e funcionando em `riscozero.onrender.com`, com auto-deploy a partir
+do `main`. 307 testes automatizados passando, `npm audit` sem
+vulnerabilidades. Apresentação: Mostra Técnica 2026, terça-feira.
+
 ---
 
 ## 1. O que é o RiscoZero
@@ -483,62 +488,210 @@ esperados (navegação saindo de uma página com fetch em andamento).
 
 ---
 
+### Fase 13 — Publicação, reconciliação do repositório e a caça ao bug da tela preta
+
+Primeira fase com o sistema **já publicado e sendo usado de verdade** — e por
+isso a primeira em que os problemas vieram do ambiente real (hospedagem
+gratuita, cache de navegador, merge mal resolvido) em vez do código recém-
+escrito. 14 commits, 35 arquivos, +1279/−366.
+
+**1. Higiene de segredos.** O `.env.example` tinha sido apagado da árvore de
+trabalho, e existia um `.env.txt` — cópia do `.env` real, com segredos de
+produção — **fora do `.gitignore`**, a um `git add -A` de virar público num
+repositório aberto. `.env.example` restaurado, `.env.txt` removido, `.env`
+real preservado.
+
+**2. Deploy do Render voltou a subir.** Estava falhando com `JWT_SECRET não
+definido` — o Secret File tinha subido vazio. É o mesmo tipo de falha que a
+checagem de força do segredo em `middleware/auth.js` existe para provocar
+cedo (melhor não subir do que subir inseguro).
+
+**3. Vulnerabilidade no `qs`.** Falha moderada (contorno do limite de array,
+negação de serviço) herdada via `express → body-parser`. Corrigida com
+`overrides` no `package.json`, sem trocar a versão do Express. `npm audit` →
+0 vulnerabilidades.
+
+**4. Reconciliação com o GitHub.** Comparadas todas as branches remotas com o
+`main`: havia trabalho real nunca mergeado — a branch da Fase 12, que a
+própria seção acima registrava como pendente de PR. Trazida para o `main`,
+branches já integradas removidas. Também foi removida das docs a referência a
+uma tag `v2.0-sqlite` que **nunca existiu** (nem local, nem remota — o
+primeiro commit do repositório já é a v4.0 com MongoDB); no lugar, ponteiro
+para o `MIGRACAO.md`, que é onde o contexto da migração de fato está.
+
+**5. Regressões escondidas pelo merge — o padrão mais perigoso da fase.**
+Quando duas branches divergidas se encontram, o conteúdo de um lado pode
+substituir o do outro por inteiro, derrubando em silêncio features que só
+existiam no lado perdedor. Não quebra teste, não gera conflito, e só aparece
+quando alguém usa a tela. Três ocorrências, todas vindas do merge da Fase 12:
+
+- **`server.js`** — quatro perdas de uma vez: o roteador `/api/bi` deixara de
+  ser montado; o `express.static` tinha voltado à forma embutida, perdendo o
+  `no-cache` do HTML; a rede de segurança contra queda do processo
+  (`unhandledRejection` / `uncaughtException`) sumira; e o limite de 100kb no
+  corpo das requisições voltara ao padrão sem teto.
+- **`usuarios.html`** — faltava o markup do diálogo de confirmação, então
+  `usuarios.js` chamava `addEventListener` em `null`, o script morria antes de
+  desenhar a lista e a tela ficava **travada em "Carregando contas" para
+  sempre**. Este era o sintoma que o usuário via como "carrega eternamente".
+- **`usuarios.html` / `acessos.html`** — theme-color, preload de fonte,
+  skip-link, `<noscript>`, `id="conteudo-principal"`, meta tags e o link
+  "Chaves" na navegação, todos ausentes.
+
+**6. Turnos Madrugada e Comercial.** Os 3 turnos originais (Manhã/Tarde/Noite)
+assumiam operação de fábrica e deixavam de fora quem trabalha na madrugada
+como escala separada e quem cumpre expediente comercial — o pessoal do setor
+Administrativo era obrigado a escolher um turno de fábrica que não descrevia
+sua rotina. Passaram a **cinco**. Deliberadamente **não** se criou um turno
+"Administrativo": esse nome já existe como *setor*, e duplicá-lo confundiria
+os dois conceitos. Mudança propagada por modelo, formulário, análise, seed,
+servidor de demonstração, testes e coleção do Postman.
+
+Um detalhe de língua que a mudança expôs: `utils/insights.js` montava a frase
+como *"o turno da ${nome}"*, o que funciona para nomes de período (*"da
+manhã"*) mas produz *"o turno da Comercial"* — errado, porque "Comercial" é
+adjetivo, não período. A frase passou a ser *"o turno Comercial"*, forma que
+serve aos cinco nomes por igual.
+
+**7. O bug da tela preta.** Clicar em "Setores e turnos" no painel apagava
+todo o conteúdo da página — **permanentemente**, sobrando só o cabeçalho. Foi
+o problema mais caro da fase, e a causa não estava em nada que parecesse
+relacionado.
+
+`public/js/transicoes.js` intercepta cliques em links para fazer o fade entre
+páginas, e seu teste de "link interno do site" aceitava qualquer `href` sem
+`:` — o que inclui `#secao-setores`. A sequência:
+
+1. Adiciona a classe `saindo` no `<html>`, que leva o `<main>` a `opacity: 0`.
+2. Atribui o endereço a `window.location.href`.
+3. Mas esse endereço difere do atual **só no fragmento**, e isso é navegação
+   *no mesmo documento*: o navegador rola até a âncora e **não recarrega
+   nada**.
+4. Nenhum documento novo chega para levar a classe embora. O `<main>` fica
+   invisível para sempre.
+
+O cabeçalho continuava aparecendo porque está **fora** do `<main>` — o que
+fazia o sintoma parecer "os dados não carregaram", quando na verdade tinham
+carregado. Recarregar resolvia, o que reforçava a leitura errada.
+
+O diagnóstico demorou porque duas pistas apontavam para o lugar errado: a
+hospedagem gratuita de fato leva ~50s para acordar (então "demora e vem
+preto" parecia timing), e o endereço tinha uma âncora (então parecia rolagem).
+Houve várias tentativas de correção nessa direção — margem de rolagem,
+`scroll-margin-top`, adiar a rolagem, resistir ao cold start. A medição que
+encerrou a questão já existia desde cedo: `scrollY: 2042, secaoTop: 80.1`
+provava que a rolagem estava **certa**, com a seção exatamente sob o
+cabeçalho. Lida como *eliminação* da hipótese de rolagem em vez de mais um
+sintoma dela, sobra "está no lugar e não se vê" — ou seja, opacidade — e um
+único elemento cobre o `<main>` inteiro sem tocar no cabeçalho.
+
+Correção na raiz: âncoras da própria página não são mais interceptadas (o
+navegador rola sozinho, que é o comportamento correto). Mais duas redes de
+segurança, porque a classe podia reaparecer por outros caminhos: ela é
+removida no `pageshow` — o botão "voltar" restaura a página do cache de
+histórico (bfcache) exatamente como estava, classe incluída — e expira por
+tempo se a navegação não acontecer. De quebra, isso conserta o link "Pular
+para o conteúdo" (`#conteudo-principal`), que tinha o mesmo defeito em
+**todas** as telas: quem navega por teclado apagava a página no primeiro
+atalho de acessibilidade do site.
+
+A correção de rolagem por âncora do `dashboard.js` foi mantida (ela resolve um
+caso real — abrir um endereço com `#secao-x` antes de o painel existir), mas
+passou a desistir ao primeiro gesto de rolagem da pessoa. Antes insistia por
+90 segundos, o que podia puxar a página de volta no meio de uma leitura.
+
+**8. O que mascarava tudo: cache.** CSS e JS eram servidos com
+`max-age=3600`. Como os nomes de arquivo não têm hash de conteúdo, o navegador
+não volta a perguntar ao servidor por um `<script src>` que ainda considera
+fresco — nem ao recarregar. O efeito prático foi que **correções já publicadas
+e funcionando eram testadas contra o arquivo velho**, repetidamente, ao longo
+de horas. CSS e JS passaram a `no-cache` (que não significa "não guarde", e
+sim "guarde, mas confirme antes de usar" — uma requisição que responde 304).
+Fonte e ícone, os arquivos pesados e os que de fato não mudam entre um push e
+outro, seguem com a hora de cache. O comentário em `middleware/estaticos.js`
+já antecipava esse risco para o HTML; a fase apenas levou o mesmo raciocínio
+aos arquivos que mudam num push.
+
+**9. Teste instável por fuso.** `testes/testar-bi.js` montava a data do filtro
+com `toISOString()` (UTC) para uma rota que lê `?de=AAAA-MM-DD` como
+meia-noite **local**. No Brasil (UTC−3) as duas divergem entre 21h e
+meia-noite: nesse intervalo o teste pedia o dia seguinte e não achava a
+resposta de "agora". Falhava só à noite — exatamente quando o time trabalha.
+A rota está certa; o teste é que passou a montar a data no fuso local.
+
+Verificado com a suíte completa (**307 testes**, 0 falhas), `npm audit` limpo,
+e reprodução do bug da tela preta em servidor local antes e depois da
+correção.
+
+---
+
 ## 5. Estrutura de arquivos atual
 
 ```
 riscozero/
-├── server.js               Sobe o servidor e conecta as rotas
-├── config.js                Fuso horário e limites de risco
-├── database.js               Conexão com o MongoDB
-├── seed.js / limpar.js       Dados de exemplo / limpeza (agora inclui AcaoAlerta)
-├── render.yaml                Configuração de publicação (Render)
+├── server.js          Sobe o servidor e conecta as rotas
+├── config.js          Fuso horário e limites de risco
+├── database.js        Conexão com o MongoDB
+├── seed.js/limpar.js  Dados de exemplo / limpeza (inclui AcaoAlerta)
+├── preparar.js        Prepara o ambiente a partir do zero
+├── render.yaml        Configuração de publicação (Render)
 │
 ├── models/
-│   ├── Resposta.js            Formato de uma resposta + setores/turnos válidos
-│   ├── Usuario.js             Contas de acesso + criptografia de senha
-│   ├── LogAcesso.js           Registro de entradas e tentativas que falharam
-│   └── AcaoAlerta.js          Registro de ação da gestão sobre um alerta (novo, Fase 8)
+│   ├── Resposta.js    Formato de uma resposta + setores/turnos válidos (5 turnos, Fase 13)
+│   ├── Usuario.js     Contas de acesso + criptografia de senha
+│   ├── LogAcesso.js   Registro de entradas e tentativas que falharam
+│   ├── AcaoAlerta.js  Ação da gestão sobre um alerta (Fase 8)
+│   └── TokenBI.js     Chaves de leitura para ferramentas de análise
 │
 ├── utils/
-│   ├── analise.js             ★ Cérebro: índice de risco, tendência, recomendações
-│   ├── insights.js            Números → texto lido por humanos (regras, não IA)
-│   └── email.js               Aviso por e-mail em risco alto (opcional, Fase 12)
+│   ├── analise.js     ★ Cérebro: índice de risco, tendência, recomendações
+│   ├── insights.js    Números → texto lido por humanos (regras, não IA)
+│   ├── email.js       Aviso por e-mail em risco alto (opcional, Fase 12)
+│   └── webhooks.js    Notificação para sistemas externos
 │
 ├── middleware/
-│   ├── auth.js                JWT (exigirLogin, exigirAdmin) + checagem de força do segredo
-│   ├── limites.js              Rate limiting: login/formulário por IP, rotas de escrita autenticadas por usuário (Fase 12)
-│   └── seguranca.js            Cabeçalhos de segurança (CSP, X-Frame-Options...)
+│   ├── auth.js        JWT (exigirLogin, exigirAdmin) + checagem de força do segredo
+│   ├── limites.js     Rate limiting: login/formulário por IP, escrita autenticada por usuário (Fase 12)
+│   ├── seguranca.js   Cabeçalhos de segurança (CSP, X-Frame-Options...)
+│   └── estaticos.js   Entrega de public/ e política de cache (HTML/CSS/JS revalidam — Fase 13)
 │
 ├── routes/
-│   ├── respostas.js            API do formulário, painel, ação pós-alerta e efeito antes/depois
-│   ├── usuarios.js             CRUD das contas de acesso
-│   ├── logs.js                 Consulta do histórico de acessos
-│   └── auth.js                 Login, logout, troca de senha — origem via req.ip
+│   ├── respostas.js   API do formulário, painel, ação pós-alerta e efeito antes/depois
+│   ├── usuarios.js    CRUD das contas de acesso
+│   ├── logs.js        Consulta do histórico de acessos
+│   ├── auth.js        Login, logout, troca de senha — origem via req.ip
+│   └── bi.js          Exportação para ferramentas de análise + gestão de chaves
 │
 ├── public/
-│   ├── index.html               Formulário do trabalhador (suporta ?quiosque=1)
-│   ├── login.html                Entrada do painel
-│   ├── dashboard.html             Painel de gestão (2 botões de exportação, Socket.IO)
-│   ├── usuarios.html               Gerenciamento de contas (nav restrita por papel)
-│   ├── acessos.html                Histórico de acessos (nav restrita por papel)
-│   ├── 404.html                     Página de erro própria
-│   ├── manifest.json / ícones        PWA (só o formulário)
+│   ├── index.html     Formulário do trabalhador (suporta ?quiosque=1)
+│   ├── login.html     Entrada do painel
+│   ├── dashboard.html Painel de gestão (2 botões de exportação, Socket.IO)
+│   ├── usuarios.html  Gerenciamento de contas (nav restrita por papel)
+│   ├── acessos.html   Histórico de acessos (nav restrita por papel)
+│   ├── chaves.html    Chaves de leitura para BI (só admin)
+│   ├── 404.html       Página de erro própria
+│   ├── manifest.json / favicon.svg / ícones    PWA (só o formulário)
 │   ├── robots.txt
-│   ├── css/style.css                 Sistema de design único, compartilhado
-│   ├── fonts/                         Tipografia local, sem CDN
+│   ├── css/style.css  Sistema de design único, compartilhado
+│   ├── fonts/         Tipografia local, sem CDN
 │   └── js/
-│       ├── formulario.js, login.js, dashboard.js, usuarios.js, acessos.js
-│       └── vendor/                    Chart.js local
+│       ├── formulario.js, login.js, dashboard.js, usuarios.js,
+│       │   acessos.js, chaves.js
+│       ├── transicoes.js   Fade entre páginas — em TODAS as telas (ver Fase 13)
+│       └── vendor/         Chart.js local
 │
+├── docs/POWER-BI.md   Como ligar o Power BI às rotas de exportação
 ├── postman/RiscoZero.postman_collection.json   24 requisições
 │
 └── testes/
-    ├── testar-analise.js        Lógica de risco/tendência/insights/e-mail (72 testes)
-    ├── testar-api.js             Rotas, login, permissões, CRUD, rate limit (166 testes)
-    ├── verificar-banco.js         Testa o MongoDB real
-    ├── servidor-demo.js            Sobe offline com banco em memória (com Socket.IO)
-    ├── rodar-postman.js             Confere a coleção contra um servidor real
-    └── mongo-falso.js                Banco em memória para os testes
+    ├── testar-analise.js   Risco/tendência/insights/e-mail (81 testes)
+    ├── testar-api.js       Rotas, login, permissões, CRUD, rate limit (166)
+    ├── testar-webhooks.js  Entrega, falhas e novas tentativas (15)
+    ├── testar-bi.js        Exportação, chaves, filtros de data (45)
+    ├── verificar-banco.js  Testa o MongoDB real
+    ├── servidor-demo.js    Sobe offline com banco em memória (com Socket.IO)
+    ├── rodar-postman.js    Confere a coleção contra um servidor real
+    └── mongo-falso.js      Banco em memória para os testes
 ```
 
 ---
@@ -552,6 +705,8 @@ riscozero/
 | `APRESENTACAO.md` | Roteiro minuto a minuto da apresentação oral, checklist, falas sugeridas, FAQ com respostas prontas, plano B se algo der errado |
 | `MIGRACAO.md` | Documento de apoio explicando a migração SQLite → MongoDB (útil se a banca perguntar sobre a troca de banco) |
 | `PUBLICAR.md` | Guia de publicação gratuita (Render + MongoDB Atlas), incluindo o alerta mais importante: o serviço grátis "dorme" depois de 15 min sem acesso |
+| `PRE-APRESENTACAO-TERÇA.md` | Checklist do que conferir nos dias/horas antes da Mostra |
+| `docs/POWER-BI.md` | Como ligar o Power BI (ou planilha/Looker) às rotas de exportação usando uma chave de leitura |
 | `CONTEXTO-COMPLETO.md` | Este arquivo — histórico e contexto completo do projeto |
 
 ---
@@ -585,26 +740,48 @@ riscozero/
     o formulário (Fase 12).
 18. WebSockets complementa o polling, não o substitui — o painel precisa
     continuar se atualizando sozinho mesmo se o socket cair (Fase 12).
+19. Turnos são cinco, e "Administrativo" **não** é um deles: esse nome já
+    existe como *setor*, e repeti-lo como turno confundiria duas dimensões
+    diferentes do mesmo dado (Fase 13).
+20. Texto gerado nunca concorda com um nome vindo de dado: a frase é
+    *"o turno Comercial"*, não *"o turno da Comercial"* — a forma sem artigo
+    serve a todos os nomes, atuais e futuros (Fase 13).
+21. Âncoras da própria página nunca passam pela transição entre telas: mudar
+    só o fragmento não recarrega o documento, então qualquer estado ligado à
+    saída da página ficaria preso (Fase 13).
+22. HTML, CSS e JS revalidam a cada uso (`no-cache`); só fonte e ícone ficam
+    em cache longo. Sem hash no nome do arquivo, cache longo em código
+    significa publicar uma correção e continuar vendo o defeito (Fase 13).
 
 ---
 
 ## 8. Testes — estado atual
 
 ```bash
-npm test           # 238 testes, sem precisar de banco (72 + 166)
+npm test           # 307 testes, sem precisar de banco (81 + 166 + 15 + 45)
 npm run verificar  # testa o MongoDB de verdade (precisa do .env)
 node testes/rodar-postman.js   # 24 requisições, contra um servidor real
 ```
 
-- `testes/testar-analise.js` (72) — escalas invertidas, índice, tendência,
+- `testes/testar-analise.js` (81) — escalas invertidas, índice, tendência,
   geração de insights, casos de borda (série vazia, dia atípico), e a
   lógica de debounce do aviso por e-mail (`utils/email.js`).
 - `testes/testar-api.js` (166) — rotas, login, permissões, CRUD,
   agregações, CSV (incluindo o teste de formula injection), histórico,
   ação pós-alerta (inclusive por gestor e o rate limit da rota), limite do
   formulário, e o efeito antes/depois de uma ação registrada.
-- Ambos rodam contra um MongoDB simulado em memória
+- `testes/testar-webhooks.js` (15) — entrega, filtro de falhas, resumo e
+  detecção de conta com muitas falhas seguidas.
+- `testes/testar-bi.js` (45) — exportação completa/agregada/série, paginação,
+  ciclo de vida das chaves (criação, revogação imediata, vencimento,
+  permanência no histórico) e filtros de data.
+- Todos rodam contra um MongoDB simulado em memória
   (`testes/mongo-falso.js`), sem precisar de banco instalado nem internet.
+
+Datas em teste são montadas no **fuso local**, nunca com `toISOString()`: as
+rotas leem `?de=AAAA-MM-DD` como meia-noite local, e em UTC−3 as duas
+interpretações divergem entre 21h e meia-noite — um teste montado em UTC
+passa o dia inteiro e falha só à noite (ver Fase 13).
 
 ---
 
@@ -623,6 +800,16 @@ node testes/rodar-postman.js   # 24 requisições, contra um servidor real
   só no log do servidor (decisão deliberada — ver Fase 12).
 - WebSockets depende do polling de 20s como reforço se a conexão cair; não
   há indicador visual de "socket conectado/desconectado" no painel.
+- **A hospedagem gratuita "dorme" depois de 15 min sem acesso**, e a primeira
+  visita depois disso pode levar ~50 segundos para responder (aviso do próprio
+  Render). Não é defeito do sistema, mas é a limitação mais visível para quem
+  abre o site — e, na apresentação, a razão para abrir o painel alguns minutos
+  antes de começar. Foi também a pista que mais atrasou o diagnóstico da
+  Fase 13, por dar aparência de "erro de carregamento" a um problema que era
+  de CSS.
+- Arquivos estáticos não têm hash no nome (`style.abc123.css`), então a
+  garantia de ver a versão nova vem de revalidar a cada uso, não do endereço.
+  Funciona, mas custa uma requisição condicional por arquivo.
 
 ---
 
@@ -640,7 +827,9 @@ turnos, painel com atualização automática, histórico de acessos, troca de
 senha, recomendações por tendência, gerador automático de insights,
 publicação online, exportar em PDF, registro de ação pós-alerta, e-mail
 automático em risco alto, medir efeito antes/depois de uma ação, modo
-quiosque, atualização instantânea via WebSockets (Fase 12).
+quiosque, atualização instantânea via WebSockets (Fase 12), exportação para
+ferramentas de análise com chaves de leitura revogáveis e webhooks para
+sistemas externos.
 
 ---
 
@@ -663,18 +852,25 @@ inteiro offline, com dados de exemplo em memória — as telas são idênticas
 
 ## 12. Fluxo de trabalho / estado do repositório
 
-- Repositório: `azka-zenin/riscozero`.
-- Branch de trabalho da Fase 12: `claude/refinements-possible-ip90y7` —
-  diferente das fases anteriores, este ambiente de execução exige
-  desenvolver numa branch dedicada em vez de commitar direto no `main`;
-  chegar ao `main` depende de um Pull Request (ainda não aberto ao final
-  desta fase, salvo pedido explícito do usuário).
-- Fases 1 a 11 estão commitadas e enviadas ao `main`. A Fase 12 está
-  commitada na branch acima.
+- Repositório: `azka-zenin/riscozero`. Publicado em
+  `riscozero.onrender.com` (Render + MongoDB Atlas), com **auto-deploy a
+  partir do `main`** — todo push publica.
+- **Todas as fases, de 1 a 13, estão no `main`.** A Fase 12, que ficou numa
+  branch dedicada aguardando PR, foi integrada na Fase 13, junto com a
+  limpeza das branches já mergeadas.
+- Lição da Fase 13, que vale para qualquer merge futuro deste repositório:
+  ao juntar branches divergidas, **conferir arquivo por arquivo o que existia
+  só de um lado**. Um merge pode substituir um arquivo inteiro pelo conteúdo
+  do outro lado sem gerar conflito, sem quebrar teste e sem qualquer sinal —
+  e as features perdidas só aparecem quando alguém usa a tela.
 - Presença ativa de testes automatizados como rede de segurança: qualquer
-  mudança nova é verificada com `npm test` (238) + `node
+  mudança nova é verificada com `npm test` (307) + `node
   testes/rodar-postman.js` (24) antes de ser considerada concluída, além de
-  verificação visual (Playwright) quando a mudança é de UI.
+  verificação visual quando a mudança é de UI.
+- Depois de publicar algo e ir testar no navegador, lembrar que **o que você
+  está vendo pode ser a versão anterior**. Desde a Fase 13 o servidor manda
+  CSS e JS revalidarem, o que resolve o caso normal; havendo dúvida, conferir
+  com o cache desligado antes de concluir que a correção não funcionou.
 
 ---
 
@@ -697,3 +893,11 @@ inteiro offline, com dados de exemplo em memória — as telas são idênticas
   discutido (densidade alta de comentários "por quê" no CSS é real, mas
   tratada como problema secundário porque é invisível pra quem visita o
   site).
+- **Ao depurar, tratar uma medição que sai como esperado como eliminação de
+  hipótese, não como sintoma a mais.** A Fase 13 custou horas porque
+  `secaoTop: 80.1` — prova de que a rolagem estava correta — foi lida como
+  mais um detalhe do problema de rolagem, em vez de como o fim daquela
+  linha de investigação. Quando o elemento está no lugar certo e mesmo
+  assim não se vê, o problema não é posição.
+- Antes de concluir que uma correção publicada não funcionou, confirmar que
+  o navegador está mesmo executando o arquivo novo.
