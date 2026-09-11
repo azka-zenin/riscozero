@@ -210,6 +210,14 @@
   --corpo: 'Manrope', system-ui, -apple-system, sans-serif;
   --dado: 'JetBrains Mono', ui-monospace, 'SF Mono', monospace;
 
+  /* Instrument Serif só existe no projeto em UM corte (400 normal, 400
+     itálico — ver public/fonts/). Pedir 600/700 nela faz o navegador
+     sintetizar negrito (engorda os traços do corte 400 algoritmicamente),
+     o que sai com traço irregular numa serifa fina como esta. Todo lugar
+     que usa var(--titulo) pede peso por este token, nunca um número — se um
+     corte bold de verdade for baixado algum dia, muda aqui uma vez só. */
+  --peso-titulo: 400;
+
   /* ------------------------------------------------------------------------
      ESCALA TIPOGRÁFICA — 10 degraus, e só eles
 
@@ -407,7 +415,7 @@ main { flex: 1; }
 
 .marca {
   font-family: var(--titulo);
-  font-weight: 700;
+  font-weight: var(--peso-titulo);
   font-size: var(--t-corpo);
   letter-spacing: -0.02em;
   color: var(--tinta);
@@ -469,7 +477,10 @@ main { flex: 1; }
    fazer alguma coisa (um .botao), não pra dizer "você está aqui". */
 .topo nav a.ativo {
   color: var(--tinta);
-  font-weight: 700;
+  /* 600, não 700: Manrope só tem até o corte 600 carregado (ver @font-face
+     no topo do arquivo) — pedir 700 sintetiza negrito em vez de usar um
+     corte de verdade. */
+  font-weight: 600;
 }
 
 .topo nav a.ativo::after {
@@ -512,7 +523,7 @@ main.estreito {
 h1 {
   font-family: var(--titulo);
   font-size: var(--t-titulo-g);
-  font-weight: 700;
+  font-weight: var(--peso-titulo);
   letter-spacing: -0.032em;
   line-height: 1.08;
   margin: 0 0 var(--e-3);
@@ -673,19 +684,38 @@ h1 {
   );
 }
 
+/* A divisória entre as duas metades da face era uma borda cheia — a única
+   linha reta e sólida dentro do próprio mostrador, destoando da textura de
+   régua que ele já usa embaixo (.destaque::after) e que a tela de login usa
+   (.aviso-login::before). Mesma técnica, só girada: traços de 1px a cada
+   12px, agora separando os dois lados em vez de fechar com um traço só. */
 .destaque-medida {
   padding: var(--e-8) var(--e-8);
-  border-right: 1px solid var(--face-linha);
-  background: rgba(255, 255, 255, 0.02);
+  background-color: rgba(255, 255, 255, 0.02);
+  background-image: repeating-linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.14) 0,
+    rgba(255, 255, 255, 0.14) 1px,
+    transparent 1px,
+    transparent 12px
+  );
+  background-repeat: no-repeat;
+  background-position: right top;
+  background-size: 1px 100%;
 }
 
 .destaque .sobrescrito { color: var(--face-tinta-fraca); }
 
 .indice-grande {
   font-size: var(--t-display);
-  /* 700, não 600: é o maior e mais importante número do sistema — não faz
-     sentido pesar menos que o h1 da página ou a logo no cabeçalho. */
-  font-weight: 700;
+  /* 500, o corte mais pesado que existe de verdade para JetBrains Mono
+     neste projeto (ver @font-face) — 600/700 aqui seria negrito sintético
+     numa fonte tabular, que sai com traço desigual entre os dígitos. Não é
+     perda de destaque: em 4,6rem, isolado na própria face escura do
+     mostrador, com o tracking mais fechado do sistema, o tamanho e o
+     contexto já fazem o número dominar a tela — o peso não precisa
+     carregar essa função sozinho. */
+  font-weight: 500;
   line-height: 0.95;
   letter-spacing: -0.05em;
   margin: var(--e-4) 0 0;
@@ -744,7 +774,7 @@ h1 {
 .destaque-titulo {
   font-family: var(--titulo);
   font-size: var(--t-titulo-p);
-  font-weight: 600;
+  font-weight: var(--peso-titulo);
   letter-spacing: -0.02em;
   line-height: 1.25;
   margin: var(--e-4) 0 var(--e-4);
@@ -915,7 +945,10 @@ h1 {
 
 .cartao .valor {
   font-size: var(--t-titulo-g);
-  font-weight: 600;
+  /* 500, não 600: mesmo motivo do .indice-grande — é o corte mais pesado
+     que existe de verdade para JetBrains Mono; 600 sintetizava negrito em
+     todo número de cartão do painel. */
+  font-weight: 500;
   line-height: 1.05;
   letter-spacing: -0.04em;
 }
@@ -926,6 +959,7 @@ h1 {
 .cartao .valor.valor-nome {
   font-family: var(--titulo);
   font-size: var(--t-titulo-p);
+  font-weight: var(--peso-titulo); /* sem isto herdaria o 600 de .cartao .valor, sintetizado nesta fonte */
   letter-spacing: -0.02em; /* mesma convenção de todo título neste degrau */
 }
 .cartao .valor.valor-longo {
@@ -983,7 +1017,7 @@ h1 {
   gap: var(--e-3);
   font-family: var(--titulo);
   font-size: var(--t-titulo-p);
-  font-weight: 600;
+  font-weight: var(--peso-titulo);
   letter-spacing: -0.02em;
   margin: 0 0 var(--e-2);
 }
@@ -1060,6 +1094,12 @@ h1 {
 }
 
 .alerta .icone svg { display: block; }
+
+/* Sem isto, o <strong> (usado em acessos.js para destacar o e-mail que
+   falhou) cai no bold padrão do navegador (700) — mesmo problema do
+   .faixa-urgencia strong logo abaixo, mesma correção: o corte mais pesado
+   que existe de verdade para Manrope é 600. */
+.alerta strong { font-weight: 600; }
 
 .alerta.alto { background: var(--alto-fraco); border-color: var(--alto-borda); color: var(--alto); }
 .alerta.medio { background: var(--medio-fraco); border-color: var(--medio-borda); color: var(--medio); }
@@ -1159,7 +1199,7 @@ h1 {
 
 .insight-nome {
   font-family: var(--titulo);
-  font-weight: 600;
+  font-weight: var(--peso-titulo);
   font-size: var(--t-interface);
   letter-spacing: -0.012em;
 }
@@ -1196,7 +1236,7 @@ h1 {
 .cabecalho-setor .nome {
   font-family: var(--titulo);
   font-size: var(--t-corpo);
-  font-weight: 600;
+  font-weight: var(--peso-titulo);
   letter-spacing: -0.015em;
 }
 
@@ -1347,7 +1387,7 @@ h1 {
 
 .comentario .setor-nome {
   font-family: var(--titulo);
-  font-weight: 600;
+  font-weight: var(--peso-titulo);
   color: var(--tinta);
   font-size: var(--t-mini);
 }
@@ -1463,8 +1503,8 @@ fieldset.campo {
 }
 
 .ajuda {
-  color: var(--tinta-media);
-  font-size: var(--t-pequeno);
+  color: var(--tinta-fraca);
+  font-size: var(--t-mini);
   line-height: 1.55;
   margin: 0 0 var(--e-4);
 }
@@ -1605,7 +1645,10 @@ textarea { resize: vertical; }
   border-color: var(--marca);
   background: var(--marca);
   color: var(--papel);
-  font-weight: 600;
+  /* Sem mudança de peso aqui: JetBrains Mono só tem até o corte 500
+     carregado, que já é o peso base do rótulo (acima) — subir pra 600
+     sintetizava negrito. A troca de fundo/cor já marca a seleção sem
+     ambiguidade, então o peso não precisa fazer esse trabalho de novo. */
   box-shadow: none;
 }
 
@@ -1787,6 +1830,7 @@ textarea { resize: vertical; }
   margin: 0 0 var(--e-3);
   font-family: var(--titulo);
   font-size: var(--t-titulo-p);
+  font-weight: var(--peso-titulo); /* sem isto cai no bold padrão do navegador para h2, sintetizado nesta fonte */
   letter-spacing: -0.02em; /* mesma convenção de .painel h2 e outros títulos neste degrau */
 }
 
@@ -1927,7 +1971,7 @@ textarea { resize: vertical; }
 .nav-secoes {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--e-2);
+  gap: var(--e-6);
   margin: 0 0 var(--e-7);
 }
 
@@ -1939,26 +1983,29 @@ textarea { resize: vertical; }
   scroll-margin-top: var(--e-12);
 }
 
+/* Sem caixa nem pílula de propósito — mesma lógica já registrada em
+   `.topo nav a.ativo` (acima): pílula é ação/filtro (ver `.filtro-periodo`
+   e `.botao.secundario` logo acima, na tela), traço é orientação. Isto é
+   navegação (atalho pra um trecho da própria página), não um controle —
+   por isso lê como texto sublinhado, um degrau mais quieto que a nav
+   principal do cabeçalho, não outra fileira de botões. */
 .nav-secoes a {
   color: var(--tinta-media);
   text-decoration: none;
-  font-size: var(--t-pequeno);
+  font-size: var(--t-mini);
   font-weight: 500;
-  padding: var(--e-2) var(--e-4);
-  border-radius: 999px;
-  border: 1px solid var(--linha);
-  background: var(--superficie);
-  transition: background var(--transicao), border-color var(--transicao), color var(--transicao),
+  padding: var(--e-2) 0;
+  border-bottom: 2px solid transparent;
+  transition: color var(--transicao), border-color var(--transicao),
               transform 0.12s var(--resposta);
 }
 
 .nav-secoes a:hover {
   color: var(--tinta);
-  border-color: var(--linha-forte);
-  background: var(--superficie-2);
+  border-bottom-color: var(--linha-forte);
 }
 
-.nav-secoes a:focus-visible { outline: 2px solid var(--marca); outline-offset: 1px; }
+.nav-secoes a:focus-visible { outline: 2px solid var(--marca); outline-offset: 2px; }
 .nav-secoes a:active { transform: translateY(1px); }
 
 /* --------------------------------------------------------------------------
@@ -2293,7 +2340,7 @@ body.modo-apresentacao .area-grafico.alto { height: 440px; }
   );
 }
 
-.aviso-login strong { color: var(--tinta); }
+.aviso-login strong { color: var(--tinta); font-weight: 600; }
 
 @keyframes surgir-login {
   from { opacity: 0; transform: translateY(12px) scale(0.985); }
@@ -2318,7 +2365,7 @@ body.modo-apresentacao .area-grafico.alto { height: 440px; }
 .vazio .titulo-vazio {
   font-family: var(--titulo);
   font-size: var(--t-titulo-p);
-  font-weight: 600;
+  font-weight: var(--peso-titulo);
   letter-spacing: -0.02em;
   margin-bottom: var(--e-3);
 }
@@ -2377,7 +2424,7 @@ body.modo-apresentacao .area-grafico.alto { height: 440px; }
 .confirmacao-titulo {
   font-family: var(--titulo);
   font-size: var(--t-titulo-p);
-  font-weight: 600;
+  font-weight: var(--peso-titulo);
   letter-spacing: -0.02em;
   margin-bottom: var(--e-3);
 }
@@ -2618,7 +2665,18 @@ html.js-transicoes.saindo main { opacity: 0; transform: translateY(-4px); }
 
 @media (max-width: 900px) {
   .destaque { grid-template-columns: 1fr; }
-  .destaque-medida { border-right: none; border-bottom: 1px solid var(--face-linha); }
+  /* Empilhado, a régua gira: passa a correr embaixo, não mais na direita. */
+  .destaque-medida {
+    background-position: left bottom;
+    background-size: 100% 1px;
+    background-image: repeating-linear-gradient(
+      to right,
+      rgba(255, 255, 255, 0.14) 0,
+      rgba(255, 255, 255, 0.14) 1px,
+      transparent 1px,
+      transparent 12px
+    );
+  }
   .duas-colunas { grid-template-columns: 1fr; }
 }
 
