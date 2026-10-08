@@ -1379,48 +1379,60 @@ botoesPeriodo.forEach((botao) => {
   });
 });
 
+// Data de hoje (AAAA-MM-DD) no fuso de Brasília, para o nome do arquivo.
+// toISOString() daria a data em UTC, e depois das 21h já seria o dia seguinte.
+function hojeParaArquivo() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+}
+
 // A exportação precisa passar pelo fetch (e não por um link direto) porque
 // o servidor exige o cabeçalho de autenticação. Por isso baixamos o arquivo
 // como blob e disparamos o download por código.
-botaoExportar.addEventListener('click', async () => {
+async function baixarArquivo(botao, caminho, nomeArquivo) {
   if (!exigirSessao()) return;
 
-  const textoOriginal = botaoExportar.textContent;
-  botaoExportar.textContent = 'Gerando...';
-  botaoExportar.disabled = true;
+  const textoOriginal = botao.textContent;
+  botao.textContent = 'Gerando...';
+  botao.disabled = true;
 
   try {
-    const resposta = await requisitar(`/api/respostas/exportar?periodo=${periodoAtual}`);
+    const resposta = await requisitar(caminho);
     if (!resposta.ok) throw new Error('Falha ao exportar');
 
     const blob = await resposta.blob();
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `riscozero-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = nomeArquivo;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url); // libera a memória usada pelo blob
 
-    botaoExportar.textContent = 'Baixado!';
-    setTimeout(() => { botaoExportar.textContent = textoOriginal; }, 2000);
+    botao.textContent = 'Baixado!';
+    setTimeout(() => { botao.textContent = textoOriginal; }, 2000);
   } catch (erro) {
     console.error(erro);
-    botaoExportar.textContent = 'Erro ao exportar';
-    setTimeout(() => { botaoExportar.textContent = textoOriginal; }, 2500);
+    botao.textContent = 'Erro ao exportar';
+    setTimeout(() => { botao.textContent = textoOriginal; }, 2500);
   } finally {
-    botaoExportar.disabled = false;
+    botao.disabled = false;
   }
-});
+}
 
-// A folha de estilo de impressão (style.css, @media print) já esconde
-// cabeçalho, rodapé e controles e evita cortar cartões entre páginas — o
-// botão só precisa disparar a impressão do navegador, que também é o "Salvar
-// como PDF" de qualquer impressora do sistema.
-botaoExportarPDF.addEventListener('click', () => {
-  window.print();
-});
+botaoExportar.addEventListener('click', () => baixarArquivo(
+  botaoExportar,
+  `/api/respostas/exportar?periodo=${periodoAtual}`,
+  `riscozero-${hojeParaArquivo()}.csv`,
+));
+
+// O PDF é gerado no servidor (mesmos números do painel), não pela impressão do
+// navegador — por isso sai igual em qualquer máquina, sem cortes nem scroll.
+botaoExportarPDF.addEventListener('click', () => baixarArquivo(
+  botaoExportarPDF,
+  `/api/respostas/exportar-pdf?periodo=${periodoAtual}`,
+  `riscozero-${hojeParaArquivo()}.pdf`,
+));
 
 // ---------------------------------------------------------------------------
 // Os gráficos também precisam trocar de tema para o papel

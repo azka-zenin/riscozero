@@ -2862,4 +2862,11 @@ html.js-transicoes.saindo main { opacity: 0; transform: translateY(-4px); }
   .comentario {
     break-inside: avoid;
   }
+
+  /* A lista de comentários tem altura máxima com rolagem para a tela. Em
+     papel a rolagem não existe: o que passasse da altura sumia do relatório. */
+  .lista-comentarios {
+    max-height: none;
+    overflow: visible;
+  }
 }

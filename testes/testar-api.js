@@ -355,6 +355,10 @@ async function rodar() {
     csv.trim().split('\r\n').length === 9, String(csv.trim().split('\r\n').length));
   ok('nome do setor acentuado no CSV', csv.includes('Produção'));
   ok('decimal com virgula', /\d,\d\d;/.test(csv));
+  // Producao tem so 3 respostas aqui, abaixo do minimo para comentarios: o
+  // texto nao pode sair no CSV, mesmo para quem tem acesso ao arquivo.
+  ok('comentario de setor com poucas respostas fica fora do CSV',
+    !csv.includes('Muito pesado hoje'));
 
   // Proteção contra "formula injection": um comentário começando com =, +,
   // - ou @ não pode virar fórmula executável ao abrir o CSV no Excel.
@@ -364,12 +368,37 @@ async function rodar() {
       comentario: "=cmd|'/c calc'!A1",
     },
   });
+  // O comentário só sai no CSV se o setor tiver respostas suficientes; sem
+  // estas quatro, TI ficaria abaixo do mínimo e o teste passaria por motivo
+  // errado (o comentário oculto, e não a proteção contra fórmula).
+  for (let i = 0; i < 4; i++) {
+    await pedir('POST', '/api/respostas', {
+      corpo: { setor: 'TI', turno: 'Manha', estresse: 2, sono: 2, carga_trabalho: 2, ambiente_fisico: 2 },
+    });
+  }
   const csvInjResp = await fetch(base + '/api/respostas/exportar?periodo=tudo', {
     headers: { Authorization: `Bearer ${tokenAdmin}` },
   });
   const csvInj = (await csvInjResp.text()).replace(/^﻿/, '');
   ok('comentario com formula vem prefixado com apostrofo',
     csvInj.includes("'=cmd|'/c calc'!A1") && !csvInj.includes(";=cmd|"), csvInj);
+
+  // -------------------------------------------------------------------------
+  secao('EXPORTAÇÃO PDF');
+
+  const pdfResp = await fetch(base + '/api/respostas/exportar-pdf?periodo=tudo', {
+    headers: { Authorization: `Bearer ${tokenAdmin}` },
+  });
+  const pdfBytes = Buffer.from(await pdfResp.arrayBuffer());
+  ok('PDF responde 200', pdfResp.status === 200, `status ${pdfResp.status}`);
+  ok('PDF tem assinatura %PDF', pdfBytes.subarray(0, 5).toString('latin1') === '%PDF-');
+  ok('PDF vem como download de .pdf',
+    (pdfResp.headers.get('content-disposition') || '').includes('.pdf'));
+  ok('PDF tambem sai por 7 e 30 dias', (await fetch(base + '/api/respostas/exportar-pdf?periodo=7', {
+    headers: { Authorization: `Bearer ${tokenAdmin}` },
+  })).status === 200);
+  ok('PDF exige login',
+    (await fetch(base + '/api/respostas/exportar-pdf?periodo=tudo')).status === 401);
 
   // -------------------------------------------------------------------------
   secao('CRUD DE CONTAS');
@@ -675,11 +704,16 @@ async function rodar() {
   const textoCsv = Buffer.from(await csvTurno.arrayBuffer()).toString('utf8');
   ok('CSV tem coluna de turno', textoCsv.split('\r\n')[0].includes('Turno'));
   ok('CSV mostra turno acentuado', textoCsv.includes('Manhã') || textoCsv.includes('Noite'));
-  // Registros antigos (sem turno) apareceriam como "Nao informado"; como o
-  // campo agora e obrigatorio, todos os novos trazem o turno preenchido.
-  ok('CSV traz turno em toda linha nova',
-    textoCsv.split('\r\n').slice(1).filter(Boolean)
-      .every((l) => /;(Manhã|Tarde|Noite|Madrugada|Comercial|Nao informado);/.test(l)));
+
+  // Colunas: 0 ID, 1 Setor, 2 Turno, ..., 9 Comentário, 10 Data. Os valores de
+  // teste não têm ';', então dá para separar por ';' sem parser de CSV.
+  const linhasCsv = textoCsv.split('\r\n').slice(1).filter(Boolean).map((l) => l.split(';'));
+  const turnosValidos = ['Manhã', 'Tarde', 'Noite', 'Madrugada', 'Comercial'];
+  ok('CSV traz turno em toda linha sem comentário liberado',
+    linhasCsv.filter((c) => c[9] === '').every((c) => turnosValidos.includes(c[2])));
+  ok('CSV omite turno nas linhas com comentário liberado',
+    linhasCsv.filter((c) => c[9] !== '').length > 0
+      && linhasCsv.filter((c) => c[9] !== '').every((c) => c[2] === ''));
 
   // -------------------------------------------------------------------------
   secao('TENDÊNCIA');
