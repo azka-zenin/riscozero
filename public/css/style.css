@@ -441,7 +441,6 @@ main { flex: 1; }
   transition: transform 0.4s var(--assenta);
 }
 
-.marca:hover::before { transform: translateY(-1px) scale(1.04); }
 .marca:focus-visible { outline: 2px solid var(--marca); outline-offset: 1px; }
 .marca span { color: var(--marca); }
 
@@ -918,7 +917,6 @@ h1 {
    quietos: são contêiner de conteúdo, não um dado isolado, e elevar tudo na
    tela no hover viraria ruído em vez de destaque. */
 .cartao:hover {
-  transform: translateY(-3px);
   border-color: var(--linha-forte);
 }
 
@@ -1636,10 +1634,7 @@ textarea { resize: vertical; }
 .escala label:hover {
   border-color: var(--marca);
   color: var(--marca);
-  transform: translateY(-2px);
 }
-
-.escala label:active { transform: translateY(0); }
 
 .escala input[type="radio"]:checked + label {
   border-color: var(--marca);
@@ -1725,8 +1720,6 @@ textarea { resize: vertical; }
 .botao:hover {
   background: var(--marca-clara);
   border-color: var(--marca-clara);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
 }
 .botao:active { transform: translateY(1px); box-shadow: none; }
 .botao:focus-visible { outline: 2px solid var(--marca); outline-offset: 2px; }
@@ -1788,8 +1781,6 @@ textarea { resize: vertical; }
 }
 .painel-confirmacao .botao.perigo:hover {
   filter: brightness(1.12);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
 }
 .painel-confirmacao .botao.perigo:focus-visible { outline: 2px solid var(--alto); outline-offset: 2px; }
 
@@ -2656,7 +2647,6 @@ html.js-transicoes.saindo main { opacity: 0; transform: translateY(-4px); }
   /* Zerar a duração deixaria o brilho "piscando" sem parar; melhor remover a
      animação inteira e mostrar o bloco neutro parado. */
   .esq-bloco::after { animation: none; }
-  .cartao:hover, .botao:hover, .escala label:hover { transform: none; }
 }
 
 /* --------------------------------------------------------------------------
