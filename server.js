@@ -23,6 +23,7 @@ const authRouter = require('./routes/auth');
 const usuariosRouter = require('./routes/usuarios');
 const logsRouter = require('./routes/logs');
 const biRouter = require('./routes/bi');
+const { resetarAdminPorAmbiente } = require('./utils/reset-por-ambiente');
 
 const app = express();
 
@@ -108,6 +109,7 @@ app.use((erro, req, res, next) => {
 async function iniciar() {
   try {
     await conectar();
+    await resetarAdminPorAmbiente();
 
     servidorHttp.listen(config.PORTA, () => {
       // Publicado, o endereço é o do serviço de hospedagem, não localhost.
