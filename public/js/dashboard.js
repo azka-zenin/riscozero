@@ -421,6 +421,8 @@ async function carregarPainel(silencioso = false) {
       buscarAutenticado(`/api/respostas/comentarios?periodo=${periodoAtual}`),
     ]);
 
+    if (resumo.limites) Object.assign(limitesRisco, resumo.limites);
+
     montarPainel(resumo, evolucao, comentarios);
   } catch (erro) {
     if (erro.message === 'Sessão expirada') return; // já redirecionou
@@ -461,6 +463,45 @@ function mostrarVazio() {
 // ---------------------------------------------------------------------------
 // Montagem do painel
 // ---------------------------------------------------------------------------
+
+// Seções longas que podem ser recolhidas no celular, onde o painel passa de
+// 8.000 px de altura. No desktop o botão fica escondido e tudo aparece aberto.
+// O estado vive aqui, e não no DOM, porque o painel é recriado a cada
+// atualização e senão a seção aberta pela pessoa voltaria a fechar sozinha.
+const recolhidas = new Set(
+  window.matchMedia('(max-width: 600px)').matches
+    ? ['secao-recomendacoes', 'secao-comentarios']
+    : []
+);
+
+function botaoRecolher(id) {
+  return `<button type="button" class="botao-recolher" data-secao="${id}"
+      aria-expanded="${!recolhidas.has(id)}" aria-label="Mostrar ou esconder esta seção">
+      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M3 6l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>`;
+}
+
+function definirRecolhida(id, recolher) {
+  if (recolher) recolhidas.add(id); else recolhidas.delete(id);
+
+  const secao = document.getElementById(id);
+  if (!secao) return;
+  secao.classList.toggle('recolhida', recolher);
+  secao.querySelector('.botao-recolher')?.setAttribute('aria-expanded', String(!recolher));
+}
+
+document.addEventListener('click', (evento) => {
+  const botao = evento.target.closest('.botao-recolher');
+  if (botao) {
+    definirRecolhida(botao.dataset.secao, !recolhidas.has(botao.dataset.secao));
+    return;
+  }
+
+  // Quem escolhe uma seção no menu quer vê-la: abre antes de rolar até ela.
+  const link = evento.target.closest('.nav-secoes a');
+  const id = link?.getAttribute('href')?.slice(1);
+  if (id && recolhidas.has(id)) definirRecolhida(id, false);
+});
 
 function montarPainel(resumo, evolucao, comentarios) {
   const { geral, porSetor, porTurno, indiceRisco, classificacao, alertas, recomendacoesPorSetor } = resumo;
@@ -531,22 +572,28 @@ function montarPainel(resumo, evolucao, comentarios) {
       </div>
     </div>
 
-    <div class="painel" id="secao-recomendacoes">
+    <div class="painel recolhivel${recolhidas.has('secao-recomendacoes') ? ' recolhida' : ''}" id="secao-recomendacoes">
+      ${botaoRecolher('secao-recomendacoes')}
       <h2><span class="icone-titulo">${ICONES_SECAO.lista}</span>O que fazer agora</h2>
-      <p class="descricao-painel">
-        Recomendações geradas a partir dos indicadores que passaram do limite
-        de atenção, organizadas por setor.
-      </p>
-      ${montarRecomendacoes(recomendacoesPorSetor)}
+      <div class="corpo-recolhivel">
+        <p class="descricao-painel">
+          Recomendações geradas a partir dos indicadores que passaram do limite
+          de atenção, organizadas por setor.
+        </p>
+        ${montarRecomendacoes(recomendacoesPorSetor)}
+      </div>
     </div>
 
-    <div class="painel" id="secao-comentarios">
+    <div class="painel recolhivel${recolhidas.has('secao-comentarios') ? ' recolhida' : ''}" id="secao-comentarios">
+      ${botaoRecolher('secao-comentarios')}
       <h2><span class="icone-titulo">${ICONES_SECAO.comentario}</span>O que a equipe está dizendo</h2>
-      <p class="descricao-painel">
-        Comentários deixados no formulário. A barra colorida indica o nível de
-        risco da resposta em que o comentário foi escrito.
-      </p>
-      ${montarComentarios(comentarios)}
+      <div class="corpo-recolhivel">
+        <p class="descricao-painel">
+          Comentários deixados no formulário. A barra colorida indica o nível de
+          risco da resposta em que o comentário foi escrito.
+        </p>
+        ${montarComentarios(comentarios)}
+      </div>
     </div>
   `;
 
@@ -1074,9 +1121,13 @@ Chart.defaults.plugins.tooltip.displayColors = false;
 Chart.defaults.plugins.tooltip.titleFont = { family: Chart.defaults.font.family, size: 12, weight: '600' };
 Chart.defaults.plugins.tooltip.bodyFont = { family: Chart.defaults.font.family, size: 12 };
 
+// Limites do risco. Os valores iniciais são só o padrão do servidor; a cada
+// resumo recebido eles são trocados pelos que o servidor realmente usa.
+const limitesRisco = { baixoAte: 2.2, medioAte: 3.4 };
+
 function corPorIndice(indice) {
-  if (indice <= 2.2) return CORES.baixo;
-  if (indice <= 3.4) return CORES.medio;
+  if (indice <= limitesRisco.baixoAte) return CORES.baixo;
+  if (indice <= limitesRisco.medioAte) return CORES.medio;
   return CORES.alto;
 }
 

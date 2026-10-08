@@ -2670,8 +2670,36 @@ html.js-transicoes.saindo main { opacity: 0; transform: translateY(-4px); }
   .duas-colunas { grid-template-columns: 1fr; }
 }
 
+/* Botão de recolher seção: existe só no celular (ver dashboard.js). */
+.botao-recolher { display: none; }
+
 @media (max-width: 600px) {
   body { font-size: 14.5px; }
+
+  .painel.recolhivel { position: relative; }
+  .painel.recolhivel h2 { padding-right: 44px; }
+
+  .botao-recolher {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    width: 32px;
+    height: 32px;
+    background: none;
+    border: 1px solid var(--linha-forte);
+    border-radius: 8px;
+    color: var(--tinta-fraca);
+    cursor: pointer;
+  }
+  .botao-recolher:hover { color: var(--tinta); }
+  .botao-recolher:focus-visible { outline: 2px solid var(--marca); outline-offset: 2px; }
+  .botao-recolher svg { transition: transform 0.18s ease; }
+  .botao-recolher[aria-expanded="false"] svg { transform: rotate(-90deg); }
+
+  .recolhida .corpo-recolhivel { display: none; }
 
   /* O cabeçalho empilha logo / menu / conta em três linhas curtas, em vez de
      duas linhas de menu quebrado mais três linhas de conta — o antigo layout
@@ -2852,6 +2880,10 @@ html.js-transicoes.saindo main { opacity: 0; transform: translateY(-4px); }
   .comentario {
     break-inside: avoid;
   }
+
+  /* Seção recolhida no celular continua inteira no papel. */
+  .botao-recolher { display: none; }
+  .recolhida .corpo-recolhivel { display: block; }
 
   /* A lista de comentários tem altura máxima com rolagem para a tela. Em
      papel a rolagem não existe: o que passasse da altura sumia do relatório. */

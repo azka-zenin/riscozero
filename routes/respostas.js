@@ -459,6 +459,12 @@ async function montarResumo(periodo) {
 
     return {
       periodo: rotulo,
+      // Os gráficos colorem pelos mesmos limites que classificam o risco aqui;
+      // sem isto, mudar LIMITE_RISCO_* no .env deixaria cor e nível discordando.
+      limites: {
+        baixoAte: config.LIMITES_RISCO.BAIXO_ATE,
+        medioAte: config.LIMITES_RISCO.MEDIO_ATE,
+      },
       geral,
       porSetor: setoresComIndice,
       porTurno: turnosComIndice,
