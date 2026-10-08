@@ -47,7 +47,13 @@ const logAcessoSchema = new mongoose.Schema(
     // "tentou entrar com uma conta que nem existe".
     motivo: {
       type: String,
-      enum: ['ok', 'senha_incorreta', 'usuario_inexistente', 'conta_desativada'],
+      // exportou_csv / exportou_pdf não são tentativas de login: registram
+      // quem baixou os dados, já que o CSV e o PDF levam as respostas para
+      // fora do painel (ver routes/respostas.js).
+      enum: [
+        'ok', 'senha_incorreta', 'usuario_inexistente', 'conta_desativada',
+        'exportou_csv', 'exportou_pdf',
+      ],
       required: true,
     },
 

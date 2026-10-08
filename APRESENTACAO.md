@@ -112,7 +112,10 @@ Clique em "7 dias" e mostre os gráficos mudando. Depois "Exportar CSV" e
 
 > "O RH pode levar esses dados para uma reunião ou cruzar com registros de
 > afastamento. O CSV serve para quem vai cruzar os números numa planilha; o
-> PDF é o painel inteiro pronto para imprimir ou anexar num relatório."
+> PDF é o resumo do período (índice geral, setores, turnos, alertas e
+> recomendações) gerado pelo servidor, pronto para imprimir ou anexar num
+> relatório. Comentários não entram no PDF, para não circular texto livre
+> fora do painel."
 
 **Passo 5 — Contas de acesso** (aba 3)
 

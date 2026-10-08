@@ -441,7 +441,6 @@ main { flex: 1; }
   transition: transform 0.4s var(--assenta);
 }
 
-.marca:hover::before { transform: translateY(-1px) scale(1.04); }
 .marca:focus-visible { outline: 2px solid var(--marca); outline-offset: 1px; }
 .marca span { color: var(--marca); }
 
@@ -918,7 +917,6 @@ h1 {
    quietos: são contêiner de conteúdo, não um dado isolado, e elevar tudo na
    tela no hover viraria ruído em vez de destaque. */
 .cartao:hover {
-  transform: translateY(-3px);
   border-color: var(--linha-forte);
 }
 
@@ -1636,10 +1634,7 @@ textarea { resize: vertical; }
 .escala label:hover {
   border-color: var(--marca);
   color: var(--marca);
-  transform: translateY(-2px);
 }
-
-.escala label:active { transform: translateY(0); }
 
 .escala input[type="radio"]:checked + label {
   border-color: var(--marca);
@@ -1725,8 +1720,6 @@ textarea { resize: vertical; }
 .botao:hover {
   background: var(--marca-clara);
   border-color: var(--marca-clara);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
 }
 .botao:active { transform: translateY(1px); box-shadow: none; }
 .botao:focus-visible { outline: 2px solid var(--marca); outline-offset: 2px; }
@@ -1788,8 +1781,6 @@ textarea { resize: vertical; }
 }
 .painel-confirmacao .botao.perigo:hover {
   filter: brightness(1.12);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
 }
 .painel-confirmacao .botao.perigo:focus-visible { outline: 2px solid var(--alto); outline-offset: 2px; }
 
@@ -2130,6 +2121,12 @@ body.modo-apresentacao .area-grafico.alto { height: 440px; }
 .conta-usuario > :not(:first-child) {
   padding-left: var(--e-4);
   border-left: 1px solid var(--linha);
+}
+
+/* O botão Sair tem cantos arredondados; com o separador à esquerda, o canto
+   curvo cortava a linha. Só o lado direito arredonda. */
+.conta-usuario > .link-sair {
+  border-radius: 0 var(--raio-p) var(--raio-p) 0;
 }
 
 /* --------------------------------------------------------------------------
@@ -2656,7 +2653,6 @@ html.js-transicoes.saindo main { opacity: 0; transform: translateY(-4px); }
   /* Zerar a duração deixaria o brilho "piscando" sem parar; melhor remover a
      animação inteira e mostrar o bloco neutro parado. */
   .esq-bloco::after { animation: none; }
-  .cartao:hover, .botao:hover, .escala label:hover { transform: none; }
 }
 
 /* --------------------------------------------------------------------------
@@ -2680,20 +2676,62 @@ html.js-transicoes.saindo main { opacity: 0; transform: translateY(-4px); }
   .duas-colunas { grid-template-columns: 1fr; }
 }
 
+/* Botão de recolher seção: existe só no celular (ver dashboard.js). */
+.botao-recolher { display: none; }
+
 @media (max-width: 600px) {
   body { font-size: 14.5px; }
+
+  .painel.recolhivel { position: relative; }
+  .painel.recolhivel h2 { padding-right: 52px; }
+
+  .botao-recolher {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 44px;
+    height: 44px;
+    background: none;
+    border: 1px solid var(--linha-forte);
+    border-radius: 8px;
+    color: var(--tinta-fraca);
+    cursor: pointer;
+  }
+  .botao-recolher:hover { color: var(--tinta); }
+  .botao-recolher:focus-visible { outline: 2px solid var(--marca); outline-offset: 2px; }
+  .botao-recolher svg { transition: transform 0.18s ease; }
+  .botao-recolher[aria-expanded="false"] svg { transform: rotate(-90deg); }
+
+  .recolhida .corpo-recolhivel { display: none; }
 
   /* O cabeçalho empilha logo / menu / conta em três linhas curtas, em vez de
      duas linhas de menu quebrado mais três linhas de conta — o antigo layout
      chegava a 6 linhas e empurrava todo o conteúdo da tela para fora da
-     primeira dobra. Compacto assim, volta a fazer sentido deixá-lo fixo no
-     topo (como no desktop): a régua de rolagem por baixo ganha mais do que a
-     altura fixa custa. */
+     primeira dobra.
+
+     Mesmo compacto, ele passa de 150px — quase um quinto de um celular. Fixo,
+     isso come a tela inteira o tempo todo (e o desfoque de fundo pesa na
+     rolagem). Por isso, aqui ele rola junto com a página; quem fica fixo no
+     painel é o menu de seções, que tem 44px (ver .nav-secoes abaixo). */
   .topo {
-    flex-direction: column;
-    align-items: flex-start;
-    padding: var(--e-3) var(--e-5);
+    position: static;
+    background: var(--papel);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    /* Logo à esquerda e conta à direita na mesma linha; o menu desce inteiro
+       para a segunda linha (order: 3). */
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--e-2) var(--e-5);
   }
+  .topo nav { order: 3; }
+  /* Menu de um link só (formulário público, login): cabe ao lado do logo. */
+  .topo nav:has(> a:only-child) { order: 0; width: auto; }
 
   /* O menu cresceu com as telas novas e não cabe numa linha só em telas
      estreitas. Em vez de quebrar em duas linhas (o que dobra a altura do
@@ -2707,25 +2745,34 @@ html.js-transicoes.saindo main { opacity: 0; transform: translateY(-4px); }
     scrollbar-width: none;
   }
   .topo nav::-webkit-scrollbar { display: none; }
-  .topo nav a { padding: var(--e-2) var(--e-3); font-size: var(--t-pequeno); white-space: nowrap; }
+  .topo nav a {
+    padding: 0 var(--e-3);
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    font-size: var(--t-pequeno);
+    white-space: nowrap;
+  }
   /* Empilhado, o traço embaixo do item ativo encosta no item de baixo e lê
      como sublinhado de link. Aqui a pílula de fundo funciona melhor. */
   .topo nav a.ativo { background: var(--superficie-2); border-radius: var(--raio-p); }
   .topo nav a.ativo::after { display: none; }
-  .marca { padding: var(--e-1) 0 var(--e-2); }
+  .marca { padding: var(--e-2) 0; }
 
   /* A conta continua em linha (indicador · nome · sair), só que agora abaixo
      do menu em vez de ao lado dele — empilhar cada item em sua própria linha
      era o que mais pesava na altura do cabeçalho antigo. */
   .conta-usuario {
-    width: 100%;
-    flex-wrap: wrap;
-    row-gap: var(--e-1);
-    padding: var(--e-2) 0 0;
+    width: auto;
+    flex-wrap: nowrap;
+    padding: 0;
   }
+  /* A bolinha verde já diz "conectado"; o texto só aparece quando algo está
+     errado ou ainda conectando. */
+  .indicador-conexao.ok .texto-conexao { display: none; }
 
-  main { padding: var(--e-8) var(--e-5) var(--e-11); }
-  main.estreito { padding-top: var(--e-8); }
+  main { padding: var(--e-6) var(--e-5) var(--e-11); }
+  main.estreito { padding-top: var(--e-6); }
 
   h1 { font-size: var(--t-titulo); }
 
@@ -2742,8 +2789,55 @@ html.js-transicoes.saindo main { opacity: 0; transform: translateY(-4px); }
   .escala { gap: var(--e-2); }
   .escala label { padding: var(--e-4) 2px; font-size: var(--t-pequeno); }
 
-  .controles { flex-direction: column; align-items: stretch; }
-  .filtro-periodo { justify-content: center; }
+  /* Período em largura total e exportar em duas colunas iguais: dedo grande,
+     duas fileiras só. O modo apresentação é para telão — no celular só ocupa
+     uma fileira à toa. */
+  .controles { flex-direction: column; align-items: stretch; gap: var(--e-3); margin-bottom: var(--e-5); }
+  .filtro-periodo { width: 100%; }
+  .filtro-periodo button { flex: 1; min-height: 44px; }
+  .grupo-exportar { width: 100%; }
+  .grupo-exportar .botao { flex: 1; }
+  #botao-apresentacao { display: none; }
+
+  /* Alvos de toque: 44px é o mínimo confortável para o dedo. Vários controles
+     tinham de 31 a 37px. */
+  .botao, .link-sair { min-height: 44px; }
+  .link-sair { padding: 0 var(--e-4); }
+
+  /* O menu de seções fica fixo no topo enquanto se rola: é o atalho para
+     pular um painel longo, e agora é o único elemento fixo. Sem desfoque de
+     propósito — fundo sólido é mais barato de rolar. */
+  .nav-secoes {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    flex-wrap: nowrap;
+    gap: var(--e-5);
+    overflow-x: auto;
+    scrollbar-width: none;
+    margin: 0 calc(-1 * var(--e-5)) var(--e-5);
+    padding: 0 var(--e-5);
+    background: var(--papel);
+    border-bottom: 1px solid var(--linha);
+  }
+  .nav-secoes::-webkit-scrollbar { display: none; }
+  .nav-secoes a {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+  }
+  /* Ao pular para uma seção, ela para logo abaixo da faixa fixa. */
+  [id^="secao-"] { scroll-margin-top: 56px; }
+
+  /* A cascata de entrada (até ~1,2s) faz sentido em tela grande, onde tudo
+     aparece de uma vez. No celular só os dois primeiros blocos estão à vista,
+     então o resto do atraso é espera pura. !important para vencer o atraso
+     que o dashboard.js escreve direto no elemento. */
+  .lista-alertas, .grade-cartoes, .painel, .destaque {
+    animation-duration: 0.3s;
+    animation-delay: 0s !important;
+  }
 
   .linha-usuario { flex-direction: column; align-items: flex-start; }
   .acoes-usuario { width: 100%; }
@@ -2861,5 +2955,16 @@ html.js-transicoes.saindo main { opacity: 0; transform: translateY(-4px); }
   .cartao, .painel, .destaque, .insight-setor, .setor-recomendacao,
   .comentario {
     break-inside: avoid;
+  }
+
+  /* Seção recolhida no celular continua inteira no papel. */
+  .botao-recolher { display: none; }
+  .recolhida .corpo-recolhivel { display: block; }
+
+  /* A lista de comentários tem altura máxima com rolagem para a tela. Em
+     papel a rolagem não existe: o que passasse da altura sumia do relatório. */
+  .lista-comentarios {
+    max-height: none;
+    overflow: visible;
   }
 }

@@ -12,6 +12,7 @@
 //   GET  /api/respostas/evolucao           → série temporal para o gráfico de linha
 //   GET  /api/respostas/comentarios        → comentários deixados
 //   GET  /api/respostas/exportar           → baixa tudo em CSV
+//   GET  /api/respostas/exportar-pdf       → relatório do período em PDF
 
 const express = require('express');
 const router = express.Router();
@@ -20,6 +21,8 @@ const { AcaoAlerta } = require('../models/AcaoAlerta');
 const { exigirLogin } = require('../middleware/auth');
 const analise = require('../utils/analise');
 const insights = require('../utils/insights');
+const { gerarPdfResumo } = require('../utils/pdf');
+const { registrar } = require('../models/LogAcesso');
 const email = require('../utils/email');
 const config = require('../config');
 const { limiteFormulario, limiteAcaoAlerta } = require('../middleware/limites');
@@ -30,6 +33,27 @@ const { limiteFormulario, limiteAcaoAlerta } = require('../middleware/limites');
 // Calculamos a data de corte no servidor e comparamos com $gte. Usamos
 // "-6 dias" para os últimos 7 porque o dia de hoje já conta como o sétimo.
 // ---------------------------------------------------------------------------
+/**
+ * Devolve o início (00:00) do dia que fica `diasAtras` dias antes de hoje, no
+ * fuso do sistema. Não usa setHours: isso zera a hora no fuso do servidor, que
+ * no Render é UTC — e então o período começaria às 21h do dia anterior em
+ * Brasília.
+ */
+function inicioDoDia(diasAtras) {
+  const hoje = new Intl.DateTimeFormat('en-CA', {
+    timeZone: config.FUSO_HORARIO,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+
+  const [ano, mes, dia] = hoje.split('-').map(Number);
+  const dataLocal = new Date(Date.UTC(ano, mes - 1, dia - diasAtras)).toISOString().slice(0, 10);
+
+  // Brasília não tem horário de verão desde 2019, então o deslocamento é fixo.
+  return new Date(`${dataLocal}T00:00:00-03:00`);
+}
+
 function filtroPeriodo(periodo) {
   const dias = periodo === '7' ? 7 : periodo === '30' ? 30 : null;
 
@@ -37,9 +61,7 @@ function filtroPeriodo(periodo) {
     return { match: {}, rotulo: 'Todo o período' };
   }
 
-  const corte = new Date();
-  corte.setDate(corte.getDate() - (dias - 1));
-  corte.setHours(0, 0, 0, 0); // começa no início do dia, não na hora atual
+  const corte = inicioDoDia(dias - 1);
 
   return {
     match: { data_envio: { $gte: corte } },
@@ -60,6 +82,18 @@ function camposDeMedia() {
     media_carga_trabalho: { $avg: '$carga_trabalho' },
     media_ambiente_fisico: { $avg: '$ambiente_fisico' },
   };
+}
+
+// Ordem dos turnos ao longo do dia. Antes só manhã, tarde e noite estavam na
+// lista, e Madrugada e Comercial (fora dela) iam parar no começo.
+const ORDEM_TURNOS = ['Madrugada', 'Manha', 'Comercial', 'Tarde', 'Noite'];
+
+function porOrdemDoDia(a, b) {
+  const posicao = (t) => {
+    const i = ORDEM_TURNOS.indexOf(t.turno);
+    return i === -1 ? ORDEM_TURNOS.length : i; // turno desconhecido vai para o fim
+  };
+  return posicao(a) - posicao(b);
 }
 
 /** Converte a saída do $group (que usa _id) para o formato que o front espera. */
@@ -141,9 +175,7 @@ async function calcularEfeitoAcao(setor, dataAcao) {
 // sempre. Roda em segundo plano, sem atrasar a resposta ao formulário: quem
 // respondeu não deveria esperar um envio de e-mail para ver a confirmação.
 async function verificarAlertaEmail(setor) {
-  const corte = new Date();
-  corte.setDate(corte.getDate() - 29);
-  corte.setHours(0, 0, 0, 0);
+  const corte = inicioDoDia(29);
 
   const [resultado] = await Resposta.aggregate([
     { $match: { setor, data_envio: { $gte: corte } } },
@@ -238,9 +270,10 @@ router.get('/', async (req, res) => {
 });
 
 // GET /api/respostas/resumo — dado principal do painel
-router.get('/resumo', async (req, res) => {
-  try {
-    const { match, rotulo } = filtroPeriodo(req.query.periodo);
+// Monta o resumo do painel. Separado da rota para o PDF usar exatamente os
+// mesmos números que a tela mostra.
+async function montarResumo(periodo) {
+    const { match, rotulo } = filtroPeriodo(periodo);
 
     // Os agrupamentos são independentes, então rodam em paralelo
     const [resultadoGeral, resultadoPorSetor, resultadoPorTurno, resultadoEvolucaoSetor] =
@@ -288,7 +321,7 @@ router.get('/resumo', async (req, res) => {
     // Período sem nenhuma resposta: devolve uma estrutura vazia coerente em
     // vez de erro, para o painel conseguir exibir a tela de "sem dados".
     if (!geral || geral.total === 0) {
-      return res.json({
+      return {
         periodo: rotulo,
         geral: { total: 0 },
         porSetor: [],
@@ -305,7 +338,7 @@ router.get('/resumo', async (req, res) => {
           porSetor: [],
           turnos: null,
         },
-      });
+      };
     }
 
     const medias = {
@@ -366,10 +399,8 @@ router.get('/resumo', async (req, res) => {
       };
     });
 
-    // Turnos seguem a ordem natural do dia (manhã, tarde, noite) em vez da
-    // alfabética, que colocaria "Manha, Noite, Tarde" e confundiria a leitura
-    // do gráfico.
-    const ORDEM_TURNOS = ['Manha', 'Tarde', 'Noite'];
+    // Turnos seguem a ordem natural do dia em vez da alfabética, que colocaria
+    // "Manha, Noite, Tarde" e confundiria a leitura do gráfico.
     const turnosComIndice = resultadoPorTurno
       .map((t) => {
         const mediasTurno = {
@@ -391,7 +422,7 @@ router.get('/resumo', async (req, res) => {
           classificacao: analise.classificarRisco(indice),
         };
       })
-      .sort((a, b) => ORDEM_TURNOS.indexOf(a.turno) - ORDEM_TURNOS.indexOf(b.turno));
+      .sort(porOrdemDoDia);
 
     const classificacaoGeral = analise.classificarRisco(indiceRisco);
 
@@ -437,8 +468,14 @@ router.get('/resumo', async (req, res) => {
       }
     }
 
-    res.json({
+    return {
       periodo: rotulo,
+      // Os gráficos colorem pelos mesmos limites que classificam o risco aqui;
+      // sem isto, mudar LIMITE_RISCO_* no .env deixaria cor e nível discordando.
+      limites: {
+        baixoAte: config.LIMITES_RISCO.BAIXO_ATE,
+        medioAte: config.LIMITES_RISCO.MEDIO_ATE,
+      },
       geral,
       porSetor: setoresComIndice,
       porTurno: turnosComIndice,
@@ -469,7 +506,12 @@ router.get('/resumo', async (req, res) => {
           .slice(0, 4),
         turnos: insights.insightTurnos(turnosComIndice),
       },
-    });
+    };
+}
+
+router.get('/resumo', async (req, res) => {
+  try {
+    res.json(await montarResumo(req.query.periodo));
   } catch (erro) {
     console.error('Erro ao calcular resumo:', erro.message);
     res.status(500).json({ erro: 'Erro ao calcular resumo.' });
@@ -547,9 +589,8 @@ router.get('/turnos', async (req, res) => {
     });
 
     // Ordena na sequência natural do dia, não por risco: o gráfico fica mais
-    // fácil de ler quando manhã, tarde e noite aparecem sempre na mesma ordem.
-    const ordem = { Manha: 0, Tarde: 1, Noite: 2 };
-    serie.sort((a, b) => (ordem[a.turno] ?? 9) - (ordem[b.turno] ?? 9));
+    // fácil de ler quando os turnos aparecem sempre na mesma ordem.
+    serie.sort(porOrdemDoDia);
 
     res.json(serie);
   } catch (erro) {
@@ -720,7 +761,8 @@ function escaparCSV(valor) {
   // enviar algo como "=cmd|'/c calc'!A1" esperando que rodasse na máquina
   // de quem exportar. O apóstrofo força o Excel a tratar como texto puro,
   // sem mudar o valor visível na célula.
-  if (/^[=+\-@]/.test(texto)) {
+  // Tab e CR no início também fazem o Excel tratar a célula como fórmula.
+  if (/^[=+\-@\t\r]/.test(texto)) {
     texto = `'${texto}`;
   }
 
@@ -735,14 +777,67 @@ function dataBR(data) {
   return new Date(data).toLocaleString('pt-BR', { timeZone: config.FUSO_HORARIO });
 }
 
+/** Só o dia, sem hora — ver a regra de anonimato em /exportar. */
+function dataSemHora(data) {
+  return new Intl.DateTimeFormat('pt-BR', {
+    timeZone: config.FUSO_HORARIO,
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  }).format(new Date(data));
+}
+
+/** Data de hoje (AAAA-MM-DD) no fuso do sistema, para nomes de arquivo. */
+function dataDeHoje() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: config.FUSO_HORARIO }).format(new Date());
+}
+
+/**
+ * Anota no histórico de acessos quem baixou um arquivo. Qualquer conta logada
+ * pode exportar, então este registro é o que permite ao administrador saber
+ * depois quem levou os dados para fora do painel.
+ */
+function registrarExportacao(req, motivo) {
+  return registrar({
+    email: req.usuario.email,
+    nome: req.usuario.nome,
+    sucesso: true,
+    motivo,
+    origem: req.ip || null,
+  });
+}
+
+/**
+ * Setores que têm respostas suficientes no período para que os comentários
+ * apareçam. É a mesma regra de GET /comentarios, aplicada linha a linha aqui.
+ */
+async function setoresComComentarioLiberado(match) {
+  const contagens = await Resposta.aggregate([
+    { $match: match },
+    { $group: { _id: '$setor', total: { $sum: 1 } } },
+  ]);
+  return new Set(
+    contagens.filter((c) => c.total >= config.MINIMO_RESPOSTAS_COMENTARIO).map((c) => c._id)
+  );
+}
+
+// GET /api/respostas/exportar — CSV com todas as respostas do período
+//
+// Regra de anonimato (a mesma de /comentarios): quando o comentário de uma
+// resposta é liberado, o turno e a hora exata saem da linha, porque texto
+// livre junto desses dados identifica quem escreveu. Respostas sem comentário,
+// ou de setores pequenos, mantêm turno e hora.
 router.get('/exportar', async (req, res) => {
   try {
     const { match } = filtroPeriodo(req.query.periodo);
-    const linhas = await Resposta.find(match).sort({ data_envio: -1 }).lean();
+    const [linhas, comentariosLiberados] = await Promise.all([
+      Resposta.find(match).sort({ data_envio: -1 }).lean(),
+      setoresComComentarioLiberado(match),
+    ]);
 
     const cabecalho = [
       'ID', 'Setor', 'Turno', 'Estresse', 'Sono', 'Carga de trabalho',
-      'Ambiente fisico', 'Indice de risco', 'Nivel', 'Comentario', 'Data de envio',
+      'Ambiente físico', 'Índice de risco', 'Nível', 'Comentário', 'Data de envio',
     ];
 
     const linhasCSV = linhas.map((l) => {
@@ -753,31 +848,54 @@ router.get('/exportar', async (req, res) => {
         ambiente_fisico: l.ambiente_fisico,
       };
       const indice = analise.calcularIndiceRisco(medias);
+      // Uma resposta antiga com algum indicador vazio não tem índice. Antes
+      // isso lançava erro no toFixed e derrubava a exportação inteira.
+      const temIndice = indice !== null;
+      const mostraComentario = Boolean(l.comentario) && comentariosLiberados.has(l.setor);
 
       return [
         l._id,
         analise.nomeSetor(l.setor),
-        analise.nomeTurno(l.turno),
+        mostraComentario ? '' : analise.nomeTurno(l.turno),
         l.estresse,
         l.sono,
         l.carga_trabalho,
         l.ambiente_fisico,
-        indice.toFixed(2).replace('.', ','),
-        analise.classificarRisco(indice).rotulo,
-        l.comentario,
-        dataBR(l.data_envio),
+        temIndice ? indice.toFixed(2).replace('.', ',') : '',
+        temIndice ? analise.classificarRisco(indice).rotulo : '',
+        mostraComentario ? l.comentario : '',
+        mostraComentario ? dataSemHora(l.data_envio) : dataBR(l.data_envio),
       ].map(escaparCSV).join(';');
     });
 
-    const csv = '\uFEFF' + [cabecalho.join(';'), ...linhasCSV].join('\r\n');
+    const csv = '﻿' + [cabecalho.join(';'), ...linhasCSV].join('\r\n');
 
-    const dataArquivo = new Date().toISOString().slice(0, 10);
+    await registrarExportacao(req, 'exportou_csv');
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-    res.setHeader('Content-Disposition', `attachment; filename="riscozero-${dataArquivo}.csv"`);
+    res.setHeader('Content-Disposition', `attachment; filename="riscozero-${dataDeHoje()}.csv"`);
     res.send(csv);
   } catch (erro) {
     console.error('Erro ao exportar:', erro.message);
     res.status(500).json({ erro: 'Erro ao gerar o arquivo.' });
+  }
+});
+
+// GET /api/respostas/exportar-pdf — relatório em PDF do mesmo período do painel
+//
+// Comentários não entram no PDF de propósito: ele circula por e-mail e pasta
+// compartilhada, fora do controle que o painel tem sobre o anonimato.
+router.get('/exportar-pdf', async (req, res) => {
+  try {
+    const resumo = await montarResumo(req.query.periodo);
+    const pdf = await gerarPdfResumo(resumo);
+
+    await registrarExportacao(req, 'exportou_pdf');
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="riscozero-${dataDeHoje()}.pdf"`);
+    res.send(pdf);
+  } catch (erro) {
+    console.error('Erro ao gerar PDF:', erro.message);
+    res.status(500).json({ erro: 'Erro ao gerar o PDF.' });
   }
 });
 

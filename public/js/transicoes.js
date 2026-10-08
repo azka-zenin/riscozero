@@ -18,7 +18,11 @@
   const prefereMenosMovimento =
     window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  if (prefereMenosMovimento) return; // navegação já é instantânea sem JS extra
+  // No toque, o fade-out só adiciona espera a cada toque no menu; o celular já
+  // tem a própria transição de página.
+  const telaDeToque = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
+
+  if (prefereMenosMovimento || telaDeToque) return; // navegação já é instantânea sem JS extra
 
   document.documentElement.classList.add('js-transicoes');
 

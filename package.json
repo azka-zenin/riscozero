@@ -19,6 +19,7 @@
     "jsonwebtoken": "^9.0.3",
     "mongoose": "^9.9.1",
     "nodemailer": "^9.0.5",
+    "pdfkit": "^0.17.2",
     "socket.io": "^4.8.3"
   },
   "devDependencies": {

@@ -421,6 +421,8 @@ async function carregarPainel(silencioso = false) {
       buscarAutenticado(`/api/respostas/comentarios?periodo=${periodoAtual}`),
     ]);
 
+    if (resumo.limites) Object.assign(limitesRisco, resumo.limites);
+
     montarPainel(resumo, evolucao, comentarios);
   } catch (erro) {
     if (erro.message === 'Sessão expirada') return; // já redirecionou
@@ -461,6 +463,45 @@ function mostrarVazio() {
 // ---------------------------------------------------------------------------
 // Montagem do painel
 // ---------------------------------------------------------------------------
+
+// Seções longas que podem ser recolhidas no celular, onde o painel passa de
+// 8.000 px de altura. No desktop o botão fica escondido e tudo aparece aberto.
+// O estado vive aqui, e não no DOM, porque o painel é recriado a cada
+// atualização e senão a seção aberta pela pessoa voltaria a fechar sozinha.
+const recolhidas = new Set(
+  window.matchMedia('(max-width: 600px)').matches
+    ? ['secao-recomendacoes', 'secao-comentarios']
+    : []
+);
+
+function botaoRecolher(id) {
+  return `<button type="button" class="botao-recolher" data-secao="${id}"
+      aria-expanded="${!recolhidas.has(id)}" aria-label="Mostrar ou esconder esta seção">
+      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M3 6l5 5 5-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>`;
+}
+
+function definirRecolhida(id, recolher) {
+  if (recolher) recolhidas.add(id); else recolhidas.delete(id);
+
+  const secao = document.getElementById(id);
+  if (!secao) return;
+  secao.classList.toggle('recolhida', recolher);
+  secao.querySelector('.botao-recolher')?.setAttribute('aria-expanded', String(!recolher));
+}
+
+document.addEventListener('click', (evento) => {
+  const botao = evento.target.closest('.botao-recolher');
+  if (botao) {
+    definirRecolhida(botao.dataset.secao, !recolhidas.has(botao.dataset.secao));
+    return;
+  }
+
+  // Quem escolhe uma seção no menu quer vê-la: abre antes de rolar até ela.
+  const link = evento.target.closest('.nav-secoes a');
+  const id = link?.getAttribute('href')?.slice(1);
+  if (id && recolhidas.has(id)) definirRecolhida(id, false);
+});
 
 function montarPainel(resumo, evolucao, comentarios) {
   const { geral, porSetor, porTurno, indiceRisco, classificacao, alertas, recomendacoesPorSetor } = resumo;
@@ -531,22 +572,28 @@ function montarPainel(resumo, evolucao, comentarios) {
       </div>
     </div>
 
-    <div class="painel" id="secao-recomendacoes">
+    <div class="painel recolhivel${recolhidas.has('secao-recomendacoes') ? ' recolhida' : ''}" id="secao-recomendacoes">
+      ${botaoRecolher('secao-recomendacoes')}
       <h2><span class="icone-titulo">${ICONES_SECAO.lista}</span>O que fazer agora</h2>
-      <p class="descricao-painel">
-        Recomendações geradas a partir dos indicadores que passaram do limite
-        de atenção, organizadas por setor.
-      </p>
-      ${montarRecomendacoes(recomendacoesPorSetor)}
+      <div class="corpo-recolhivel">
+        <p class="descricao-painel">
+          Recomendações geradas a partir dos indicadores que passaram do limite
+          de atenção, organizadas por setor.
+        </p>
+        ${montarRecomendacoes(recomendacoesPorSetor)}
+      </div>
     </div>
 
-    <div class="painel" id="secao-comentarios">
+    <div class="painel recolhivel${recolhidas.has('secao-comentarios') ? ' recolhida' : ''}" id="secao-comentarios">
+      ${botaoRecolher('secao-comentarios')}
       <h2><span class="icone-titulo">${ICONES_SECAO.comentario}</span>O que a equipe está dizendo</h2>
-      <p class="descricao-painel">
-        Comentários deixados no formulário. A barra colorida indica o nível de
-        risco da resposta em que o comentário foi escrito.
-      </p>
-      ${montarComentarios(comentarios)}
+      <div class="corpo-recolhivel">
+        <p class="descricao-painel">
+          Comentários deixados no formulário. A barra colorida indica o nível de
+          risco da resposta em que o comentário foi escrito.
+        </p>
+        ${montarComentarios(comentarios)}
+      </div>
     </div>
   `;
 
@@ -1074,9 +1121,13 @@ Chart.defaults.plugins.tooltip.displayColors = false;
 Chart.defaults.plugins.tooltip.titleFont = { family: Chart.defaults.font.family, size: 12, weight: '600' };
 Chart.defaults.plugins.tooltip.bodyFont = { family: Chart.defaults.font.family, size: 12 };
 
+// Limites do risco. Os valores iniciais são só o padrão do servidor; a cada
+// resumo recebido eles são trocados pelos que o servidor realmente usa.
+const limitesRisco = { baixoAte: 2.2, medioAte: 3.4 };
+
 function corPorIndice(indice) {
-  if (indice <= 2.2) return CORES.baixo;
-  if (indice <= 3.4) return CORES.medio;
+  if (indice <= limitesRisco.baixoAte) return CORES.baixo;
+  if (indice <= limitesRisco.medioAte) return CORES.medio;
   return CORES.alto;
 }
 
@@ -1379,48 +1430,60 @@ botoesPeriodo.forEach((botao) => {
   });
 });
 
+// Data de hoje (AAAA-MM-DD) no fuso de Brasília, para o nome do arquivo.
+// toISOString() daria a data em UTC, e depois das 21h já seria o dia seguinte.
+function hojeParaArquivo() {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
+}
+
 // A exportação precisa passar pelo fetch (e não por um link direto) porque
 // o servidor exige o cabeçalho de autenticação. Por isso baixamos o arquivo
 // como blob e disparamos o download por código.
-botaoExportar.addEventListener('click', async () => {
+async function baixarArquivo(botao, caminho, nomeArquivo) {
   if (!exigirSessao()) return;
 
-  const textoOriginal = botaoExportar.textContent;
-  botaoExportar.textContent = 'Gerando...';
-  botaoExportar.disabled = true;
+  const textoOriginal = botao.textContent;
+  botao.textContent = 'Gerando...';
+  botao.disabled = true;
 
   try {
-    const resposta = await requisitar(`/api/respostas/exportar?periodo=${periodoAtual}`);
+    const resposta = await requisitar(caminho);
     if (!resposta.ok) throw new Error('Falha ao exportar');
 
     const blob = await resposta.blob();
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `riscozero-${new Date().toISOString().slice(0, 10)}.csv`;
+    link.download = nomeArquivo;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url); // libera a memória usada pelo blob
 
-    botaoExportar.textContent = 'Baixado!';
-    setTimeout(() => { botaoExportar.textContent = textoOriginal; }, 2000);
+    botao.textContent = 'Baixado!';
+    setTimeout(() => { botao.textContent = textoOriginal; }, 2000);
   } catch (erro) {
     console.error(erro);
-    botaoExportar.textContent = 'Erro ao exportar';
-    setTimeout(() => { botaoExportar.textContent = textoOriginal; }, 2500);
+    botao.textContent = 'Erro ao exportar';
+    setTimeout(() => { botao.textContent = textoOriginal; }, 2500);
   } finally {
-    botaoExportar.disabled = false;
+    botao.disabled = false;
   }
-});
+}
 
-// A folha de estilo de impressão (style.css, @media print) já esconde
-// cabeçalho, rodapé e controles e evita cortar cartões entre páginas — o
-// botão só precisa disparar a impressão do navegador, que também é o "Salvar
-// como PDF" de qualquer impressora do sistema.
-botaoExportarPDF.addEventListener('click', () => {
-  window.print();
-});
+botaoExportar.addEventListener('click', () => baixarArquivo(
+  botaoExportar,
+  `/api/respostas/exportar?periodo=${periodoAtual}`,
+  `riscozero-${hojeParaArquivo()}.csv`,
+));
+
+// O PDF é gerado no servidor (mesmos números do painel), não pela impressão do
+// navegador — por isso sai igual em qualquer máquina, sem cortes nem scroll.
+botaoExportarPDF.addEventListener('click', () => baixarArquivo(
+  botaoExportarPDF,
+  `/api/respostas/exportar-pdf?periodo=${periodoAtual}`,
+  `riscozero-${hojeParaArquivo()}.pdf`,
+));
 
 // ---------------------------------------------------------------------------
 // Os gráficos também precisam trocar de tema para o papel
