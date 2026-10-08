@@ -185,11 +185,14 @@ function gerarPdfResumo(resumo) {
     }
 
     // Rodapé com a paginação. Feito por último, quando já se sabe o total de
-    // páginas. A margem inferior é zerada para o rodapé não disparar uma página nova.
+    // páginas. A margem inferior é zerada em CADA página (a margem é de cada
+    // uma): com ela, escrever abaixo do limite dispara uma página nova — antes
+    // isso criava uma página extra em branco no fim, e o rodapé dizia "de 2"
+    // num arquivo de 3 páginas.
     const total = doc.bufferedPageRange().count;
-    doc.page.margins.bottom = 0;
     for (let i = 0; i < total; i++) {
       doc.switchToPage(i);
+      doc.page.margins.bottom = 0;
       doc.font('Helvetica').fontSize(8).fillColor(COR_SUAVE).text(
         `RiscoZero · página ${i + 1} de ${total}`,
         MARGEM,

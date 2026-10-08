@@ -400,6 +400,28 @@ async function rodar() {
   ok('PDF exige login',
     (await fetch(base + '/api/respostas/exportar-pdf?periodo=tudo')).status === 401);
 
+  // Regressão: o rodapé de paginação escrevia abaixo da margem e criava uma
+  // página em branco no fim de qualquer PDF com mais de uma página.
+  const { gerarPdfResumo } = require('../utils/pdf');
+  const classe = { rotulo: 'Médio' };
+  const pdfGrande = await gerarPdfResumo({
+    periodo: 'Todo o período',
+    geral: {
+      total: 99, media_estresse: 3, media_sono: 3, media_carga_trabalho: 3,
+      media_ambiente_fisico: 3, ultima_resposta: new Date(),
+    },
+    indiceRisco: 3,
+    classificacao: classe,
+    porSetor: Array.from({ length: 50 }, (_, i) => ({
+      setorNome: `Setor ${i}`, total: 10, indiceRisco: 3, classificacao: classe, tendencia: { rotulo: 'estável' },
+    })),
+    porTurno: [],
+    alertas: [],
+    recomendacoesPorSetor: [],
+  });
+  const paginasPdf = (pdfGrande.toString('latin1').match(/\/Type \/Page(?!s)/g) || []).length;
+  ok('PDF de varias paginas nao ganha pagina em branco no fim', paginasPdf === 2, `${paginasPdf} paginas`);
+
   // As exportações levam as respostas para fora do painel, e qualquer conta
   // logada pode fazê-las: o histórico é como o admin descobre quem baixou.
   const historico = await pedir('GET', '/api/logs?limite=500', { token: tokenAdmin });

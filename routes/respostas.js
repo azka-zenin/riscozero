@@ -84,6 +84,18 @@ function camposDeMedia() {
   };
 }
 
+// Ordem dos turnos ao longo do dia. Antes só manhã, tarde e noite estavam na
+// lista, e Madrugada e Comercial (fora dela) iam parar no começo.
+const ORDEM_TURNOS = ['Madrugada', 'Manha', 'Comercial', 'Tarde', 'Noite'];
+
+function porOrdemDoDia(a, b) {
+  const posicao = (t) => {
+    const i = ORDEM_TURNOS.indexOf(t.turno);
+    return i === -1 ? ORDEM_TURNOS.length : i; // turno desconhecido vai para o fim
+  };
+  return posicao(a) - posicao(b);
+}
+
 /** Converte a saída do $group (que usa _id) para o formato que o front espera. */
 function comoSetor(documento) {
   const { _id, ...resto } = documento;
@@ -387,10 +399,8 @@ async function montarResumo(periodo) {
       };
     });
 
-    // Turnos seguem a ordem natural do dia (manhã, tarde, noite) em vez da
-    // alfabética, que colocaria "Manha, Noite, Tarde" e confundiria a leitura
-    // do gráfico.
-    const ORDEM_TURNOS = ['Manha', 'Tarde', 'Noite'];
+    // Turnos seguem a ordem natural do dia em vez da alfabética, que colocaria
+    // "Manha, Noite, Tarde" e confundiria a leitura do gráfico.
     const turnosComIndice = resultadoPorTurno
       .map((t) => {
         const mediasTurno = {
@@ -412,7 +422,7 @@ async function montarResumo(periodo) {
           classificacao: analise.classificarRisco(indice),
         };
       })
-      .sort((a, b) => ORDEM_TURNOS.indexOf(a.turno) - ORDEM_TURNOS.indexOf(b.turno));
+      .sort(porOrdemDoDia);
 
     const classificacaoGeral = analise.classificarRisco(indiceRisco);
 
@@ -579,9 +589,8 @@ router.get('/turnos', async (req, res) => {
     });
 
     // Ordena na sequência natural do dia, não por risco: o gráfico fica mais
-    // fácil de ler quando manhã, tarde e noite aparecem sempre na mesma ordem.
-    const ordem = { Manha: 0, Tarde: 1, Noite: 2 };
-    serie.sort((a, b) => (ordem[a.turno] ?? 9) - (ordem[b.turno] ?? 9));
+    // fácil de ler quando os turnos aparecem sempre na mesma ordem.
+    serie.sort(porOrdemDoDia);
 
     res.json(serie);
   } catch (erro) {
