@@ -400,6 +400,20 @@ async function rodar() {
   ok('PDF exige login',
     (await fetch(base + '/api/respostas/exportar-pdf?periodo=tudo')).status === 401);
 
+  // As exportações levam as respostas para fora do painel, e qualquer conta
+  // logada pode fazê-las: o histórico é como o admin descobre quem baixou.
+  const historico = await pedir('GET', '/api/logs?limite=500', { token: tokenAdmin });
+  const registros = Array.isArray(historico.dados) ? historico.dados : [];
+  ok('download de CSV fica no historico de acessos',
+    registros.some((l) => l.motivo === 'exportou_csv' && l.motivoTexto === 'Baixou o CSV'));
+  ok('download de PDF fica no historico de acessos',
+    registros.some((l) => l.motivo === 'exportou_pdf' && l.motivoTexto === 'Baixou o PDF'));
+  const resumoLogs = await pedir('GET', '/api/logs/resumo', { token: tokenAdmin });
+  const soLogins = registros.filter((l) => !l.motivo.startsWith('exportou'));
+  ok('totais de entradas e falhas nao contam downloads',
+    resumoLogs.dados.geral.total === soLogins.length,
+    `${resumoLogs.dados.geral.total} vs ${soLogins.length}`);
+
   // -------------------------------------------------------------------------
   secao('CRUD DE CONTAS');
 

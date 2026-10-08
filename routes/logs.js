@@ -20,7 +20,13 @@ const MOTIVOS = {
   senha_incorreta: 'Senha incorreta',
   usuario_inexistente: 'Conta não existe',
   conta_desativada: 'Conta desativada',
+  exportou_csv: 'Baixou o CSV',
+  exportou_pdf: 'Baixou o PDF',
 };
+
+// Exportações entram no histórico, mas não nos totais de entradas e falhas:
+// esses números falam de login, e misturar downloads os distorceria.
+const EXPORTACOES = ['exportou_csv', 'exportou_pdf'];
 
 /** Monta o filtro a partir dos parâmetros da consulta. */
 function montarFiltro(query) {
@@ -77,7 +83,7 @@ router.get('/resumo', async (req, res) => {
 
     const [totais, porMotivo, suspeitos] = await Promise.all([
       LogAcesso.aggregate([
-        { $match: filtro },
+        { $match: { ...filtro, motivo: { $nin: EXPORTACOES } } },
         {
           $group: {
             _id: null,

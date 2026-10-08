@@ -331,8 +331,8 @@ riscozero/
 | GET | `/api/respostas/evolucao` | Logado | Índice de risco dia a dia |
 | GET | `/api/respostas/turnos` | Logado | Risco por turno de trabalho |
 | GET | `/api/respostas/comentarios` | Logado | Comentários deixados |
-| GET | `/api/respostas/exportar` | Logado | Baixa tudo em CSV (comentários e turno seguem a regra de anonimato) |
-| GET | `/api/respostas/exportar-pdf` | Logado | Baixa o resumo do período em PDF (sem comentários) |
+| GET | `/api/respostas/exportar` | Logado | Baixa tudo em CSV (comentários e turno seguem a regra de anonimato; o download fica no histórico de acessos) |
+| GET | `/api/respostas/exportar-pdf` | Logado | Baixa o resumo do período em PDF (sem comentários; o download fica no histórico de acessos) |
 | POST | `/api/usuarios` | **Admin** | Cria conta |
 | GET | `/api/usuarios` | Logado | Lista contas |
 | GET | `/api/usuarios/:id` | Logado | Detalha uma conta |

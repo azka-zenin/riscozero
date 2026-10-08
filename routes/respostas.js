@@ -22,6 +22,7 @@ const { exigirLogin } = require('../middleware/auth');
 const analise = require('../utils/analise');
 const insights = require('../utils/insights');
 const { gerarPdfResumo } = require('../utils/pdf');
+const { registrar } = require('../models/LogAcesso');
 const email = require('../utils/email');
 const config = require('../config');
 const { limiteFormulario, limiteAcaoAlerta } = require('../middleware/limites');
@@ -783,6 +784,21 @@ function dataDeHoje() {
 }
 
 /**
+ * Anota no histórico de acessos quem baixou um arquivo. Qualquer conta logada
+ * pode exportar, então este registro é o que permite ao administrador saber
+ * depois quem levou os dados para fora do painel.
+ */
+function registrarExportacao(req, motivo) {
+  return registrar({
+    email: req.usuario.email,
+    nome: req.usuario.nome,
+    sucesso: true,
+    motivo,
+    origem: req.ip || null,
+  });
+}
+
+/**
  * Setores que têm respostas suficientes no período para que os comentários
  * apareçam. É a mesma regra de GET /comentarios, aplicada linha a linha aqui.
  */
@@ -845,6 +861,7 @@ router.get('/exportar', async (req, res) => {
 
     const csv = '﻿' + [cabecalho.join(';'), ...linhasCSV].join('\r\n');
 
+    await registrarExportacao(req, 'exportou_csv');
     res.setHeader('Content-Type', 'text/csv; charset=utf-8');
     res.setHeader('Content-Disposition', `attachment; filename="riscozero-${dataDeHoje()}.csv"`);
     res.send(csv);
@@ -863,6 +880,7 @@ router.get('/exportar-pdf', async (req, res) => {
     const resumo = await montarResumo(req.query.periodo);
     const pdf = await gerarPdfResumo(resumo);
 
+    await registrarExportacao(req, 'exportou_pdf');
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="riscozero-${dataDeHoje()}.pdf"`);
     res.send(pdf);
