@@ -282,16 +282,22 @@ async function gerarRespostas() {
   console.log(`Pronto! ${registros.length} respostas inseridas ao longo dos últimos ${DIAS} dias.`);
 }
 
-(async () => {
-  try {
-    await conectar();
-    await criarAdmin();
-    await gerarRespostas();
-    console.log('Suba o servidor com "npm start" e acesse o painel.');
-    await desconectar();
-    process.exit(0);
-  } catch (erro) {
-    console.error('Erro ao preparar os dados:', erro.message);
-    process.exit(1);
-  }
-})();
+// Quando o arquivo é importado (utils/seed-por-ambiente.js), só exporta as
+// funções. Rodando direto com "npm run seed", executa tudo e encerra.
+if (require.main === module) {
+  (async () => {
+    try {
+      await conectar();
+      await criarAdmin();
+      await gerarRespostas();
+      console.log('Suba o servidor com "npm start" e acesse o painel.');
+      await desconectar();
+      process.exit(0);
+    } catch (erro) {
+      console.error('Erro ao preparar os dados:', erro.message);
+      process.exit(1);
+    }
+  })();
+}
+
+module.exports = { criarAdmin, gerarRespostas };

@@ -24,6 +24,7 @@ const usuariosRouter = require('./routes/usuarios');
 const logsRouter = require('./routes/logs');
 const biRouter = require('./routes/bi');
 const { resetarAdminPorAmbiente } = require('./utils/reset-por-ambiente');
+const { semearPorAmbiente } = require('./utils/seed-por-ambiente');
 
 const app = express();
 
@@ -110,6 +111,7 @@ async function iniciar() {
   try {
     await conectar();
     await resetarAdminPorAmbiente();
+    await semearPorAmbiente();
 
     servidorHttp.listen(config.PORTA, () => {
       // Publicado, o endereço é o do serviço de hospedagem, não localhost.
