@@ -121,6 +121,11 @@ if (MODO_QUIOSQUE) {
   const linkPainel = document.getElementById('link-painel-gestao');
   if (linkPainel) linkPainel.style.display = 'none';
 
+  // Os links da base científica levam para fora do sistema: um toque
+  // acidental tiraria o tablet do formulário.
+  const baseCientifica = document.getElementById('base-cientifica');
+  if (baseCientifica) baseCientifica.remove();
+
   const aviso = document.getElementById('aviso-quiosque');
   if (aviso) aviso.style.display = 'block';
 }
