@@ -12,7 +12,8 @@ const { Resposta } = require('../models/Resposta');
 const { criarAdmin, gerarRespostas } = require('../seed');
 
 async function semearPorAmbiente() {
-  if (process.env.SEED_DEMO !== 'true') return;
+  // Aceita "true", "True", "TRUE"... — o painel não avisa se a caixa está errada.
+  if ((process.env.SEED_DEMO || '').trim().toLowerCase() !== 'true') return;
 
   const existentes = await Resposta.countDocuments();
   if (existentes > 0) {
