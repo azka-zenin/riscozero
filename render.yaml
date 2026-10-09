@@ -34,5 +34,15 @@ services:
       - key: JWT_SECRET
         generateValue: true
 
+      # Dados de demonstração e primeiro admin, para quando o Render não tem
+      # shell. Só popula se o banco estiver vazio. Depois da primeira subida,
+      # troque SEED_DEMO para false no painel.
+      - key: SEED_DEMO
+        sync: false
+      - key: ADMIN_EMAIL
+        sync: false
+      - key: ADMIN_SENHA
+        sync: false
+
       - key: NODE_ENV
         value: production
