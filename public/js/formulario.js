@@ -3,12 +3,30 @@
 
 const form = document.getElementById('form-risco');
 const mensagem = document.getElementById('mensagem');
+const areaIntroducao = document.getElementById('area-introducao');
 const areaFormulario = document.getElementById('area-formulario');
 const areaSucesso = document.getElementById('area-sucesso');
+const botaoComecar = document.getElementById('botao-comecar');
 const botaoNova = document.getElementById('botao-nova');
 const botaoEnviar = form.querySelector('button[type="submit"]');
 const progressoPreenchido = document.getElementById('progresso-preenchido');
 const progressoTexto = document.getElementById('progresso-texto');
+
+// ---------------------------------------------------------------------------
+// Tela de introdução: troca pelo formulário só no clique em "Começar".
+// Só na primeira vez — "Enviar outra resposta" (modo quiosque ou não) volta
+// direto pro formulário, sem passar pela introdução de novo. Quem já está
+// ali sabe pra que serve; repetir a explicação a cada pessoa só atrasaria o
+// quiosque.
+// ---------------------------------------------------------------------------
+if (botaoComecar) {
+  botaoComecar.addEventListener('click', () => {
+    areaIntroducao.style.display = 'none';
+    areaFormulario.style.display = 'block';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+    document.getElementById('setor').focus();
+  });
+}
 
 // As 4 escalas são "as perguntas" de verdade da autoavaliação — Setor e
 // Turno são contexto rápido, não entram na contagem (mesma distinção já

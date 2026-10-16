@@ -2458,6 +2458,96 @@ body.modo-apresentacao .area-grafico.alto { height: 440px; }
   font-size: var(--t-interface);
 }
 
+/* --------------------------------------------------------------------------
+   Introdução — a tela antes do formulário
+
+   Sem moldura, de propósito: a mesma leitura "publicação, não aparelho" do
+   resto da página (ver nota de direção visual no topo do arquivo). É a marca
+   falando por si, não um cartão.
+   -------------------------------------------------------------------------- */
+
+#area-introducao {
+  text-align: center;
+  padding: var(--e-9) 0 var(--e-6);
+  animation: surgir 0.55s var(--assenta) backwards;
+}
+
+#area-introducao .subtitulo {
+  margin: 0 auto var(--e-6);
+}
+
+/* Barras de altura crescente — a mesma marca gráfica do cabeçalho (.marca,
+   "a leitura de um instrumento de medida"), só que grande e em movimento: a
+   primeira coisa que a pessoa vê é o próprio instrumento "lendo". Pulso
+   contínuo, não só na entrada — é o único lugar do sistema onde esse
+   movimento permanente faz sentido (ver nota de MOVIMENTO no topo do
+   arquivo: em qualquer outro lugar, "fica quieto" depois de assentar). */
+.marca-heroi {
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: var(--e-3);
+  height: 56px;
+  margin: 0 auto var(--e-6);
+}
+
+.marca-heroi span {
+  width: 14px;
+  border-radius: var(--raio-p) var(--raio-p) 0 0;
+  background: var(--tinta);
+  transform-origin: bottom center;
+  animation: crescer-barra 2.2s var(--assenta) infinite alternate;
+}
+.marca-heroi span:nth-child(1) { height: 45%; animation-delay: 0s; }
+.marca-heroi span:nth-child(2) { height: 70%; animation-delay: 0.2s; }
+.marca-heroi span:nth-child(3) { height: 100%; animation-delay: 0.4s; }
+
+@keyframes crescer-barra {
+  from { transform: scaleY(0.5); opacity: 0.55; }
+  to   { transform: scaleY(1); opacity: 1; }
+}
+
+.titulo-heroi {
+  font-size: clamp(2.6rem, 10vw, 4.6rem);
+  margin-bottom: var(--e-5);
+}
+
+/* "Zero" em cor de marca, igual ao wordmark pequeno do cabeçalho (.marca
+   span) — mesmo vocabulário, maior. */
+.titulo-heroi span { color: var(--marca); }
+
+.fatos-introducao {
+  display: flex;
+  justify-content: center;
+  gap: var(--e-8);
+  flex-wrap: wrap;
+  margin: 0 0 var(--e-8);
+  padding-top: var(--e-6);
+  border-top: 1px solid var(--linha);
+}
+
+.fato {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--e-1);
+}
+
+.fato-numero {
+  font-family: var(--dado);
+  font-size: var(--t-titulo-p);
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.fato-rotulo {
+  font-family: var(--dado);
+  font-size: var(--t-micro);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--tinta-fraca);
+}
+
 .carregando::after {
   content: '';
   display: inline-block;

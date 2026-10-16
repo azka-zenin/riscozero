@@ -48,7 +48,49 @@
   </noscript>
 
 <main id="conteudo-principal">
-    <div id="area-formulario">
+    <!--
+      Tela de introdução — a primeira coisa que a pessoa vê, antes de
+      qualquer pergunta. O formulário em si não explica por que ele existe;
+      aqui é onde isso é dito, uma vez, antes de pedir pra responder algo.
+      Fica oculta depois do clique em "Começar" (ver js/formulario.js),
+      mesmo padrão já usado na troca para a tela de confirmação.
+    -->
+    <div id="area-introducao">
+      <div class="marca-heroi" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </div>
+      <h1 class="titulo-heroi">Risco<span>Zero</span></h1>
+      <p class="subtitulo">
+        O check-in diário de bem-estar da fábrica. Em menos de um minuto, cada
+        turno conta como está o estresse, o sono, a carga de trabalho e o
+        ambiente — e essas respostas, somadas por setor, mostram onde a
+        sobrecarga está se formando antes que vire afastamento, acidente ou
+        queda de qualidade.
+      </p>
+      <p class="subtitulo">
+        Ninguém é identificado: a resposta entra só na leitura conjunta do seu
+        setor, nunca em um nome.
+      </p>
+
+      <div class="fatos-introducao">
+        <div class="fato">
+          <span class="fato-numero">4</span>
+          <span class="fato-rotulo">perguntas rápidas</span>
+        </div>
+        <div class="fato">
+          <span class="fato-numero">100%</span>
+          <span class="fato-rotulo">anônimo</span>
+        </div>
+        <div class="fato">
+          <span class="fato-numero">&lt;1 min</span>
+          <span class="fato-rotulo">pra responder</span>
+        </div>
+      </div>
+
+      <button type="button" class="botao grande" id="botao-comecar">Começar</button>
+    </div>
+
+    <div id="area-formulario" style="display:none">
       <h1>Como foi o seu dia?</h1>
       <p class="subtitulo">
         Ajuda a identificar sinais de sobrecarga antes que virem um problema
